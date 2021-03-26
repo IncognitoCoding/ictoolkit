@@ -1,6 +1,6 @@
 from setuptools import setup
 
-VERSION = '0.0.11' 
+VERSION = '0.0.1' 
 DESCRIPTION = 'ictools is designed to be the swiss army knife of programming methods.'
 LONG_DESCRIPTION = 'Each method is broken down into a specific type of use case. The methods are currently broad and cover several types of areas.'
 
@@ -13,7 +13,7 @@ setup(
         description=DESCRIPTION,
         long_description=LONG_DESCRIPTION,
         packages=['ictools/directors'],
-        url='https://github.com/IncognitoCoding/ictools.git',
+        url='https://github.com/IncognitoCoding/ictoolkit.git',
         license='GPL',
         install_requires=[
             'cryptography>=3.4.6'
