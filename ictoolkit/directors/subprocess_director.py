@@ -15,7 +15,7 @@ __author__ = 'IncognitoCoding'
 __copyright__ = 'Copyright 2021, subprocess_director'
 __credits__ = ['IncognitoCoding']
 __license__ = 'GPL'
-__version__ = '1.0'
+__version__ = '1.1'
 __maintainer__ = 'IncognitoCoding'
 __status__ = 'Development'
 
@@ -77,7 +77,7 @@ def start_subprocess(program_arguments):
         output.wait()
         
     except Exception as err:
-        raise ValueError(f'An error occurred while running the subprocess, {err}, Originating error on line {traceback.extract_stack()[-1].lineno} in <{__name__}>')
+        raise ValueError(f'An error occurred while running the subprocess ({program_arguments}), {err}, Originating error on line {traceback.extract_stack()[-1].lineno} in <{__name__}>')
 
     finally:
 
