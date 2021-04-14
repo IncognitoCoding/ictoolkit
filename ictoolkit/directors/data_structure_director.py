@@ -136,10 +136,12 @@ def get_list_of_dicts_duplicates(key, list_dictionary):
 
             # Checks if the duplicate entry already exists in the duplicate_list_dictionary list.
             # This has to check if the 'duplicate_list_dictionary' is empty and if the duplicate list does not contain the entry.
-            elif bool(duplicate_list_dictionary) == False or 'None' in str([a_dict.get(entry) for a_dict in duplicate_list_dictionary]):
+            # The two different "entry" searches are required in case the key is a string or an INT. A string would have a single quote and an INT would not.
+            elif bool(duplicate_list_dictionary) == False or f'{entry}:' not in str(duplicate_list_dictionary) and f'{entry}\':' not in str(duplicate_list_dictionary):
                 
                 # Loops through all entries in the list.
                 for index, value in enumerate(duplicates_of_key):
+
                     # Checks if the value from the list is equal to the discovered duplicate.
                     if value == entry:
                         
@@ -148,9 +150,11 @@ def get_list_of_dicts_duplicates(key, list_dictionary):
                         # This will allow the ease if finding all index points for a specific value.
                         duplicate_list_dictionary.append({value: index})
 
+    except KeyError as err:
+        raise ValueError(f'A failure occurred getting duplicate values the list, The searching key ({key}) does not exist in the dictionary, Originating error on line {traceback.extract_stack()[-1].lineno} in <{__name__}>')
     except Exception as err: 
         raise ValueError(f'A failure occurred getting duplicate values from the key ({key}) in the list_dictionary, {err}, Originating error on line {traceback.extract_stack()[-1].lineno} in <{__name__}>')
-
+    
     else:
 
         return duplicate_list_dictionary
@@ -190,7 +194,8 @@ def get_list_duplicates(duplicates):
 
             # Checks if the duplicate entry already exists in the duplicate_list_dictionary list.
             # This has to check if the 'duplicate_list_dictionary' is empty and if the duplicate list does not contain the entry.
-            elif bool(duplicate_list_dictionary) == False or 'None' in str([a_dict.get(entry) for a_dict in duplicate_list_dictionary]):
+            # The two different "entry" searches are required in case the key is a string or an INT. A string would have a single quote and an INT would not.
+            elif bool(duplicate_list_dictionary) == False or f'{entry}:' not in str(duplicate_list_dictionary) and f'{entry}\':' not in str(duplicate_list_dictionary):
 
                 # Loops through all entries in the list.
                 for index, value in enumerate(duplicates):
