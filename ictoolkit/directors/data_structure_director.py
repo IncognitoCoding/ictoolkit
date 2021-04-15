@@ -91,25 +91,29 @@ def remove_duplicate_dict_values_in_list(list_dictionary, element_number=None):
         return revised_list
 
 
-def get_list_of_dicts_duplicates(key, list_dictionary):
+def get_list_of_dicts_duplicates(key, list_dictionary, grouped=False):
     
     """
-    Finds duplicate dictionary values in the list using the key and return the value and index points as a list with each duplicate in dictionary format.
+    Finds duplicate dictionary values in the list using the key and return the value and index points. Duplicates can be either un-grouped or grouped. Default is ungrouped. 
+    Returning both the duplicate and original list index points allows any modification or additional data search when the duplicates return.
 
     A key is required to find all duplicates for that key.
 
-    The duplicate value will be the key, and the index point the duplicate gets found lists as the value. 
-
-    Calling Example List of Dictionaries: [{'key1': 'ValueA'}, {'key1': 'ValueA'}, {'key1': 'ValueA'}, {'key1': 'ValueB'}, {'key1': 'ValueB'}]
+    Calling Example List of Dictionaries: [{'key1': 'ValueA'}, {'key1': 'ValueA'}, {'key1': 'ValueA'}, {'key1': 'ValueB'}, {'key1': 'ValueB'}, {'key1': 'ValueC'}, {'key1': 'ValueD'}]
 
     Args:
         key (str): the dictionary key that needs to get all duplicate values assigned to that ke
         list_dictionary (list): dictionary with duplicate values in a list
+        grouped (bool): enables grouping of duplicate values. Disabled by default
 
     Returns:
-        list: duplicate values in dictionary format in a list
+        list: the default return option is un-grouped duplicate values in dictionary format in a list
+        dict: enabling grouped will return the duplicate values grouped in a dictionary with individual nested groupings
+        None: if no duplicates are detected, a value of "None" will be returned
 
-        Return Example: [{'ValueA': 0}, {'ValueA': 1}, {'ValueA': 2}, {'ValueB': 3}, {'ValueB': 4}]
+        Return Example (Un-Grouped): [{'index': 0, 'value': 'ValueA'}, {'index': 1, 'value': 'ValueA'}, {'index': 2, 'value': 'ValueA'}, {'index': 3, 'value': 'ValueB'}, {'index': 4, 'value': 'ValueB'}]
+        Return Example (Grouped): {'ValueA': [{'index': 0, 'value': 'ValueA'}, {'index': 1, 'value': 'ValueA'}, {'index': 2, 'value': 'ValueA'}], 'ValueB': [{'index': 3, 'value': 'ValueB'}, {'index': 4, 'value': 'ValueB'}]}
+
     """
     
     try:
@@ -137,7 +141,7 @@ def get_list_of_dicts_duplicates(key, list_dictionary):
             # Checks if the duplicate entry already exists in the duplicate_list_dictionary list.
             # This has to check if the 'duplicate_list_dictionary' is empty and if the duplicate list does not contain the entry.
             # The two different "entry" searches are required in case the key is a string or an INT. A string would have a single quote and an INT would not.
-            elif bool(duplicate_list_dictionary) == False or f'{entry}:' not in str(duplicate_list_dictionary) and f'{entry}\':' not in str(duplicate_list_dictionary):
+            elif bool(duplicate_list_dictionary) == False or f'\'value\': {entry}' not in str(duplicate_list_dictionary) and f'\'value\': \'{entry}\'' not in str(duplicate_list_dictionary):
                 
                 # Loops through all entries in the list.
                 for index, value in enumerate(duplicates_of_key):
@@ -148,7 +152,7 @@ def get_list_of_dicts_duplicates(key, list_dictionary):
                         # Adds the duplicate entry values and index
                         # The value will be the key and the index will be the value.
                         # This will allow the ease if finding all index points for a specific value.
-                        duplicate_list_dictionary.append({value: index})
+                        duplicate_list_dictionary.append({'index': index, 'value': value})
 
     except KeyError as err:
         raise ValueError(f'A failure occurred getting duplicate values the list, The searching key ({key}) does not exist in the dictionary, Originating error on line {traceback.extract_stack()[-1].lineno} in <{__name__}>')
@@ -157,21 +161,60 @@ def get_list_of_dicts_duplicates(key, list_dictionary):
     
     else:
 
-        return duplicate_list_dictionary
+        # Checks that duplicates exist.
+        if duplicate_list_dictionary:
+
+            # Checks if the user enabled grouping.
+            if grouped:
+                
+                try:
+
+                    # Stores new grouped entries
+                    grouped = {}
+
+                    # Loops through each grouped entry.
+                    for entry in duplicate_list_dictionary:
+
+                        # Gets matching entries based on the "value" key and adds them to the grouped dictionary.
+                        grouped[entry['value']] = grouped.get(entry['value'], [])
+                        grouped[entry['value']].append(entry)
+
+                except Exception as err: 
+                    raise ValueError(f'A failure occurred grouping duplicate values, {err}, Originating error on line {traceback.extract_stack()[-1].lineno} in <{__name__}>')
+                
+                else:
+
+                    # Returns grouped duplicates.
+                    return grouped
+
+            else:
+
+                # Returns un-grouped duplicates.
+                return duplicate_list_dictionary
+
+        else:
+            return None
 
 
-def get_list_duplicates(duplicates):
+def get_list_duplicates(duplicates, grouped=False):
     """
-    Finds all duplicate entries in a list and returns the value and index points as a list with each duplicate in dictionary format.
+    Finds duplicate entries in the list return the value and index points. Duplicates can be either un-grouped or grouped. Default is ungrouped. 
+    Returning both the duplicate and original list index points allows any modification or additional data search when the duplicates return.
 
-    The duplicate value will be the key, and the index point the duplicate gets found adds as the value. 
+    Calling Example List: ['ValueA', 'ValueA', 'ValueA', 'ValueB', 'ValueB', 'ValueC', 'ValueD']
 
-    Calling Example List: ['ValueA', 'ValueA', 'ValueA', 'ValueB', 'ValueB']
+    Args:
+        duplicates (list): list with duplicates
+        grouped (bool): enables grouping of duplicate values. Disabled by default
 
     Returns:
-        list: duplicate values in dictionary format in a list
+        list: the default return option is un-grouped duplicate values in dictionary format in a list
+        dict: enabling grouped will return the duplicate values grouped in a dictionary with individual nested groupings
+        None: if no duplicates are detected, a value of "None" will be returned
 
-        Return Example: [{'ValueA': 0}, {'ValueA': 1}, {'ValueA': 2}, {'ValueB': 3}, {'ValueB': 4}]
+        Return Example (Un-Grouped): [{'index': 0, 'value': 'ValueA'}, {'index': 1, 'value': 'ValueA'}, {'index': 2, 'value': 'ValueA'}, {'index': 3, 'value': 'ValueB'}, {'index': 4, 'value': 'ValueB'}]
+        Return Example (Grouped): {'ValueA': [{'index': 0, 'value': 'ValueA'}, {'index': 1, 'value': 'ValueA'}, {'index': 2, 'value': 'ValueA'}], 'ValueB': [{'index': 3, 'value': 'ValueB'}, {'index': 4, 'value': 'ValueB'}]}
+
     """
     
     try:
@@ -195,7 +238,7 @@ def get_list_duplicates(duplicates):
             # Checks if the duplicate entry already exists in the duplicate_list_dictionary list.
             # This has to check if the 'duplicate_list_dictionary' is empty and if the duplicate list does not contain the entry.
             # The two different "entry" searches are required in case the key is a string or an INT. A string would have a single quote and an INT would not.
-            elif bool(duplicate_list_dictionary) == False or f'{entry}:' not in str(duplicate_list_dictionary) and f'{entry}\':' not in str(duplicate_list_dictionary):
+            elif bool(duplicate_list_dictionary) == False or f'\'value\': {entry}' not in str(duplicate_list_dictionary) and f'\'value\': \'{entry}\'' not in str(duplicate_list_dictionary):
 
                 # Loops through all entries in the list.
                 for index, value in enumerate(duplicates):
@@ -205,11 +248,43 @@ def get_list_duplicates(duplicates):
                         # Adds the duplicate entry values and index
                         # The value will be the key and the index will be the value.
                         # This will allow the ease if finding all index points for a specific value.
-                        duplicate_list_dictionary.append({value: index})
+                        duplicate_list_dictionary.append({'index': index, 'value': value})
 
     except Exception as err: 
         raise ValueError(f'A failure occurred getting duplicate values the list, {err}, Originating error on line {traceback.extract_stack()[-1].lineno} in <{__name__}>')
 
     else:
         
-        return duplicate_list_dictionary
+        # Checks that duplicates exist.
+        if duplicate_list_dictionary:
+
+            # Checks if the user enabled grouping.
+            if grouped:
+                
+                try:
+
+                    # Stores new grouped entries
+                    grouped = {}
+
+                    # Loops through each grouped entry.
+                    for entry in duplicate_list_dictionary:
+
+                        # Gets matching entries based on the "value" key and adds them to the grouped dictionary.
+                        grouped[entry['value']] = grouped.get(entry['value'], [])
+                        grouped[entry['value']].append(entry)
+
+                except Exception as err: 
+                    raise ValueError(f'A failure occurred grouping duplicate values, {err}, Originating error on line {traceback.extract_stack()[-1].lineno} in <{__name__}>')
+                
+                else:
+
+                    # Returns grouped duplicates.
+                    return grouped
+
+            else:
+
+                # Returns un-grouped duplicates.
+                return duplicate_list_dictionary
+        
+        else:
+            return None
