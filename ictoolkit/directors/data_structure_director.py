@@ -12,7 +12,7 @@ __author__ = 'IncognitoCoding'
 __copyright__ = 'Copyright 2021, dict_director'
 __credits__ = ['IncognitoCoding']
 __license__ = 'GPL'
-__version__ = '1.0'
+__version__ = '1.1'
 __maintainer__ = 'IncognitoCoding'
 __status__ = 'Development'
 
