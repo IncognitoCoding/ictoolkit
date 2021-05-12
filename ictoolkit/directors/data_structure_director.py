@@ -196,7 +196,7 @@ def get_list_of_dicts_duplicates(key, list_dictionary, grouped=False):
             return None
 
 
-def get_list_duplicates(duplicates, grouped=False):
+def get_list_duplicates(duplicates, match_index=None, grouped=False):
     """
     Finds duplicate entries in the list return the value and index points. Duplicates can be either un-grouped or grouped. Default is ungrouped. 
     Returning both the duplicate and original list index points allows any modification or additional data search when the duplicates return.
@@ -205,6 +205,7 @@ def get_list_duplicates(duplicates, grouped=False):
 
     Args:
         duplicates (list): list with duplicates
+        match_index (int): if the entries in the lists are a list the index can be set to match on a specific index in the list.
         grouped (bool): enables grouping of duplicate values. Disabled by default
 
     Returns:
@@ -227,28 +228,87 @@ def get_list_duplicates(duplicates, grouped=False):
         duplicate_list_dictionary = []
 
         for entry in duplicates:
+            
+            # Checks if the entry in the list is another list.
+            # This allows lists to be in a list and be searched.
+            if isinstance(entry, list):
+                
+                # Checks a match_index is given to match a specific index in the list entry.
+                if isinstance(match_index, int):
 
-            # Checks if the entry from the list exists in the "temp_unique_items" list. If not it gets added to the temp list.
-            # If the entry exists the entry will hit the elif statement and get all index points for the duplicates.
-            if entry not in temp_unique_items:
+                    # Checks if the entry from the list exists in the "temp_unique_items" list. If not it gets added to the temp list.
+                    # If the entry exists the entry will hit the elif statement and get all index points for the duplicates.
+                    if entry[match_index] not in temp_unique_items:
 
-                # Adds the entry to the list.
-                temp_unique_items.append(entry)
+                        # Adds the entry to the list.
+                        temp_unique_items.append(entry[match_index])
 
-            # Checks if the duplicate entry already exists in the duplicate_list_dictionary list.
-            # This has to check if the 'duplicate_list_dictionary' is empty and if the duplicate list does not contain the entry.
-            # The two different "entry" searches are required in case the key is a string or an INT. A string would have a single quote and an INT would not.
-            elif bool(duplicate_list_dictionary) == False or f'\'value\': {entry}' not in str(duplicate_list_dictionary) and f'\'value\': \'{entry}\'' not in str(duplicate_list_dictionary):
+                    # Checks if the duplicate entry already exists in the duplicate_list_dictionary list.
+                    # This has to check if the 'duplicate_list_dictionary' is empty and if the duplicate list does not contain the entry.
+                    # The two different "entry" searches are required in case the key is a string or an INT. A string would have a single quote and an INT would not.
+                    elif bool(duplicate_list_dictionary) == False or f'\'value\': {entry[match_index]}' not in str(duplicate_list_dictionary) and f'\'value\': \'{entry[match_index]}\'' not in str(duplicate_list_dictionary):
 
-                # Loops through all entries in the list.
-                for index, value in enumerate(duplicates):
-                    # Checks if the value from the list is equal to the discovered duplicate.
-                    if value == entry:
-                        
-                        # Adds the duplicate entry values and index
-                        # The value will be the key and the index will be the value.
-                        # This will allow the ease if finding all index points for a specific value.
-                        duplicate_list_dictionary.append({'index': index, 'value': value})
+                        # Loops through all entries in the list.
+                        for index, value in enumerate(duplicates):
+                            # Checks if the value from the list is equal to the discovered duplicate.
+                            if value[match_index] == entry[match_index]:
+                                
+                                # Adds the duplicate entry values and index
+                                # The value will be the key and the index will be the value.
+                                # This will allow the ease if finding all index points for a specific value.
+                                duplicate_list_dictionary.append({'index': index, 'value': value})
+
+                # No match_index given, so the entire list entry will be used for matching, so the entry will be converted to a string.
+                else:
+
+                    # Checks if the entry from the list exists in the "temp_unique_items" list. If not it gets added to the temp list.
+                    # If the entry exists the entry will hit the elif statement and get all index points for the duplicates.
+                    if str(entry) not in temp_unique_items:
+
+                        # Adds the entry to the list.
+                        temp_unique_items.append(str(entry))
+
+                    # Checks if the duplicate entry already exists in the duplicate_list_dictionary list.
+                    # This has to check if the 'duplicate_list_dictionary' is empty and if the duplicate list does not contain the entry.
+                    # The two different "entry" searches are required in case the key is a string or an INT. A string would have a single quote and an INT would not.
+                    elif bool(duplicate_list_dictionary) == False or f'\'value\': {str(entry)}' not in str(duplicate_list_dictionary) and f'\'value\': \'{str(entry)}\'' not in str(duplicate_list_dictionary):
+
+                        # Loops through all entries in the list.
+                        for index, value in enumerate(duplicates):
+
+                            # Checks if the value from the list is equal to the discovered duplicate.
+                            if str(value) == str(entry):
+                                
+                                # Adds the duplicate entry values and index
+                                # The value will be the key and the index will be the value.
+                                # This will allow the ease if finding all index points for a specific value.
+                                duplicate_list_dictionary.append({'index': index, 'value': value})
+            
+            # Standard strings in the list.
+            else:
+
+                # Checks if the entry from the list exists in the "temp_unique_items" list. If not it gets added to the temp list.
+                # If the entry exists the entry will hit the elif statement and get all index points for the duplicates.
+                if entry not in temp_unique_items:
+
+                    # Adds the entry to the list.
+                    temp_unique_items.append(entry)
+
+                # Checks if the duplicate entry already exists in the duplicate_list_dictionary list.
+                # This has to check if the 'duplicate_list_dictionary' is empty and if the duplicate list does not contain the entry.
+                # The two different "entry" searches are required in case the key is a string or an INT. A string would have a single quote and an INT would not.
+                elif bool(duplicate_list_dictionary) == False or f'\'value\': {entry}' not in str(duplicate_list_dictionary) and f'\'value\': \'{entry}\'' not in str(duplicate_list_dictionary):
+
+                    # Loops through all entries in the list.
+                    for index, value in enumerate(duplicates):
+
+                        # Checks if the value from the list is equal to the discovered duplicate.
+                        if value == entry:
+                            
+                            # Adds the duplicate entry values and index
+                            # The value will be the key and the index will be the value.
+                            # This will allow the ease if finding all index points for a specific value.
+                            duplicate_list_dictionary.append({'index': index, 'value': value})
 
     except Exception as err: 
         raise ValueError(f'A failure occurred getting duplicate values the list, {err}, Originating error on line {traceback.extract_stack()[-1].lineno} in <{__name__}>')
@@ -268,10 +328,28 @@ def get_list_duplicates(duplicates, grouped=False):
 
                     # Loops through each grouped entry.
                     for entry in duplicate_list_dictionary:
+                        
+                        # Checks if the match_index is set to match a specific list index in the list entry.
+                        if isinstance(match_index, int):
 
-                        # Gets matching entries based on the "value" key and adds them to the grouped dictionary.
-                        grouped[entry['value']] = grouped.get(entry['value'], [])
-                        grouped[entry['value']].append(entry)
+                            # Gets matching entries based on the "value" key and adds them to the grouped dictionary.
+                            grouped[str(entry['value'][match_index])] = grouped.get(entry['value'][match_index], [])
+                            grouped[str(entry['value'][match_index])].append(entry)
+
+                        # Checks if no match_index exists, which matches the entire list entry.
+                        # The list entry is converted to a string for the key.
+                        elif not isinstance(match_index, int):
+
+                            # Gets matching entries based on the "value" key and adds them to the grouped dictionary.
+                            grouped[str(entry['value'])] = grouped.get(str(entry['value']), [])
+                            grouped[str(entry['value'])].append(entry)
+
+                        # Standard string element in the list.
+                        else:
+                            
+                            # Gets matching entries based on the "value" key and adds them to the grouped dictionary.
+                            grouped[entry['value']] = grouped.get(entry['value'], [])
+                            grouped[entry['value']].append(entry)
 
                 except Exception as err: 
                     raise ValueError(f'A failure occurred grouping duplicate values, {err}, Originating error on line {traceback.extract_stack()[-1].lineno} in <{__name__}>')
