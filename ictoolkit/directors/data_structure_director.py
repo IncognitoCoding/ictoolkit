@@ -12,7 +12,7 @@ __author__ = 'IncognitoCoding'
 __copyright__ = 'Copyright 2021, dict_director'
 __credits__ = ['IncognitoCoding']
 __license__ = 'GPL'
-__version__ = '1.1'
+__version__ = '1.2'
 __maintainer__ = 'IncognitoCoding'
 __status__ = 'Development'
 
@@ -201,10 +201,12 @@ def get_list_duplicates(duplicates, match_index=None, grouped=False):
     Finds duplicate entries in the list return the value and index points. Duplicates can be either un-grouped or grouped. Default is ungrouped. 
     Returning both the duplicate and original list index points allows any modification or additional data search when the duplicates return.
 
-    Calling Example List: ['ValueA', 'ValueA', 'ValueA', 'ValueB', 'ValueB', 'ValueC', 'ValueD']
+    Calling Example List1: ['ValueA', 'ValueA', 'ValueA', 'ValueB', 'ValueB', 'ValueC', 'ValueD']
+    Calling Example List2: [['ValueA', 'ValueB'], ['ValueA', 'ValueB'], ['ValueD', 'ValueB'], ['ValueB'], ['ValueB']
+    Calling Example List: [('ValueA', 'ValueB'), ('ValueA', 'ValueB'), ('ValueD', 'ValueB'), ('ValueB'), ('ValueB')]
 
     Args:
-        duplicates (list): list with duplicates
+        duplicates (list): list with duplicate strings, a list with duplicate list index, a list with duplicate lists, a list with duplicate tuple index, and a list with duplicate tuple lists
         match_index (int): if the entries in the lists are a list the index can be set to match on a specific index in the list.
         grouped (bool): enables grouping of duplicate values. Disabled by default
 
@@ -231,7 +233,7 @@ def get_list_duplicates(duplicates, match_index=None, grouped=False):
             
             # Checks if the entry in the list is another list.
             # This allows lists to be in a list and be searched.
-            if isinstance(entry, list):
+            if isinstance(entry, list) or isinstance(entry, tuple):
                 
                 # Checks a match_index is given to match a specific index in the list entry.
                 if isinstance(match_index, int):
@@ -332,9 +334,23 @@ def get_list_duplicates(duplicates, match_index=None, grouped=False):
                         # Checks if the match_index is set to match a specific list index in the list entry.
                         if isinstance(match_index, int):
 
-                            # Gets matching entries based on the "value" key and adds them to the grouped dictionary.
-                            grouped[str(entry['value'][match_index])] = grouped.get(entry['value'][match_index], [])
-                            grouped[str(entry['value'][match_index])].append(entry)
+                            # Checks if the values being returned are a tuple.
+                            # If tuple the matched_index will be used to set the key.
+                            # This is required because single value will be a string and the index will only pull the first letter.
+                            # Output Example: {'index': 0, 'value': ('ValueA', 'ValueB')}
+                            if isinstance(entry['value'], tuple):
+                            
+                                # Gets matching entries based on the "value" key and adds them to the grouped dictionary.
+                                grouped[str(entry['value'][match_index])] = grouped.get(str(entry['value'][match_index]), [])
+                                grouped[str(entry['value'][match_index])].append(entry)
+
+                            # Means only one entry exists as the value, and the value type is a string.
+                            # Output Example: {'index': 3, 'value': 'ValueB'}
+                            else:
+
+                                # Gets matching entries based on the "value" key and adds them to the grouped dictionary.
+                                grouped[str(entry['value'])] = grouped.get(str(entry['value']), [])
+                                grouped[str(entry['value'])].append(entry)
 
                         # Checks if no match_index exists, which matches the entire list entry.
                         # The list entry is converted to a string for the key.
