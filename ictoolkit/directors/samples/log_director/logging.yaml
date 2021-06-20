@@ -1,0 +1,44 @@
+---
+version: 1
+disable_existing_loggers: False
+formatters:
+  simple:
+    format: "%(asctime)s|%(levelname)s|%(message)s (Module:%(module)s, Function:%(funcName)s, Line:%(lineno)s)"
+    datefmt: "%Y-%m-%d %H:%M:%S"
+
+handlers:
+  console:
+    class: logging.StreamHandler
+    level: DEBUG
+    formatter: simple
+    stream: ext://sys.stdout
+
+  info_file_handler:
+    class: logging.handlers.RotatingFileHandler
+    level: INFO
+    formatter: simple
+    filename: logs\\info.log
+    # Sets max log file size to 10000 bytes (1 Megabyte)
+    maxBytes: 1000
+    backupCount: 20
+    encoding: utf8
+
+  error_file_handler:
+    class: logging.handlers.RotatingFileHandler
+    level: ERROR
+    formatter: logs\\simple
+    filename: errors.log
+    # Sets max log file size to 10000 bytes (1 Megabyte)
+    maxBytes: 1000
+    backupCount: 20
+    encoding: utf8
+
+loggers:
+  my_module:
+    level: ERROR
+    handlers: [console]
+    propagate: no
+
+root:
+  level: INFO
+  handlers: [console, info_file_handler, error_file_handler]

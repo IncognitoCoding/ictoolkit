@@ -14,9 +14,12 @@ __author__ = 'IncognitoCoding'
 __copyright__ = 'Copyright 2021, log_director'
 __credits__ = ['IncognitoCoding']
 __license__ = 'GPL'
-__version__ = '1.1'
+__version__ = '1.2'
 __maintainer__ = 'IncognitoCoding'
 __status__ = 'Development'
+
+# Own modules
+from yaml_director import read_yaml_config
 
 
 def create_logger(save_path, logger_name, log_name, max_bytes, file_log_level, console_log_level, backup_count, format_option, handler_option, rollover):
@@ -169,3 +172,30 @@ def create_logger(save_path, logger_name, log_name, max_bytes, file_log_level, c
 
     # Returns logger
     return logger
+
+
+def setup_logger_yaml(yaml_path):
+    """
+    This function sets up a logger for the program. The configuration must be setup with a YAML file. This method is the best method for using logging in to additional modules.
+
+    See the sample folder for an example configuration file.
+
+    Usage:
+        Setup your logger by running the command below.
+            - logger = logging.getLogger(__name__)
+        Call this function to setup the logger. No return is required.
+        Call the logger using something similar to the command below.
+            - logger.info('testing')
+
+        Note: When using the same logger in other modules the only requirement is to run the command below within the function. Do not run at the module level. This can cause issues.
+            - logger = logging.getLogger(__name__)
+
+    Args:
+        yaml_path (str): yaml configuration file.
+    """
+    try:
+        # Calls function to pull in YAML configuration.
+        config = read_yaml_config(yaml_path)
+        logging.config.dictConfig(config)
+    except:
+        logging.basicConfig(level=default_level)
