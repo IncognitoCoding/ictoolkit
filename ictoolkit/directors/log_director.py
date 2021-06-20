@@ -175,7 +175,7 @@ def create_logger(save_path, logger_name, log_name, max_bytes, file_log_level, c
     return logger
 
 
-def setup_logger_yaml(yaml_path):
+def setup_logger_yaml(yaml_path, allow_basic=None):
     """
     This function sets up a logger for the program. The configuration must be setup with a YAML file. This method is the best method for using logging in to additional modules.
 
@@ -193,10 +193,38 @@ def setup_logger_yaml(yaml_path):
 
     Args:
         yaml_path (str): yaml configuration file.
+        allow_basic (bool, optional): Allows the default log level of "INFO" to be used if the YAML file configuration fails when set to "True".
     """
     try:
         # Calls function to pull in YAML configuration.
         config = read_yaml_config(yaml_path)
         logging.config.dictConfig(config)
-    except:
-        logging.basicConfig(level=logging.INFO)
+    except Exception as err:
+        # Checks if allow_default is enabled to setup default "Info" logging.
+        if allow_basic:
+            # Sets the basic logger setup configuration.
+            logging.basicConfig(level=logging.INFO)
+        else:
+            if 'Unable to configure handler' in str(err):
+                error_message = (
+                    'The logging hander failed to create.\n\n' +
+                    (('-' * 150) + '\n') + (('-' * 65) + 'Additional Information' + ('-' * 63) + '\n') + (('-' * 150) + '\n') +
+                    'Suggested Resolution:\n'
+                    '  - Please verify YAML file configuration.\n'
+                    '  - Verify your log save path exists.\n\n'
+                    f'Originating error on line {traceback.extract_stack()[-1].lineno} in <{__name__}>\n' +
+                    (('-' * 150) + '\n') * 2 
+                )   
+                print(error_message) 
+                raise ValueError(error_message)
+            else:
+                error_message = (
+                    'The program failed to setup the logger.\n\n' +
+                    (('-' * 150) + '\n') + (('-' * 65) + 'Additional Information' + ('-' * 63) + '\n') + (('-' * 150) + '\n') +
+                    'Suggested Resolution:\n'
+                    f'  - {err}\n\n'
+                    f'Originating error on line {traceback.extract_stack()[-1].lineno} in <{__name__}>\n' +
+                    (('-' * 150) + '\n') * 2 
+                )   
+                print(error_message) 
+                raise ValueError(error_message)
