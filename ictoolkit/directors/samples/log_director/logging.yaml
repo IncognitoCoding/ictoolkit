@@ -9,7 +9,7 @@ formatters:
 handlers:
   console:
     class: logging.StreamHandler
-    level: DEBUG
+    level: INFO
     formatter: simple
     stream: ext://sys.stdout
 
@@ -19,17 +19,27 @@ handlers:
     formatter: simple
     filename: logs\\info.log
     # Sets max log file size to 10000 bytes (1 Megabyte)
-    maxBytes: 1000
+    maxBytes: 10000
+    backupCount: 20
+    encoding: utf8
+  
+  debug_file_handler:
+    class: logging.handlers.RotatingFileHandler
+    level: DEBUG
+    formatter: simple
+    filename: logs\\debug.log
+    # Sets max log file size to 10000 bytes (1 Megabyte)
+    maxBytes: 10000
     backupCount: 20
     encoding: utf8
 
   error_file_handler:
     class: logging.handlers.RotatingFileHandler
     level: ERROR
-    formatter: logs\\simple
-    filename: errors.log
+    formatter: simple
+    filename: logs\\errors.log
     # Sets max log file size to 10000 bytes (1 Megabyte)
-    maxBytes: 1000
+    maxBytes: 10000
     backupCount: 20
     encoding: utf8
 
@@ -40,5 +50,5 @@ loggers:
     propagate: no
 
 root:
-  level: INFO
+  level: DEBUG
   handlers: [console, info_file_handler, error_file_handler]
