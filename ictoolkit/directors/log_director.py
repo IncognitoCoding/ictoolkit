@@ -10,6 +10,9 @@ import logging
 import traceback
 from logging.handlers import RotatingFileHandler
 
+# Own modules
+from ictoolkit.directors.yaml_director import read_yaml_config
+
 __author__ = 'IncognitoCoding'
 __copyright__ = 'Copyright 2021, log_director'
 __credits__ = ['IncognitoCoding']
@@ -17,9 +20,6 @@ __license__ = 'GPL'
 __version__ = '1.2'
 __maintainer__ = 'IncognitoCoding'
 __status__ = 'Development'
-
-# Own modules
-from yaml_director import read_yaml_config
 
 
 def create_logger(save_path, logger_name, log_name, max_bytes, file_log_level, console_log_level, backup_count, format_option, handler_option, rollover):
