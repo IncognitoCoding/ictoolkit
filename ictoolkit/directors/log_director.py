@@ -182,13 +182,12 @@ def setup_logger_yaml(yaml_path, allow_basic=None):
     See the sample folder for an example configuration file.
 
     Usage:
-        Setup your logger by running the command below.
+    - Setup your logger by running the command below.
             - logger = logging.getLogger(__name__)
-        Call this function to setup the logger. No return is required.
-        Call the logger using something similar to the command below.
+    - Call this function to setup the logger. No return is required.
+    - Call the logger using something similar to the command below.
             - logger.info('testing')
-
-        Note: When using the same logger in other modules the only requirement is to run the command below within the function. Do not run at the module level. This can cause issues.
+   - Note: When using the same logger in other modules the only requirement is to run the command below within the function. Do not run at the module level. This can cause issues.
             - logger = logging.getLogger(__name__)
 
     Args:
