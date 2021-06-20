@@ -17,7 +17,7 @@ __author__ = 'IncognitoCoding'
 __copyright__ = 'Copyright 2021, log_director'
 __credits__ = ['IncognitoCoding']
 __license__ = 'GPL'
-__version__ = '1.2'
+__version__ = '1.3'
 __maintainer__ = 'IncognitoCoding'
 __status__ = 'Development'
 
@@ -198,4 +198,4 @@ def setup_logger_yaml(yaml_path):
         config = read_yaml_config(yaml_path)
         logging.config.dictConfig(config)
     except:
-        logging.basicConfig(level=default_level)
+        logging.basicConfig(level=logging.INFO)
