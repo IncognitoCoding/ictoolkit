@@ -193,6 +193,10 @@ def setup_logger_yaml(yaml_path, allow_basic=None):
     Args:
         yaml_path (str): yaml configuration file.
         allow_basic (bool, optional): Allows the default log level of "INFO" to be used if the YAML file configuration fails when set to "True".
+
+    Raises:
+        ValueError: The logging hander failed to create.
+        ValueError: The logger failed to setup.
     """
     try:
         # Calls function to pull in YAML configuration.
@@ -218,9 +222,8 @@ def setup_logger_yaml(yaml_path, allow_basic=None):
                 raise ValueError(error_message)
             else:
                 error_message = (
-                    'The program failed to setup the logger.\n\n' +
+                    'The logger failed to setup..\n\n' +
                     (('-' * 150) + '\n') + (('-' * 65) + 'Additional Information' + ('-' * 63) + '\n') + (('-' * 150) + '\n') +
-                    'Suggested Resolution:\n'
                     f'  - {err}\n\n'
                     f'Originating error on line {traceback.extract_stack()[-1].lineno} in <{__name__}>\n' +
                     (('-' * 150) + '\n') * 2 
