@@ -12,7 +12,7 @@ __author__ = 'IncognitoCoding'
 __copyright__ = 'Copyright 2021, dict_director'
 __credits__ = ['IncognitoCoding']
 __license__ = 'GPL'
-__version__ = '1.0'
+__version__ = '1.1'
 __maintainer__ = 'IncognitoCoding'
 __status__ = 'Development'
 
@@ -37,6 +37,9 @@ def remove_duplicate_dict_values_in_list(list_dictionary, element_number=None):
                 - Element Number 1 would check match on ('found_entry': 'the entry found') & ('found_entry': 'the entry found')
                     - A match would occur, and only one dictionary entry would return.
                         - Return: [{'search_entry': '|Error|', 'found_entry': 'the entry found'}]
+    Raises:
+        ValueError: A failure occurred removing duplicates from the dictionary in the list.
+
     Returns:
         list: dictionaries in a list with duplicate values removed
     """
@@ -49,43 +52,39 @@ def remove_duplicate_dict_values_in_list(list_dictionary, element_number=None):
 
         # Loops through each dictionary in the list
         for dictionary_in_list in list_dictionary:
-
             # Checks if section number is being used for matching or a full match is being used.
             if element_number == None:
-
                 # Used tuple because it can be hased, which allows removal using set.
                 # This will convert the dictionaries in the list to tuples that contains the dictionaries.
                 # Sorted is added to help with any possible match issues wien adding/removing lots of key history.
                 items_of_dictionary = tuple(sorted(dictionary_in_list.items()))
-                
                 # Checks if dictionary entry matches previous entries.
                 if items_of_dictionary not in element_found:
-                    
                     # New element found and adding to set.
                     element_found.add(items_of_dictionary)
 
                     # Adds the full dictionary_in_list to the list because it is not a duplicate.
                     revised_list.append(dictionary_in_list)
-
             elif element_number:
-                
                 # Used tuple because it can be hased, which allows removal using set.
                 # This will convert the dictionaries in the list to tuples that contains the dictionaries.
                 # No sort is added here because sort will break the element number order.
                 items_of_dictionary = tuple(dictionary_in_list.items())
-
                 # Checks if dictionary element section does not match previous entries.
                 if items_of_dictionary[element_number] not in element_found:
-                    
                     # New element found and adding to set.
                     element_found.add(items_of_dictionary[element_number])
 
                     # Adds the full dictionary_in_list to the list because it is not a duplicate.
                     revised_list.append(dictionary_in_list)
-    
     except Exception as err: 
-        raise ValueError(f'A failure occurred removing duplicates from the dictionary in the list, {err}, Originating error on line {traceback.extract_stack()[-1].lineno} in <{__name__}>')
-
+        error_message = (
+            f'A failure occurred removing duplicates from the dictionary in the list.\n' +
+            (('-' * 150) + '\n') + (('-' * 65) + 'Additional Information' + ('-' * 63) + '\n') + (('-' * 150) + '\n') +
+            f'{err}\n\n'
+            f'Originating error on line {traceback.extract_stack()[-1].lineno} in <{__name__}>\n' +
+            (('-' * 150) + '\n') * 2 
+        )
+        raise ValueError(error_message)
     else:
-
         return revised_list

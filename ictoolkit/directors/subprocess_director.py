@@ -27,9 +27,8 @@ class AttributeDictionary(dict):
     This class was created to return data for the function start_subprocess in a dot notation format. 
     
     Args:
-        dict (adict): a dictionary key and value
+        dict (dict): A dictionary key and value.
     """
-
     def __init__(self, adict):
         self.__dict__.update(adict)
 
@@ -40,13 +39,14 @@ def start_subprocess(program_arguments):
     This function is not designed for sub-processing continuous output. Calling this function will run the sub-process and will wait until the process ends before returning the output.
     
     Args:
-        program_arguments (str or list): processing arguments such as ifconfig, ipconfig, python, PowerShell.exe, or any other arguments may be passed
-        program_path (str): program path to run based on the programs argument entry
+        program_arguments (str or list): Processing arguments such as ifconfig, ipconfig, python, PowerShell.exe, or any other arguments may be passed.
+        program_path (str): Program path to run based on the programs argument entry.
 
     Raises:
-        ValueError: An error occurred while starting the subprocess
+        ValueError: An error occurred while running the subprocess ({program_arguments}).
+
     Returns:
-        AttributeDictionary: attribute dictionary containing args and stdout
+        AttributeDictionary(dict): Attribute dictionary containing args and stdout
 
         The return code can be called using dict.key notation. 
         
@@ -56,7 +56,6 @@ def start_subprocess(program_arguments):
     """
 
     try:
-
         # Runs the subprocess and returns output
         output = subprocess.Popen(program_arguments,stdout=subprocess.PIPE)
         
@@ -67,7 +66,6 @@ def start_subprocess(program_arguments):
 
         # Reads through each standard output line.
         for line in io.TextIOWrapper(output.stdout, encoding="utf-8"):
-
             # Adds found line to the list and removes whitespace.
              process_output.append(line.rstrip())
 
@@ -75,10 +73,14 @@ def start_subprocess(program_arguments):
         subprocess_output = AttributeDictionary({'args': output.args, 'stdout': process_output})
 
         output.wait()
-        
     except Exception as err:
-        raise ValueError(f'An error occurred while running the subprocess ({program_arguments}), {err}, Originating error on line {traceback.extract_stack()[-1].lineno} in <{__name__}>')
-
+        error_message = (
+            f'An error occurred while running the subprocess ({program_arguments}).\n\n' +
+            (('-' * 150) + '\n') + (('-' * 65) + 'Additional Information' + ('-' * 63) + '\n') + (('-' * 150) + '\n') +
+            f'{err}\n\n'
+            f'Originating error on line {traceback.extract_stack()[-1].lineno} in <{__name__}>\n' +
+            (('-' * 150) + '\n') * 2 
+        )   
+        raise ValueError(error_message)
     else:
-
          return subprocess_output

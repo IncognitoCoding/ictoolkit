@@ -17,7 +17,7 @@ __author__ = 'IncognitoCoding'
 __copyright__ = 'Copyright 2021, thread_director'
 __credits__ = ['IncognitoCoding']
 __license__ = 'GPL'
-__version__ = '1.2'
+__version__ = '1.3'
 __maintainer__ = 'IncognitoCoding'
 __status__ = 'Development'
 
@@ -32,20 +32,19 @@ def start_function_thread(passing_program_function, program_function_name, infin
     is used to hold any potential exception messages, and a 2 minutes sleep is set to give time for the thread to either start or fail. If neither occurs after 1 minute, the thread 
     will end and throw a value error.
 
-    Requires calling program to use "from functools import partial" when calling
+    Requires calling program to use "from functools import partial" when calling.
 
     Calling Example: start_function_thread(partial(PassingFunction, Parameter1, Parameter2, Parameter3, etc), <function name), <bool>)
 
     Args:
-        passing_program_function (function): the function without or with parameters using functools
-        program_function_name (str): the function name used to identify the thread
-        infinite_loop_option (bool): enabled infinite loop
+        passing_program_function (function): The function without or with parameters using functools.
+        program_function_name (str): The function name used to identify the thread.
+        infinite_loop_option (bool): Enabled infinite loop.
 
     Raises:
-        ValueError: returns the calling functions exception message if an exception occurs
-        ValueError: thread ({program_function_name}) timeout has reached its threshold of 1 minute. Manual intervention is required for this thread to start
+        ValueError: A failure occurred while staring the function thread.
+        ValueError: The thread ({program_function_name}) timeout has reached its threshold of 1 minute.
     """
-    
     
     # Creates a dedicated thread class to run the companion decryptor.
     # This is required because the main() function will sleep x minutes between checks.
@@ -53,49 +52,37 @@ def start_function_thread(passing_program_function, program_function_name, infin
 
         # Automatically creates these items when called.
         def __init__(self, bucket):
-
             threading.Thread.__init__(self)
 
             # Sets name to track treads activity.
             self.name = program_function_name
             self.daemon = True
             self.bucket = bucket
-
         # Runs the object as self and calls the function.
         def run(self):
-        
             # Stores the exception, if raised by the calling function.
             self.exception = None  
             
             try: 
-            
                 # Checks if the thread needs to loop.
                 if infinite_loop_option:
-                    
                     # Infiniate Loop.
                     while True:
-                        
                         # Starts the function in a loop.
                         passing_program_function() 
-                    
                         # Sleeps 1 seconds to keep system resources from spiking when called without a sleep inside the calling entry.
                         time.sleep(1)
-                        
                 else:
-
                     # Starts the function once.
                     passing_program_function()
-            
             #Returns the calling functions error message if an error occurs.
             except Exception as err:
-            
                 # Sets the exception error message
                 #self.exception = err
                 self.bucket.put(sys.exc_info())
        
     # Creates a message queue to hold potential exception messages.
     bucket = queue.Queue()
-    
     # Calls class to start the thread.
     thread_obj = start_function_thread(bucket)
     thread_obj.start()
@@ -111,23 +98,34 @@ def start_function_thread(passing_program_function, program_function_name, infin
     while True:
         
         try:
-            
             # Gets the bucket values
             exc = bucket.get(block=False)
-            
         except queue.Empty:
             pass
-
         else:
-
             # Sets the bucket values from the exceptions
             exc_type, exc_obj, exc_trace = exc
-            
-            raise ValueError(f'{exc_obj}, Error on line {traceback.extract_stack()[-1].lineno} in <{__name__}>')
+
+            error_message = (
+                'A failure occurred while staring the function thread.\n\n' +
+                (('-' * 150) + '\n') + (('-' * 65) + 'Additional Information' + ('-' * 63) + '\n') + (('-' * 150) + '\n') +
+                f'{exc_obj}\n\n'
+                f'Originating error on line {traceback.extract_stack()[-1].lineno} in <{__name__}>\n' +
+                (('-' * 150) + '\n') * 2 
+            )   
+            raise ValueError(error_message)
           
         # Loop breaks if the thread is alive or timeout reached.
         if thread_obj.is_alive() == True:
             break
 
         if time.time() > timeout:
-            raise ValueError(f'Thread ({program_function_name}) timeout has reached its threshold of 1 minute. Manual intervention is required for this thread to start, Error on line {traceback.extract_stack()[-1].lineno} in <{__name__}>')
+            error_message = (
+                f'The thread ({program_function_name}) timeout has reached its threshold of 1 minute.\n\n' +
+                (('-' * 150) + '\n') + (('-' * 65) + 'Additional Information' + ('-' * 63) + '\n') + (('-' * 150) + '\n') +
+                'Suggested Resolution:\n'
+                '  - Manual intervention is required for this thread to start.\n\n'
+                f'Originating error on line {traceback.extract_stack()[-1].lineno} in <{__name__}>\n' +
+                (('-' * 150) + '\n') * 2 
+            )   
+            raise ValueError(error_message)
