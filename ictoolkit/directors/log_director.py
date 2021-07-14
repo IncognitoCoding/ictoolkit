@@ -18,7 +18,7 @@ __author__ = 'IncognitoCoding'
 __copyright__ = 'Copyright 2021, log_director'
 __credits__ = ['IncognitoCoding']
 __license__ = 'GPL'
-__version__ = '1.3'
+__version__ = '1.4'
 __maintainer__ = 'IncognitoCoding'
 __status__ = 'Development'
 
@@ -200,7 +200,7 @@ def setup_logger_yaml(yaml_path, allow_basic=None):
     """
     try:
         # Calls function to pull in YAML configuration.
-        config = read_yaml_config(yaml_path)
+        config = read_yaml_config(yaml_path, 'FullLoader')
         logging.config.dictConfig(config)
     except Exception as err:
         # Checks if allow_default is enabled to setup default "Info" logging.

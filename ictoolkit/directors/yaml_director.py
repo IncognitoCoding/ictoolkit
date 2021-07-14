@@ -16,18 +16,28 @@ __author__ = 'IncognitoCoding'
 __copyright__ = 'Copyright 2021, yaml_director'
 __credits__ = ['IncognitoCoding']
 __license__ = 'GPL'
-__version__ = '1.1'
+__version__ = '1.2'
 __maintainer__ = 'IncognitoCoding'
 __status__ = 'Development'
 
 
-def read_yaml_config(yaml_file_path):
+def read_yaml_config(yaml_file_path, loader):
     """
     Reads configuration yaml file data and returns the returns the read configuration.
 
     Args:
         yaml_file_path (str): YAML file path.
-
+        loader (str): Loader for the YAML file.
+            Options: 
+                - FullLoader
+                    - Used for more trusted YAML input. This option will avoid unpredictable code execution.
+                - SafeLoader
+                    - Used for untrusted YAML input. This will only load a subset of the YAML language.
+                - BaseLoader
+                    - Used for the most basic YAML input. All loading is strings.
+                - UnsafeLoader
+                    - Used for original Loader code but could be easily exploitable by untrusted YAML input.
+        
     Raises:
         ValueError: A failure occurred while opening the YAML file.
 
@@ -39,16 +49,37 @@ def read_yaml_config(yaml_file_path):
     try:
         # Calls function to pull in yaml configuration.
         with open(yaml_file_path) as file:
-            # Using the fullLoader parameter to handle the conversion from yaml.
-            config = yaml.load(file, Loader=yaml.FullLoader)
+            if 'FullLoader' == loader:
+                config = yaml.load(file, Loader=yaml.FullLoader)
+            elif 'SafeLoader' == loader:
+                config = yaml.load(file, Loader=yaml.SafeLoader)
+            elif 'BaseLoader' == loader:
+                config = yaml.load(file, Loader=yaml.BaseLoader)
+            elif 'UnsafeLoader' == loader:
+                config = yaml.load(file, Loader=yaml.UnsafeLoader)
+            else:
+                raise ValueError('Incorrect YAML loader parameter.')
     except Exception as err:
-        error_message = (
-            'A failure occurred while opening the YAML file.\n\n' +
-            (('-' * 150) + '\n') + (('-' * 65) + 'Additional Information' + ('-' * 63) + '\n') + (('-' * 150) + '\n') +
-            f'{err}\n\n'
-            f'Originating error on line {traceback.extract_stack()[-1].lineno} in <{__name__}>\n' +
-            (('-' * 150) + '\n') * 2 
-        )   
+        if 'Incorrect YAML loader parameter' in str(err):
+            error_message = (
+                'Incorrect YAML loader parameter.\n\n' +
+                (('-' * 150) + '\n') + (('-' * 65) + 'Additional Information' + ('-' * 63) + '\n') + (('-' * 150) + '\n') +
+                'Expected Result:\n'
+                '  - loader = FullLoader or SafeLoader or BaseLoader or UnsafeLoader\n\n'
+                'Returned Result:\n'
+                f'  - loader = {loader}.\n\n'
+                f'Originating error on line {traceback.extract_stack()[-1].lineno} in <{__name__}>\n' +
+                (('-' * 150) + '\n') * 2 
+            )
+            raise ValueError(error_message)
+        else:
+            error_message = (
+                'A failure occurred while opening the YAML file.\n\n' +
+                (('-' * 150) + '\n') + (('-' * 65) + 'Additional Information' + ('-' * 63) + '\n') + (('-' * 150) + '\n') +
+                f'{err}\n\n'
+                f'Originating error on line {traceback.extract_stack()[-1].lineno} in <{__name__}>\n' +
+                (('-' * 150) + '\n') * 2 
+            )   
         raise ValueError(error_message)
     else:
         return config
