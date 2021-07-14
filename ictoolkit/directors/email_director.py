@@ -24,7 +24,7 @@ __author__ = 'IncognitoCoding'
 __copyright__ = 'Copyright 2021, email_director'
 __credits__ = ['IncognitoCoding', 'Monoloch']
 __license__ = 'GPL'
-__version__ = '1.2'
+__version__ = '1.3'
 __maintainer__ = 'IncognitoCoding'
 __status__ = 'Development'
 
@@ -214,6 +214,10 @@ def send_email(email_settings, subject, body_info):
 
     # Gets encryption option.
     send_message_encrypted = email_settings.get('send_message_encrypted')
+    # Sets email encryption to false if no value is sent.
+    if send_message_encrypted == None:
+        send_message_encrypted = False
+
     # Checking if the user wants to send encrypted or unencrypted.
     # Decrypting has to be done with f.decrypt(<encrypted message>) using the salt and password used to encrypt the message.
     if send_message_encrypted == True:
@@ -346,6 +350,10 @@ def send_email(email_settings, subject, body_info):
             err = "The SMTP server rejected the connection.  Authentication may be required, ensure the INI [email] AuthenticationRequired is set correctly"
         elif "authentication failed" in str(err):
             err = "SMTP server authentication failed. Ensure the INI [email] Username and Password are set correctly"
+        elif " Authentication Required. Learn more at\n5.7.0  https://support.google.com" in str(err):
+            err = "Incorrect username and/or password or authentication_required is not enabled or Less Secure Apps needs enabled in your gmail settings"
+        elif "Authentication Required" in str(err):
+            err = "Incorrect username and/or password or the authentication_required setting is not enabled"
         error_message = (
             f'Failed to send the email message. SMTP send error occurred.\n\n' +
             (('-' * 150) + '\n') + (('-' * 65) + 'Additional Information' + ('-' * 63) + '\n') + (('-' * 150) + '\n') +
