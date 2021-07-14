@@ -16,7 +16,6 @@ setup(
         url='https://github.com/IncognitoCoding/ictoolkit.git',
         license='GPL',
         install_requires=[
-            "setuptools>=49.2.1"
         ], 
         keywords=['python'],
         classifiers= [
