@@ -28,15 +28,15 @@ def read_yaml_config(yaml_file_path, loader):
     Args:
         yaml_file_path (str): YAML file path.
         loader (str): Loader for the YAML file.
-            Options: 
-                - FullLoader
-                    - Used for more trusted YAML input. This option will avoid unpredictable code execution.
-                - SafeLoader
-                    - Used for untrusted YAML input. This will only load a subset of the YAML language.
-                - BaseLoader
-                    - Used for the most basic YAML input. All loading is strings.
-                - UnsafeLoader
-                    - Used for original Loader code but could be easily exploitable by untrusted YAML input.
+        - loader Options: 
+            - FullLoader
+                - Used for more trusted YAML input. This option will avoid unpredictable code execution.
+            - SafeLoader
+                - Used for untrusted YAML input. This will only load a subset of the YAML language.
+            - BaseLoader
+                - Used for the most basic YAML input. All loading is strings.
+            - UnsafeLoader
+                - Used for original Loader code but could be easily exploitable by untrusted YAML input.
         
     Raises:
         ValueError: A failure occurred while opening the YAML file.
