@@ -233,7 +233,7 @@ def send_email(email_settings, subject, body_info):
         <head></head>
         <body>
             <p><br>
-            """ + subject + """ at """ + datetime.now().strftime("%Y-%m-%d %H:%M:%S") + """.<br />
+            """ + subject + """ was sent at """ + datetime.now().strftime("%Y-%m-%d %H:%M:%S") + """.<br />
             <br />
             Message code below:<br />
             <br />
@@ -253,7 +253,7 @@ def send_email(email_settings, subject, body_info):
         <head></head>
         <body>
             <p><br>
-            """ + subject + """ at """ + datetime.now().strftime("%Y-%m-%d %H:%M:%S") + """.<br />
+            """ + subject + """ was sent at """ + datetime.now().strftime("%Y-%m-%d %H:%M:%S") + """.<br />
             <br />
             Message Below:<br />
             <br />
