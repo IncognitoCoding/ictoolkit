@@ -6,6 +6,8 @@ This module is designed to assist with log-related actions.
 
 # Built-in/Generic Imports
 import os
+import pathlib
+import sys
 import logging
 import logging.config
 import traceback
@@ -18,7 +20,7 @@ __author__ = 'IncognitoCoding'
 __copyright__ = 'Copyright 2021, log_director'
 __credits__ = ['IncognitoCoding']
 __license__ = 'GPL'
-__version__ = '1.4'
+__version__ = '2.0'
 __maintainer__ = 'IncognitoCoding'
 __status__ = 'Development'
 
@@ -175,9 +177,16 @@ def create_logger(save_path, logger_name, log_name, max_bytes, file_log_level, c
     return logger
 
 
-def setup_logger_yaml(yaml_path, allow_basic=None):
+def setup_logger_yaml(yaml_path, separate_default_logs=False, allow_basic=None):
     """
     This function sets up a logger for the program. The configuration must be setup with a YAML file. This method is the best method for using logging in to additional modules.
+    
+    Default file log handler paths are supported. Cross-platform usage can be a pain and require the path to be the full path. Having default enabled allows the program to set the\\
+    filename for each log handler. This function allows the ability to have all file log handlers log to the same file, which is named the same name as the main program, or be
+    individual log files per file hander, which will be named based on the file handler key name. The "filename:" key value has to be "DEFAULT" in call caps to work.\\ 
+    All default logs will be at the root of the main program in a folder called logs.
+    - default YAML example = filename: DEFAULT
+
 
     See the sample folder for an example configuration file.
 
@@ -192,6 +201,8 @@ def setup_logger_yaml(yaml_path, allow_basic=None):
 
     Args:
         yaml_path (str): yaml configuration file.
+        separate_default_logs (bool, optional): If default file handelers are being used this allows the files to be separated using the file handler YAML key name. Defaults to False.
+            \- Note: Default log paths per file hander can only be enabled by setting the key value for filename: to DEFAULT.
         allow_basic (bool, optional): Allows the default log level of "INFO" to be used if the YAML file configuration fails when set to "True".
 
     Raises:
@@ -201,6 +212,47 @@ def setup_logger_yaml(yaml_path, allow_basic=None):
     try:
         # Calls function to pull in YAML configuration.
         config = read_yaml_config(yaml_path, 'FullLoader')
+
+        ########################################################################
+        ############Checks/Sets Up Default File Logger Path If Required#########
+        ########################################################################
+        # Gets YAML return keys.
+        all_keys = list(config.keys())
+        # Checks if the log handler is a key.
+        if 'handlers' in str(all_keys):
+            # Gets all handler keys.
+            handler_keys = list(config['handlers'].keys())
+            # Loops through each hander key.
+            for handler_key in handler_keys:
+                # Gets all handler setting keys for the specific handler entry.
+                handler_setting_keys = list(config['handlers'][handler_key].keys())
+                # Loops through each handler setting.
+                for setting_keys in handler_setting_keys:
+                    # Checks if one of the keys contains filename to check if it needs the default log path set.
+                    if 'filename' in str(setting_keys):
+                        # Gets the value from the filename: key.
+                        filename_value = config['handlers'][handler_key]['filename']
+                        # Checks if the filename value is "DEFAULT".
+                        if 'DEFAULT' == filename_value:
+                            # Sets root main program directory.
+                            main_root_path = pathlib.Path.cwd()
+                            # Sets the program log path for the default log path in the YAML.
+                            log_path = os.path.abspath(f'{main_root_path}/logs')
+                            # Check if main file path exists with a "logs" folder. If not create the folder.
+                            # Checks if the save_log_path exists and if not it will be created.
+                            # This is required because the logs do not save to the root directory.
+                            if not os.path.exists(log_path):
+                                os.makedirs(log_path)
+                            # Checks if the user wants default log file hander files to be separate.
+                            if separate_default_logs:
+                                log_file_path = os.path.abspath(f'{main_root_path}/logs/{handler_key}.log')
+                            else:
+                                # Gets the programs main name and removes the .py
+                                main_program_name = os.path.basename(sys.argv[0]).replace('.py','')
+                                log_file_path = os.path.abspath(f'{main_root_path}/logs/{main_program_name}.log')
+                            # Update the file log handler file path to the main root.
+                            config['handlers'][handler_key]['filename'] = log_file_path
+        # Sets the logging configuration from the YAML configuration.
         logging.config.dictConfig(config)
     except Exception as err:
         # Checks if allow_default is enabled to setup default "Info" logging.
