@@ -9,3 +9,4 @@ sample_search/
 .vscode/settings.json
 __pycache__/
 __init__.py
+pytest.ini
