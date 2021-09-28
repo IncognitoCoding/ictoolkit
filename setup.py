@@ -1,6 +1,6 @@
 from setuptools import setup
 
-VERSION = '0.0.7.4' 
+VERSION = '0.0.7.5' 
 DESCRIPTION = 'ictoolkit is designed to be the swiss army knife of programming methods.'
 LONG_DESCRIPTION = 'Each method is broken down into a specific type of use case. The methods are currently broad and cover several types of areas.'
 
