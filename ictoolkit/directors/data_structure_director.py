@@ -397,8 +397,14 @@ def string_grouper(list_of_strings, grouping_value, grouping_option):
     """  
     logger = logging.getLogger(__name__)
 
+    logger.debug(f'Starting string grouping with the following list of strings: {list_of_strings}')
     # Validates the sent strings are in a list.
     if isinstance(list_of_strings, list):
+        # Checks if any "None" entries exist.
+        if None in list_of_strings:
+            logger.debug(f'The list of strings contains \"None\" string entries. The \"None\" entries have been removed')
+            # Removes any "None" entries from the list.
+            list_of_strings = list(filter(None, list_of_strings))
         # Make sure that the list is greater than or equal to 2.
         if len(list_of_strings) >= 2:
             # Holds grouped values from the list.
