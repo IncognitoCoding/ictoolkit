@@ -13,7 +13,7 @@ __author__ = 'IncognitoCoding'
 __copyright__ = 'Copyright 2021, data_structure_director'
 __credits__ = ['IncognitoCoding']
 __license__ = 'GPL'
-__version__ = '1.4'
+__version__ = '1.5'
 __maintainer__ = 'IncognitoCoding'
 __status__ = 'Development'
 
@@ -363,7 +363,7 @@ def get_list_duplicates(duplicates, match_index=None, grouped=False):
             return None
 
 
-def string_grouper(list_of_strings, grouping_value, grouping_option):   
+def string_grouper(list_of_strings, grouping_value, grouping_option, case_insensitive=False):   
     """
     String grouper will group a list of strings using three different options. Each option provides a different type of results, but covers any type of desired grouping.
 
@@ -383,7 +383,9 @@ def string_grouper(list_of_strings, grouping_value, grouping_option):
             \- Option 3:
                 \- Common String\\
                     \- Using this option will group all common strings in the list together based on the last matching character.\\
-                        \- Note: The group_identifier may not be the same number of characters based on the importing list.\\
+                        \- Note1: The group_identifier may not be the same number of characters based on the importing list.\\
+                        \- Note2: Currently option3 does not support case insensitive matching.
+        case_insensitive (bool): Enables case insensitive matching. For example, lower and upper would be grouped into the same grouping. Disabled by default.
 
     Raises:
         ValueError: The value sent for the grouping is not a string.
@@ -409,9 +411,34 @@ def string_grouper(list_of_strings, grouping_value, grouping_option):
         if len(list_of_strings) >= 2:
             # Holds grouped values from the list.
             grouping = []
-            # Sort the list.
-            # This is essential for grouping.
-            list_of_strings.sort()
+            case_lower = None
+            case_upper = None
+            # Checks if the sort should be based on case.
+            # Currently option 3 does not support case insensitive matching. This only allows option 1 and 2.
+            if case_insensitive and grouping_option != 3:
+                upper_count = 0
+                lower_count = 0
+                # Loops through every string in the list to check for common case (ex: A or a) to determine sort.
+                for string in list_of_strings:
+                    # Checks case and increases count.
+                    if string.isupper():
+                        upper_count += 1
+                    elif string.islower():
+                        lower_count += 1
+                # Checks the difference between the upper and lower count to determine the sort based on the common case. Tie goes to Upper.
+                if upper_count > lower_count:
+                    list_of_strings = sorted(list_of_strings,key=str.upper)
+                    case_upper = True
+                elif lower_count > upper_count:
+                    list_of_strings = sorted(list_of_strings,key=str.lower)
+                    case_lower = True
+                elif upper_count == lower_count:
+                    list_of_strings = sorted(list_of_strings,key=str.upper)
+                    case_upper = True
+                else:
+                    list_of_strings.sort()
+            else:
+                list_of_strings.sort()
 
             # Groups based on the users group option.
             if grouping_option == 1:
@@ -419,9 +446,18 @@ def string_grouper(list_of_strings, grouping_value, grouping_option):
                 # Checks that the grouping_value is a string.
                 if isinstance(grouping_value, str):
                     # Loops through a list of strings and splits based on the split number. The split number will create a grouping, and provide the split output for each grouping.
-                    for j, i in groupby(list_of_strings, lambda a_string: a_string.split(grouping_value)[0]):
-                        # Appends the grouping from groupby to the list in in dictionary format.
-                        grouping.append({'group_identifier': j, 'grouping': list(i)})
+                    if case_upper:
+                        for j, i in groupby(list_of_strings, lambda a_string: a_string.upper().split(grouping_value)[0]):
+                            # Appends the grouping from groupby to the list in in dictionary format.
+                            grouping.append({'group_identifier': j, 'grouping': list(i)})
+                    elif case_lower:
+                        for j, i in groupby(list_of_strings, lambda a_string: a_string.lower().split(grouping_value)[0]):
+                            # Appends the grouping from groupby to the list in in dictionary format.
+                            grouping.append({'group_identifier': j, 'grouping': list(i)})
+                    else:
+                        for j, i in groupby(list_of_strings, lambda a_string: a_string.split(grouping_value)[0]):
+                            # Appends the grouping from groupby to the list in in dictionary format.
+                            grouping.append({'group_identifier': j, 'grouping': list(i)})
                 else:
                     error_message = (
                         f'The grouping_value sent for the grouping is not a string.\n' +
@@ -439,10 +475,21 @@ def string_grouper(list_of_strings, grouping_value, grouping_option):
                 # This section groups based on a character number. If the string is "Testing" and the number was 3, the grouping values would match on "Tes".
                 # Checks that the grouping_value is a number.
                 if isinstance(grouping_value, int):
-                    # Loops through a list of strings and splits based on the split number. The split number will create a grouping, and provide the split output for each grouping.
-                    for j, i in groupby(list_of_strings, lambda a_string: [a_string[index : index + grouping_value] for index in range(0, len(a_string), grouping_value)][0]):
-                        # Appends the grouping from groupby to the list in in dictionary format.
-                        grouping.append({'group_identifier': j, 'grouping': list(i)})
+                    if case_upper:
+                        # Loops through a list of strings and splits based on the split number. The split number will create a grouping, and provide the split output for each grouping.
+                        for j, i in groupby(list_of_strings, lambda a_string: [a_string[index : index + grouping_value].upper() for index in range(0, len(a_string), grouping_value)][0]):
+                            # Appends the grouping from groupby to the list in in dictionary format.
+                            grouping.append({'group_identifier': j, 'grouping': list(i)})
+                    elif case_lower:    
+                        # Loops through a list of strings and splits based on the split number. The split number will create a grouping, and provide the split output for each grouping.
+                        for j, i in groupby(list_of_strings, lambda a_string: [a_string[index : index + grouping_value].lower() for index in range(0, len(a_string), grouping_value)][0]):
+                            # Appends the grouping from groupby to the list in in dictionary format.
+                            grouping.append({'group_identifier': j, 'grouping': list(i)})
+                    else:    
+                        # Loops through a list of strings and splits based on the split number. The split number will create a grouping, and provide the split output for each grouping.
+                        for j, i in groupby(list_of_strings, lambda a_string: [a_string[index : index + grouping_value] for index in range(0, len(a_string), grouping_value)][0]):
+                            # Appends the grouping from groupby to the list in in dictionary format.
+                            grouping.append({'group_identifier': j, 'grouping': list(i)})
                 else:
                     error_message = (
                         f'The grouping_value sent for the grouping is not a int.\n' +
