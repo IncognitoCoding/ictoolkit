@@ -10,3 +10,4 @@ sample_search/
 __pycache__/
 __init__.py
 pytest.ini
+environment.yaml
