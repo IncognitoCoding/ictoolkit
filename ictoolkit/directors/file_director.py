@@ -5,10 +5,12 @@ This module is designed to assist with file-related actions.
 """
 # Built-in/Generic Imports
 import os
+import sys
 import logging
 import pathlib
-import logging
 import traceback
+from glob import glob
+from re import search
 
 # Own modules
 from ictoolkit.directors.dict_director import remove_duplicate_dict_values_in_list
@@ -40,17 +42,17 @@ def write_file(file_path, write_value):
     try:
         logger.debug('Writing the value to the file')
         # Using "with" to take care of open and closing.
-        with open (file_path, 'a+') as f:
+        with open(file_path, 'a+') as f:
             f.writelines(write_value + "\n")
-    except Exception as err: 
+    except Exception as err:
         error_message = (
             f'A failure occurred while writing the file.\n\n' +
             (('-' * 150) + '\n') + (('-' * 65) + 'Additional Information' + ('-' * 63) + '\n') + (('-' * 150) + '\n') +
             f'{err}\n\n'
             f'Originating error on line {traceback.extract_stack()[-1].lineno} in <{__name__}>\n' +
-            (('-' * 150) + '\n') * 2 
-        )   
-        logger.error(error_message) 
+            (('-' * 150) + '\n') * 2
+        )
+        logger.error(error_message)
         raise ValueError(error_message)
 
     else:
@@ -58,7 +60,7 @@ def write_file(file_path, write_value):
         # Calling Example: search_file(<log file>, <search string>, <configured logger>)
         return_search = search_file(file_path, write_value)
         # Validates file entry wrote.
-        if return_search == None: 
+        if return_search is None:
             error_message = (
                 f'Writing file value \"{write_value}\" to file \"{file_path}\" did not complete.\n' +
                 (('-' * 150) + '\n') + (('-' * 65) + 'Additional Information' + ('-' * 63) + '\n') + (('-' * 150) + '\n') +
@@ -67,9 +69,9 @@ def write_file(file_path, write_value):
                 'Returned Result:\n'
                 f'  - No return search value was returned.\n\n'
                 f'Originating error on line {traceback.extract_stack()[-1].lineno} in <{__name__}>\n' +
-                (('-' * 150) + '\n') * 2 
+                (('-' * 150) + '\n') * 2
             )
-            logger.error(error_message) 
+            logger.error(error_message)
             raise ValueError(error_message)
 
 
@@ -89,16 +91,16 @@ def file_exist_check(file_path, file_description):
     logger.debug(f'Begining to check the file path for {file_description}')
     # Checks if the file does not exist
     file = pathlib.Path(file_path)
-    if not file.exists ():
+    if not file.exists():
         error_message = (
             f'{file_description} log file does not exist.\n\n' +
             (('-' * 150) + '\n') + (('-' * 65) + 'Additional Information' + ('-' * 63) + '\n') + (('-' * 150) + '\n') +
             'Suggested Resolution:\n'
             '  - Ensure the file path is the correct path to your file.\n\n'
             f'Originating error on line {traceback.extract_stack()[-1].lineno} in <{__name__}>\n' +
-            (('-' * 150) + '\n') * 2 
-        )   
-        logger.error(error_message) 
+            (('-' * 150) + '\n') * 2
+        )
+        logger.error(error_message)
         raise ValueError(error_message)
     else:
         logger.debug(f'{file_description} log file exists')
@@ -117,11 +119,11 @@ def search_file(file_path, searching_value, logger=None):
 
     Returns:
         list: a dictionary in a list
-        
+
         Usage Keys:
             - search_entry
             - found_entry
-            
+
         Return Example: Return Example: [{'search_entry': '|Error|', 'found_entry': 'the entry found'}, {'search_entry': '|Warning|', 'found_entry': 'the entry found'}]
     """
     logger = logging.getLogger(__name__)
@@ -135,7 +137,7 @@ def search_file(file_path, searching_value, logger=None):
 
         logger.debug('Reading in all lines from the file')
         # Using "with" to take care of open and closing.
-        with open (file_path, 'r') as f:
+        with open(file_path, 'r') as f:
             lines = f.readlines()
         logger.debug('Looping through all lines from the file 1 by 1')
         # Looping through all lines from the log file 1 by 1.
@@ -157,7 +159,7 @@ def search_file(file_path, searching_value, logger=None):
                         logger.debug(f'Searched file value \"{search_value}\" from value list \"{searching_value}\" found. Adding file value \"{stripped_line}\" to the returning list \"matched_entries\"')
                         # Adds found line and search value to list
                         matched_entries.append({'search_entry': searching_value, 'found_entry': stripped_line})
-            
+
             logger.debug('Checking if the list \"matched_entries\" has matched values')
 
         # Checking if the listy has discovered values for potential cleanup.
@@ -169,18 +171,18 @@ def search_file(file_path, searching_value, logger=None):
                 logger.debug(f'Removing any duplicate entries that may have matched multiple times with similar search info')
                 # Removes any duplicate matched values using the 2nd entry (1st element). This can happen if a search list has a similar search word that discovers the same line.
                 # Example Return: [{'search_entry': '|Error|', 'found_entry': 'the entry found2'}]
-                matched_entries = remove_duplicate_dict_values_in_list(matched_entries, 1) 
+                matched_entries = remove_duplicate_dict_values_in_list(matched_entries, 1)
 
                 logger.debug(f'The adjusted match list with removed duplicates is listed below: {matched_entries}')
-    except Exception as err: 
+    except Exception as err:
         error_message = (
             f'A failure occurred while searching the file.\n\n' +
             (('-' * 150) + '\n') + (('-' * 65) + 'Additional Information' + ('-' * 63) + '\n') + (('-' * 150) + '\n') +
             f'{err}\n\n'
             f'Originating error on line {traceback.extract_stack()[-1].lineno} in <{__name__}>\n' +
-            (('-' * 150) + '\n') * 2 
-        )   
-        logger.error(error_message) 
+            (('-' * 150) + '\n') * 2
+        )
+        logger.error(error_message)
         raise ValueError(error_message)
     else:
         # Checking if the list has discovered log entry values.
@@ -197,7 +199,7 @@ def search_file(file_path, searching_value, logger=None):
 
 def search_multiple_files(file_paths, searching_value):
     """
-    Searches multiple files for a value. Requires the file_path to be sent as a list. The search can look for multiple values when the searching value arguments are passed as a list. 
+    Searches multiple files for a value. Requires the file_path to be sent as a list. The search can look for multiple values when the searching value arguments are passed as a list.
     A single-string search is supported as well.
 
     Args:
@@ -220,12 +222,12 @@ def search_multiple_files(file_paths, searching_value):
 
     logger.debug(f'Begining to search the files \"{file_paths}\" for a value \"{searching_value}\"')
     try:
-        
+
         # Assigns list variable to be used in this function.
         # Required to return multiple found strings.
         grouped_found_files = []
         matched_entries = []
-        
+
         # Sets count on total files being searched.
         total_files = len(file_paths)
         logger.debug('Starting to loop through file(s)')
@@ -237,13 +239,13 @@ def search_multiple_files(file_paths, searching_value):
             logger.debug(f'Looping through file \"{basename_searched_file}\" {index + 1} of {total_files}')
 
             # Using "with" to take care of open and closing.
-            with open (file_path, 'r') as f:
+            with open(file_path, 'r') as f:
                 readLines = f.readlines()
                 # Loops through each line.
                 for line in readLines:
                     # Adds line to list.
                     grouped_found_files.append(line)
-        
+
             logger.debug('Looping through all lines from the files 1 by 1')
 
         # Looping through all lines from the log file 1 by 1.
@@ -280,17 +282,17 @@ def search_multiple_files(file_paths, searching_value):
                 logger.debug(f'Removing any duplicate entries that may have matched multiple times with similar search info')
                 # Removes any duplicate matched values using the 2nd entry (1st element). This can happen if a search list has a similar search word that discovers the same line.
                 # Example Return: [{'search_entry': '|Error|', 'found_entry': 'the entry found2'}]
-                matched_entries = remove_duplicate_dict_values_in_list(matched_entries, 1) 
+                matched_entries = remove_duplicate_dict_values_in_list(matched_entries, 1)
                 logger.debug(f'The adjusted match list with removed duplicates is listed below: {matched_entries}')
-    except Exception as err: 
+    except Exception as err:
         error_message = (
             f'A failure occurred while searching the file.\n\n' +
             (('-' * 150) + '\n') + (('-' * 65) + 'Additional Information' + ('-' * 63) + '\n') + (('-' * 150) + '\n') +
             f'{err}\n\n'
             f'Originating error on line {traceback.extract_stack()[-1].lineno} in <{__name__}>\n' +
-            (('-' * 150) + '\n') * 2 
-        )   
-        logger.error(error_message) 
+            (('-' * 150) + '\n') * 2
+        )
+        logger.error(error_message)
         raise ValueError(error_message)
     else:
         # Checking if the list has discovered log entry values.
@@ -324,7 +326,7 @@ def check_file_threshold_size(file_path, size_max_file_size, logger=None):
     # Checks if file exists before starting.
     # Log files may not exist on the initial start.
     file = pathlib.Path(file_path)
-    if file.exists ():
+    if file.exists():
         # Gets log file size.
         size_file_path = os.path.getsize(file_path)
         # Checks if the log file is greater than the threshold.
@@ -334,7 +336,7 @@ def check_file_threshold_size(file_path, size_max_file_size, logger=None):
             # Clears older entries in the log file.
             try:
                 # Clears log file.
-                f = open(file_path,"w")
+                f = open(file_path, "w")
                 f.close()
             except Exception as err:
                 error_message = (
@@ -342,9 +344,9 @@ def check_file_threshold_size(file_path, size_max_file_size, logger=None):
                     (('-' * 150) + '\n') + (('-' * 65) + 'Additional Information' + ('-' * 63) + '\n') + (('-' * 150) + '\n') +
                     f'{err}\n\n'
                     f'Originating error on line {traceback.extract_stack()[-1].lineno} in <{__name__}>\n' +
-                    (('-' * 150) + '\n') * 2 
-                )   
-                logger.error(error_message) 
+                    (('-' * 150) + '\n') * 2
+                )
+                logger.error(error_message)
                 raise ValueError(error_message)
 
             # Gets log file size again.
@@ -357,9 +359,9 @@ def check_file_threshold_size(file_path, size_max_file_size, logger=None):
                     'Suggested Resolution:\n'
                     '  - Check permissions.\n\n'
                     f'Originating error on line {traceback.extract_stack()[-1].lineno} in <{__name__}>\n' +
-                    (('-' * 150) + '\n') * 2 
-                )   
-                logger.error(error_message) 
+                    (('-' * 150) + '\n') * 2
+                )
+                logger.error(error_message)
                 raise ValueError(error_message)
             else:
                 logger.info('Log file cleared successfully')
@@ -372,7 +374,179 @@ def check_file_threshold_size(file_path, size_max_file_size, logger=None):
             'Suggested Resolution:\n'
             '  - Ensure the file path is the correct path to your file.\n\n'
             f'Originating error on line {traceback.extract_stack()[-1].lineno} in <{__name__}>\n' +
-            (('-' * 150) + '\n') * 2 
-        )   
-        logger.error(error_message) 
+            (('-' * 150) + '\n') * 2
+        )
+        logger.error(error_message)
         raise ValueError(error_message)
+
+
+def convert_relative_to_full_path(relative_path: str) -> str:
+    """ Determine full path to file given a relative file path with compatibility with PyInstaller(compiler) built-in
+
+    Args:
+        relative_path (string): The unqualified (relative) file path that needs to converted to a qualified full path format
+            - Example: "\\[directory]\\[file].[extension]"
+
+    Returns:
+        [string]: Full file path
+            - Example: "C:\\[root directory]\\[directory]\\[file].[extension]"
+    """
+    if hasattr(sys, '_MEIPASS'):
+        # PyInstaller creates a temp folder and stores path in _MEIPASS
+        base_path = sys._MEIPASS
+    else:
+        # When running uncompiled, use normal os calls to determine location
+        base_path = os.getcwd()
+
+    return f'{base_path}\\{relative_path}'
+
+
+def user_file_selection(prompt: str, criteria: str, path_format='relative') -> str:
+    """ Provides a simple user interface that numerically lists a set of files found using user submitted criteria.  User is prompted to submit the numeric value of the file that is to be used.
+
+    Args:
+        prompt (str): Literal prompt string to present to user\r
+        \tExample: "Enter the database name to import"\n
+        criteria (str): Filter to apply when searching for files. Expects standard OS search criteria
+        \tExample: "*.db" or "*config*"\n
+        path_format (str): The format that the selected file location will be returned as
+        \trelative: Returns only the relative path of the file (directory\\file.extension)\n
+        \tfull: Returns the fully qualified path of the selected file (c:\\directory\\file.extension)\n
+
+    Raises:
+        TypeError: prompt is not a string
+        TypeError: criteria is not a string
+        TypeError: path_format is not a string
+        ValueError: path_format is not 'relative' or 'full'
+        FileNotFound: No files were found given the search criteria
+
+    Returns:
+        [string]: Returns the path of the file that was selected in the format provided\r
+        \tExample: "test.py" or "c:\\folder\\test.py"
+
+    """
+    logger = logging.getLogger(__name__)
+    logger.info(f'=' * 20 + traceback.extract_stack(None, 2)[1][2] + '=' * 20)
+    # Custom flowchart tracking. This is ideal for large projects that move a lot.
+    # For any third-party modules, set the flow before making the function call.
+    logger_flowchart = logging.getLogger('flowchart')
+    logger_flowchart.info(f'Flowchart --> Function: {traceback.extract_stack(None, 2)[1][2]}')
+
+    logger.debug(f'Passing parameters [prompt] (str):\n    - {prompt}')
+    logger.debug(f'Passing parameters [criteria] (str):\n    - {criteria}')
+    logger.debug(f'Passing parameters [path_format] (str):\n    - {path_format}')
+
+    # Verify the provided criteria is in string format
+    if not isinstance(prompt, str):
+        error_message = (
+            'The provided prompt is not in string format.\n' +
+            (('-' * 150) + '\n') + (('-' * 65) + 'Additional Information' + ('-' * 63) + '\n') + (('-' * 150) + '\n') +
+            'Expected Result:\n'
+            f'  - Type = str\n\n'
+            'Returned Result:\n'
+            f'  - Type = {type(prompt)}\n\n'
+            f'Originating error on line {traceback.extract_stack()[-1].lineno} in <{__name__}>\n' +
+            (('-' * 150) + '\n') * 2
+        )
+        logging.error(error_message)
+        raise TypeError(error_message)
+
+    # Verify the provided criteria is in string format
+    if not isinstance(criteria, str):
+        error_message = (
+            'The provided criteria is not in string format.\n' +
+            (('-' * 150) + '\n') + (('-' * 65) + 'Additional Information' + ('-' * 63) + '\n') + (('-' * 150) + '\n') +
+            'Expected Result:\n'
+            f'  - Type = str\n\n'
+            'Returned Result:\n'
+            f'  - Type = {type(criteria)}\n\n'
+            f'Originating error on line {traceback.extract_stack()[-1].lineno} in <{__name__}>\n' +
+            (('-' * 150) + '\n') * 2
+        )
+        logging.error(error_message)
+        raise TypeError(error_message)
+
+    # Verify the provided path_format is in string format
+    if not isinstance(path_format, str):
+        error_message = (
+            'The provided path_format is not in string format.\n' +
+            (('-' * 150) + '\n') + (('-' * 65) + 'Additional Information' + ('-' * 63) + '\n') + (('-' * 150) + '\n') +
+            'Expected Result:\n'
+            f'  - Type = str\n\n'
+            'Returned Result:\n'
+            f'  - Type = {type(path_format)}\n\n'
+            f'Originating error on line {traceback.extract_stack()[-1].lineno} in <{__name__}>\n' +
+            (('-' * 150) + '\n') * 2
+        )
+        logging.error(error_message)
+        raise TypeError(error_message)
+
+    # Verify the provided path_format matches valid options
+    if path_format.lower() not in {'relative', 'full'}:
+        error_message = (
+            'The provided path_format is not valid.\n' +
+            (('-' * 150) + '\n') + (('-' * 65) + 'Additional Information' + ('-' * 63) + '\n') + (('-' * 150) + '\n') +
+            'Expected Result:\n'
+            '  - path_format = "relative" or "full"\n\n'
+            'Returned Result:\n'
+            f'  - Type = {path_format}\n\n'
+            f'Originating error on line {traceback.extract_stack()[-1].lineno} in <{__name__}>\n' +
+            (('-' * 150) + '\n') * 2
+        )
+        logging.error(error_message)
+        raise ValueError(error_message)
+    else:
+        # Valid format received, ensure lower case for easier processing later
+        path_format = path_format.lower()
+
+    # Initialize an empty list that will contain files found during search
+    files = []
+    # Print the prompt
+    print(prompt)
+    # Search for files in current working directory
+    for file in glob(criteria):
+        # Do not match on temporary files beginning with '~'
+        if search('^~', file) is None:
+            # Add file to list
+            files.append(file)
+            print(f'  [{[i for i, x in enumerate(files) if x == file][0]}] {file}')
+
+    # If no files were found matching user provided criteria,  raise exception
+    if len(files) == 0:
+        # User indicated that the required file was not in the list
+        error_message = (
+            'No files were found matching the required criteria\n' +
+            (('-' * 150) + '\n') + (('-' * 65) + 'Additional Information' + ('-' * 63) + '\n') + (('-' * 150) + '\n') +
+            f'Provided criteria: {criteria}\n'
+            f'Originating error on line {traceback.extract_stack()[-1].lineno} in <{__name__}>\n' +
+            (('-' * 150) + '\n') * 2
+        )
+        logging.warn(error_message)
+        # Raise exception and let calling module determine how to handle
+        raise FileNotFoundError(error_message)
+
+    # Loop until valid input is provided by user
+    while True:
+        try:
+            selection = int(input('\nSelection [#]:  '))
+        except ValueError:
+            print("Invalid entry")
+            logging.debug("User entered non-numeric input")
+            continue
+        # Check user input for basic validity
+        if selection < 0:
+            # User is being a dick and submitted a negative number, re-prompt
+            print("Invalid entry")
+            logging.debug("User entered negative number input")
+            continue
+        elif selection not in range(len(files)):
+            # Number input is greater than max selectable value, re-prompt
+            print("Invalid entry")
+            logging.debug("User entered number greater than returned file count")
+            continue
+        else:
+            # File selected, return based on the format provided
+            if path_format == 'relative':
+                return files[selection]
+            elif path_format == 'full':
+                return convert_relative_to_full_path(files[selection])
