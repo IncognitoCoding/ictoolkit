@@ -540,6 +540,3 @@ def user_file_selection(prompt: str, criteria: str, root_dir=None) -> str:
         else:
             # Valid input provided, return absolute path of file selected
             return files[selection]
-
-
-print(user_file_selection("Get them DBs:", "*.db", "C:\\Cloud\\NextCloud\\Programming\\Python\\Scripts\\Team\\icsqltools\\icsqltools\\tests\\sql"))
