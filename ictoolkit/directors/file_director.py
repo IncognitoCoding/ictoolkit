@@ -493,7 +493,7 @@ def user_file_selection(prompt: str, criteria: str, root_dir=None) -> str:
     """
     if root_dir:
         # Use provided root directory for search
-        search_path = os.path.dirname(root_dir)
+        search_path = root_dir
     else:
         # If path not provided, use current working directory
         search_path = os.path.abspath(os.curdir)
