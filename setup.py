@@ -1,6 +1,6 @@
 from setuptools import setup
 
-VERSION = '0.0.7.7'
+VERSION = '0.0.7.8'
 DESCRIPTION = 'ictoolkit is designed to be the swiss army knife of programming methods.'
 LONG_DESCRIPTION = 'Each method is broken down into a specific type of use case. The methods are currently broad and cover several types of areas.'
 
@@ -18,7 +18,7 @@ setup(
         install_requires=[
         ],
         keywords=['python'],
-        classifiers= [
+        classifiers=[
             "Development Status :: 4 - Beta",
             "Programming Language :: Python :: 3.8",
             "Programming Language :: Python :: 3.9",
@@ -26,5 +26,4 @@ setup(
             "Operating System :: Microsoft :: Windows",
         ],
         zip_safe=False
-
 )

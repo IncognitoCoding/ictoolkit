@@ -9,8 +9,7 @@ import sys
 import logging
 import pathlib
 import traceback
-from glob import glob
-from re import search
+from pathlib import Path
 
 # Own modules
 from ictoolkit.directors.dict_director import remove_duplicate_dict_values_in_list
@@ -401,7 +400,7 @@ def convert_relative_to_full_path(relative_path: str) -> str:
     return f'{base_path}\\{relative_path}'
 
 
-def user_file_selection(prompt: str, criteria: str, path_format='relative') -> str:
+def user_file_selection(prompt: str, criteria: str, root_dir=None) -> str:
     """ Provides a simple user interface that numerically lists a set of files found using user submitted criteria.  User is prompted to submit the numeric value of the file that is to be used.
 
     Args:
@@ -409,15 +408,13 @@ def user_file_selection(prompt: str, criteria: str, path_format='relative') -> s
         \tExample: "Enter the database name to import"\n
         criteria (str): Filter to apply when searching for files. Expects standard OS search criteria
         \tExample: "*.db" or "*config*"\n
-        path_format (str): The format that the selected file location will be returned as
-        \trelative: Returns only the relative path of the file (directory\\file.extension)\n
-        \tfull: Returns the fully qualified path of the selected file (c:\\directory\\file.extension)\n
+        root_dir (str): Manually sets the root directory to search.  Requires an absolute path format.\r
+        \tExample: "C:\\Directory\\Subdirectory\"\n
 
     Raises:
         TypeError: prompt is not a string
         TypeError: criteria is not a string
-        TypeError: path_format is not a string
-        ValueError: path_format is not 'relative' or 'full'
+        TypeError: root_dir is not a string
         FileNotFound: No files were found given the search criteria
 
     Returns:
@@ -434,7 +431,7 @@ def user_file_selection(prompt: str, criteria: str, path_format='relative') -> s
 
     logger.debug(f'Passing parameters [prompt] (str):\n    - {prompt}')
     logger.debug(f'Passing parameters [criteria] (str):\n    - {criteria}')
-    logger.debug(f'Passing parameters [path_format] (str):\n    - {path_format}')
+    logger.debug(f'Passing parameters [path_format] (str):\n    - {root_dir}')
 
     # Verify the provided criteria is in string format
     if not isinstance(prompt, str):
@@ -448,7 +445,7 @@ def user_file_selection(prompt: str, criteria: str, path_format='relative') -> s
             f'Originating error on line {traceback.extract_stack()[-1].lineno} in <{__name__}>\n' +
             (('-' * 150) + '\n') * 2
         )
-        logging.error(error_message)
+        logger.error(error_message)
         raise TypeError(error_message)
 
     # Verify the provided criteria is in string format
@@ -463,46 +460,29 @@ def user_file_selection(prompt: str, criteria: str, path_format='relative') -> s
             f'Originating error on line {traceback.extract_stack()[-1].lineno} in <{__name__}>\n' +
             (('-' * 150) + '\n') * 2
         )
-        logging.error(error_message)
+        logger.error(error_message)
         raise TypeError(error_message)
 
-    # Verify the provided path_format is in string format
-    if not isinstance(path_format, str):
+    # Verify the provided path_format is in string format when not None
+    if root_dir is not None and not isinstance(root_dir, str):
         error_message = (
-            'The provided path_format is not in string format.\n' +
+            'The provided root_dir is not in string format.\n' +
             (('-' * 150) + '\n') + (('-' * 65) + 'Additional Information' + ('-' * 63) + '\n') + (('-' * 150) + '\n') +
             'Expected Result:\n'
             f'  - Type = str\n\n'
             'Returned Result:\n'
-            f'  - Type = {type(path_format)}\n\n'
+            f'  - Type = {type(root_dir)}\n\n'
             f'Originating error on line {traceback.extract_stack()[-1].lineno} in <{__name__}>\n' +
             (('-' * 150) + '\n') * 2
         )
-        logging.error(error_message)
+        logger.error(error_message)
         raise TypeError(error_message)
-
-    # Verify the provided path_format matches valid options
-    if path_format.lower() not in {'relative', 'full'}:
-        error_message = (
-            'The provided path_format is not valid.\n' +
-            (('-' * 150) + '\n') + (('-' * 65) + 'Additional Information' + ('-' * 63) + '\n') + (('-' * 150) + '\n') +
-            'Expected Result:\n'
-            '  - path_format = "relative" or "full"\n\n'
-            'Returned Result:\n'
-            f'  - Type = {path_format}\n\n'
-            f'Originating error on line {traceback.extract_stack()[-1].lineno} in <{__name__}>\n' +
-            (('-' * 150) + '\n') * 2
-        )
-        logging.error(error_message)
-        raise ValueError(error_message)
-    else:
-        # Valid format received, ensure lower case for easier processing later
-        path_format = path_format.lower()
 
     # Initialize an empty list that will contain files found during search
     files = []
     # Print the prompt
     print(prompt)
+    """
     # Search for files in current working directory
     for file in glob(criteria):
         # Do not match on temporary files beginning with '~'
@@ -510,6 +490,18 @@ def user_file_selection(prompt: str, criteria: str, path_format='relative') -> s
             # Add file to list
             files.append(file)
             print(f'  [{[i for i, x in enumerate(files) if x == file][0]}] {file}')
+    """
+    if root_dir:
+        # Use provided root directory for search
+        search_path = os.path.dirname(root_dir)
+    else:
+        # If path not provided, use current working directory
+        search_path = os.path.abspath(os.curdir)
+
+    for file in Path(search_path).glob(criteria):
+        # Add file to list
+        files.append(file)
+        print(f'  [{[i for i, x in enumerate(files) if x == file][0]}] {os.path.basename(file)}')
 
     # If no files were found matching user provided criteria,  raise exception
     if len(files) == 0:
@@ -518,10 +510,11 @@ def user_file_selection(prompt: str, criteria: str, path_format='relative') -> s
             'No files were found matching the required criteria\n' +
             (('-' * 150) + '\n') + (('-' * 65) + 'Additional Information' + ('-' * 63) + '\n') + (('-' * 150) + '\n') +
             f'Provided criteria: {criteria}\n'
+            f'Directory: {search_path}\n'
             f'Originating error on line {traceback.extract_stack()[-1].lineno} in <{__name__}>\n' +
             (('-' * 150) + '\n') * 2
         )
-        logging.warn(error_message)
+        logger.debug(error_message)
         # Raise exception and let calling module determine how to handle
         raise FileNotFoundError(error_message)
 
@@ -531,22 +524,19 @@ def user_file_selection(prompt: str, criteria: str, path_format='relative') -> s
             selection = int(input('\nSelection [#]:  '))
         except ValueError:
             print("Invalid entry")
-            logging.debug("User entered non-numeric input")
+            logger.debug("User entered non-numeric input")
             continue
         # Check user input for basic validity
         if selection < 0:
             # User is being a dick and submitted a negative number, re-prompt
             print("Invalid entry")
-            logging.debug("User entered negative number input")
+            logger.debug("User entered negative number input")
             continue
         elif selection not in range(len(files)):
             # Number input is greater than max selectable value, re-prompt
             print("Invalid entry")
-            logging.debug("User entered number greater than returned file count")
+            logger.debug("User entered number greater than returned file count")
             continue
         else:
-            # File selected, return based on the format provided
-            if path_format == 'relative':
-                return files[selection]
-            elif path_format == 'full':
-                return convert_relative_to_full_path(files[selection])
+            # Valid input provided, return absolute path of file selected
+            return files[selection]
