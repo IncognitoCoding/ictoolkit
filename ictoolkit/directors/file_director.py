@@ -36,6 +36,11 @@ def write_file(file_path, write_value):
         ValueError: Writing file value <Value Being Written> to file <File Path Being Written> did not complete. The value does not exist after being written
     """
     logger = logging.getLogger(__name__)
+    logger.debug(f'=' * 20 + traceback.extract_stack(None, 2)[1][2] + '=' * 20)
+    # Custom flowchart tracking. This is ideal for large projects that move a lot. 
+    # For any third-party modules, set the flow before making the function call.
+    logger_flowchart = logging.getLogger('flowchart')
+    logger_flowchart.info(f'Flowchart --> Function: {traceback.extract_stack(None, 2)[1][2]}')
 
     logger.debug(f'Begining to write the value to the file. write_value = {write_value}')
     try:
@@ -86,6 +91,11 @@ def file_exist_check(file_path, file_description):
         ValueError: Log file does not exist.
     """
     logger = logging.getLogger(__name__)
+    logger.debug(f'=' * 20 + traceback.extract_stack(None, 2)[1][2] + '=' * 20)
+    # Custom flowchart tracking. This is ideal for large projects that move a lot. 
+    # For any third-party modules, set the flow before making the function call.
+    logger_flowchart = logging.getLogger('flowchart')
+    logger_flowchart.info(f'Flowchart --> Function: {traceback.extract_stack(None, 2)[1][2]}')
 
     logger.debug(f'Begining to check the file path for {file_description}')
     # Checks if the file does not exist
@@ -126,6 +136,11 @@ def search_file(file_path, searching_value, logger=None):
         Return Example: Return Example: [{'search_entry': '|Error|', 'found_entry': 'the entry found'}, {'search_entry': '|Warning|', 'found_entry': 'the entry found'}]
     """
     logger = logging.getLogger(__name__)
+    logger.debug(f'=' * 20 + traceback.extract_stack(None, 2)[1][2] + '=' * 20)
+    # Custom flowchart tracking. This is ideal for large projects that move a lot. 
+    # For any third-party modules, set the flow before making the function call.
+    logger_flowchart = logging.getLogger('flowchart')
+    logger_flowchart.info(f'Flowchart --> Function: {traceback.extract_stack(None, 2)[1][2]}')
 
     logger.debug(f'Begining to search the file \"{file_path}\" for a value \"{searching_value}\"')
     try:
@@ -218,6 +233,11 @@ def search_multiple_files(file_paths, searching_value):
         Return Example: Return Example: [{'search_entry': '|Error|', 'found_entry': 'the entry found'}, {'search_entry': '|Warning|', 'found_entry': 'the entry found'}]
     """
     logger = logging.getLogger(__name__)
+    logger.debug(f'=' * 20 + traceback.extract_stack(None, 2)[1][2] + '=' * 20)
+    # Custom flowchart tracking. This is ideal for large projects that move a lot. 
+    # For any third-party modules, set the flow before making the function call.
+    logger_flowchart = logging.getLogger('flowchart')
+    logger_flowchart.info(f'Flowchart --> Function: {traceback.extract_stack(None, 2)[1][2]}')
 
     logger.debug(f'Begining to search the files \"{file_paths}\" for a value \"{searching_value}\"')
     try:
@@ -320,6 +340,11 @@ def check_file_threshold_size(file_path, size_max_file_size, logger=None):
         ValueError: <File Path> file does not exist., <General Error>
     """
     logger = logging.getLogger(__name__)
+    logger.debug(f'=' * 20 + traceback.extract_stack(None, 2)[1][2] + '=' * 20)
+    # Custom flowchart tracking. This is ideal for large projects that move a lot. 
+    # For any third-party modules, set the flow before making the function call.
+    logger_flowchart = logging.getLogger('flowchart')
+    logger_flowchart.info(f'Flowchart --> Function: {traceback.extract_stack(None, 2)[1][2]}')
 
     logger.debug(f'Begining to check if the log file {file_path} has reached {size_max_file_size} bytes')
     # Checks if file exists before starting.
@@ -390,6 +415,13 @@ def convert_relative_to_full_path(relative_path: str) -> str:
         [string]: Full file path
             - Example: "C:\\[root directory]\\[directory]\\[file].[extension]"
     """
+    logger = logging.getLogger(__name__)
+    logger.debug(f'=' * 20 + traceback.extract_stack(None, 2)[1][2] + '=' * 20)
+    # Custom flowchart tracking. This is ideal for large projects that move a lot. 
+    # For any third-party modules, set the flow before making the function call.
+    logger_flowchart = logging.getLogger('flowchart')
+    logger_flowchart.info(f'Flowchart --> Function: {traceback.extract_stack(None, 2)[1][2]}')
+
     if hasattr(sys, '_MEIPASS'):
         # PyInstaller creates a temp folder and stores path in _MEIPASS
         base_path = sys._MEIPASS
@@ -423,7 +455,7 @@ def user_file_selection(prompt: str, criteria: str, root_dir=None) -> str:
 
     """
     logger = logging.getLogger(__name__)
-    logger.info(f'=' * 20 + traceback.extract_stack(None, 2)[1][2] + '=' * 20)
+    logger.debug(f'=' * 20 + traceback.extract_stack(None, 2)[1][2] + '=' * 20)
     # Custom flowchart tracking. This is ideal for large projects that move a lot.
     # For any third-party modules, set the flow before making the function call.
     logger_flowchart = logging.getLogger('flowchart')

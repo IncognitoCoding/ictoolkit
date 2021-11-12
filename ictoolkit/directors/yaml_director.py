@@ -8,6 +8,7 @@ This module does not have a test file to run with pytest. The YAML function will
 
 # Built-in/Generic Imports
 import traceback
+import logging
 
 # Libraries
 import yaml
@@ -44,6 +45,12 @@ def read_yaml_config(yaml_file_path, loader):
     Returns:
         yaml: YAML read configuration.
     """
+    logger = logging.getLogger(__name__)
+    logger.debug(f'=' * 20 + traceback.extract_stack(None, 2)[1][2] + '=' * 20)
+    # Custom flowchart tracking. This is ideal for large projects that move a lot. 
+    # For any third-party modules, set the flow before making the function call.
+    logger_flowchart = logging.getLogger('flowchart')
+    logger_flowchart.info(f'Flowchart --> Function: {traceback.extract_stack(None, 2)[1][2]}')
 
     # Checks for issues while reading the yaml file.
     try:

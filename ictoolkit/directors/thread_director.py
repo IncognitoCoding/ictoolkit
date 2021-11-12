@@ -12,6 +12,7 @@ import time
 import traceback
 from threading import Thread
 from threading import Event
+import logging
 
 __author__ = 'IncognitoCoding'
 __copyright__ = 'Copyright 2021, thread_director'
@@ -45,7 +46,13 @@ def start_function_thread(passing_program_function, program_function_name, infin
         ValueError: A failure occurred while staring the function thread.
         ValueError: The thread ({program_function_name}) timeout has reached its threshold of 1 minute.
     """
-    
+    logger = logging.getLogger(__name__)
+    logger.debug(f'=' * 20 + traceback.extract_stack(None, 2)[1][2] + '=' * 20)
+    # Custom flowchart tracking. This is ideal for large projects that move a lot. 
+    # For any third-party modules, set the flow before making the function call.
+    logger_flowchart = logging.getLogger('flowchart')
+    logger_flowchart.info(f'Flowchart --> Function: {traceback.extract_stack(None, 2)[1][2]}')
+
     # Creates a dedicated thread class to run the companion decryptor.
     # This is required because the main() function will sleep x minutes between checks.
     class start_function_thread(threading.Thread):

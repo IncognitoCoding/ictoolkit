@@ -13,7 +13,7 @@ __author__ = 'IncognitoCoding'
 __copyright__ = 'Copyright 2021, data_structure_director'
 __credits__ = ['IncognitoCoding']
 __license__ = 'GPL'
-__version__ = '1.5'
+__version__ = '1.6'
 __maintainer__ = 'IncognitoCoding'
 __status__ = 'Development'
 
@@ -44,6 +44,13 @@ def remove_duplicate_dict_values_in_list(list_dictionary, element_number=None):
     Returns:
         list: A list of dictionars with duplicate values removed.
     """
+    logger = logging.getLogger(__name__)
+    logger.debug(f'=' * 20 + traceback.extract_stack(None, 2)[1][2] + '=' * 20)
+    # Custom flowchart tracking. This is ideal for large projects that move a lot. 
+    # For any third-party modules, set the flow before making the function call.
+    logger_flowchart = logging.getLogger('flowchart')
+    logger_flowchart.info(f'Flowchart --> Function: {traceback.extract_stack(None, 2)[1][2]}')
+
     try:
 
         # Holds temporoary found elements for comparison.
@@ -78,18 +85,17 @@ def remove_duplicate_dict_values_in_list(list_dictionary, element_number=None):
 
                     # Adds the full dictionary_in_list to the list because it is not a duplicate.
                     revised_list.append(dictionary_in_list)
-    except Exception as err: 
+    except Exception as error: 
         error_message = (
             f'A failure occurred removing duplicates from the dictionary in the list.\n\n' +
             (('-' * 150) + '\n') + (('-' * 65) + 'Additional Information' + ('-' * 63) + '\n') + (('-' * 150) + '\n') +
-            f'{err}\n\n'
-            f'Originating error on line {traceback.extract_stack()[-1].lineno} in <{__name__}>\n' +
+            f'{error}\n\n'
+            f'Originating error on line {error.__traceback__.tb_lineno} in <{__name__}>\n' +
             (('-' * 150) + '\n') * 2 
         )   
         raise ValueError(error_message)
     else:
         return revised_list
-
 
 def get_list_of_dicts_duplicates(key, list_dictionary, grouped=False):
     """
@@ -118,6 +124,13 @@ def get_list_of_dicts_duplicates(key, list_dictionary, grouped=False):
         Return Example (Un-Grouped): [{'index': 0, 'value': 'ValueA'}, {'index': 1, 'value': 'ValueA'}, {'index': 2, 'value': 'ValueA'}, {'index': 3, 'value': 'ValueB'}, {'index': 4, 'value': 'ValueB'}]
         Return Example (Grouped): {'ValueA': [{'index': 0, 'value': 'ValueA'}, {'index': 1, 'value': 'ValueA'}, {'index': 2, 'value': 'ValueA'}], 'ValueB': [{'index': 3, 'value': 'ValueB'}, {'index': 4, 'value': 'ValueB'}]}
     """
+    logger = logging.getLogger(__name__)
+    logger.debug(f'=' * 20 + traceback.extract_stack(None, 2)[1][2] + '=' * 20)
+    # Custom flowchart tracking. This is ideal for large projects that move a lot. 
+    # For any third-party modules, set the flow before making the function call.
+    logger_flowchart = logging.getLogger('flowchart')
+    logger_flowchart.info(f'Flowchart --> Function: {traceback.extract_stack(None, 2)[1][2]}')
+
     try:
 
         # Temporary storage for unique items.
@@ -159,12 +172,12 @@ def get_list_of_dicts_duplicates(key, list_dictionary, grouped=False):
             (('-' * 150) + '\n') * 2 
         )
         raise ValueError(error_message)
-    except Exception as err: 
+    except Exception as error: 
         error_message = (
             f'A failure occurred getting duplicate values from the key ({key}) in the list_dictionary.\n' +
             (('-' * 150) + '\n') + (('-' * 65) + 'Additional Information' + ('-' * 63) + '\n') + (('-' * 150) + '\n') +
-            f'{err}\n\n'
-            f'Originating error on line {traceback.extract_stack()[-1].lineno} in <{__name__}>\n' +
+            f'{error}\n\n'
+            f'Originating error on line {error.__traceback__.tb_lineno} in <{__name__}>\n' +
             (('-' * 150) + '\n') * 2 
         )
         raise ValueError(error_message)
@@ -182,12 +195,12 @@ def get_list_of_dicts_duplicates(key, list_dictionary, grouped=False):
                         # Gets matching entries based on the "value" key and adds them to the grouped dictionary.
                         grouped[entry['value']] = grouped.get(entry['value'], [])
                         grouped[entry['value']].append(entry)
-                except Exception as err: 
+                except Exception as error: 
                     error_message = (
                         f'A failure occurred grouping duplicate values.\n' +
                         (('-' * 150) + '\n') + (('-' * 65) + 'Additional Information' + ('-' * 63) + '\n') + (('-' * 150) + '\n') +
-                        f'{err}\n\n'
-                        f'Originating error on line {traceback.extract_stack()[-1].lineno} in <{__name__}>\n' +
+                        f'{error}\n\n'
+                        f'Originating error on line {error.__traceback__.tb_lineno} in <{__name__}>\n' +
                         (('-' * 150) + '\n') * 2 
                     )
                     raise ValueError(error_message)
@@ -199,7 +212,6 @@ def get_list_of_dicts_duplicates(key, list_dictionary, grouped=False):
                 return duplicate_list_dictionary
         else:
             return None
-
 
 def get_list_duplicates(duplicates, match_index=None, grouped=False):
     """
@@ -227,6 +239,13 @@ def get_list_duplicates(duplicates, match_index=None, grouped=False):
         Return Example (Un-Grouped): [{'index': 0, 'value': 'ValueA'}, {'index': 1, 'value': 'ValueA'}, {'index': 2, 'value': 'ValueA'}, {'index': 3, 'value': 'ValueB'}, {'index': 4, 'value': 'ValueB'}]
         Return Example (Grouped): {'ValueA': [{'index': 0, 'value': 'ValueA'}, {'index': 1, 'value': 'ValueA'}, {'index': 2, 'value': 'ValueA'}], 'ValueB': [{'index': 3, 'value': 'ValueB'}, {'index': 4, 'value': 'ValueB'}]}
     """  
+    logger = logging.getLogger(__name__)
+    logger.debug(f'=' * 20 + traceback.extract_stack(None, 2)[1][2] + '=' * 20)
+    # Custom flowchart tracking. This is ideal for large projects that move a lot. 
+    # For any third-party modules, set the flow before making the function call.
+    logger_flowchart = logging.getLogger('flowchart')
+    logger_flowchart.info(f'Flowchart --> Function: {traceback.extract_stack(None, 2)[1][2]}')
+
     try:
 
         # Temporary storage for unique items.
@@ -297,12 +316,12 @@ def get_list_duplicates(duplicates, match_index=None, grouped=False):
                             # This will allow the ease if finding all index points for a specific value.
                             duplicate_list_dictionary.append({'index': index, 'value': value})
 
-    except Exception as err: 
+    except Exception as error: 
         error_message = (
             f'A failure occurred getting duplicate values the list.\n' +
             (('-' * 150) + '\n') + (('-' * 65) + 'Additional Information' + ('-' * 63) + '\n') + (('-' * 150) + '\n') +
-            f'{err}\n\n'
-            f'Originating error on line {traceback.extract_stack()[-1].lineno} in <{__name__}>\n' +
+            f'{error}\n\n'
+            f'Originating error on line {error.__traceback__.tb_lineno} in <{__name__}>\n' +
             (('-' * 150) + '\n') * 2 
         )
         raise ValueError(error_message)
@@ -344,12 +363,12 @@ def get_list_duplicates(duplicates, match_index=None, grouped=False):
                             # Gets matching entries based on the "value" key and adds them to the grouped dictionary.
                             grouped[entry['value']] = grouped.get(entry['value'], [])
                             grouped[entry['value']].append(entry)
-                except Exception as err: 
+                except Exception as error: 
                     error_message = (
                         f'A failure occurred grouping duplicate values.\n' +
                         (('-' * 150) + '\n') + (('-' * 65) + 'Additional Information' + ('-' * 63) + '\n') + (('-' * 150) + '\n') +
-                        f'{err}\n\n'
-                        f'Originating error on line {traceback.extract_stack()[-1].lineno} in <{__name__}>\n' +
+                        f'{error}\n\n'
+                        f'Originating error on line {error.__traceback__.tb_lineno} in <{__name__}>\n' +
                         (('-' * 150) + '\n') * 2 
                     )
                     raise ValueError(error_message)
@@ -361,7 +380,6 @@ def get_list_duplicates(duplicates, match_index=None, grouped=False):
                 return duplicate_list_dictionary
         else:
             return None
-
 
 def string_grouper(list_of_strings, grouping_value, grouping_option, case_insensitive=False):   
     """
@@ -398,6 +416,11 @@ def string_grouper(list_of_strings, grouping_value, grouping_option, case_insens
                                          \{'group_identifier': 'DH', 'grouping': ['DH-IDF1', 'DH-IDF2', 'DH-MDF']}, {'group_identifier': 'GH', 'grouping': ['GH-IDF0-RM113', 'GH-IDF1-RM161', 'GH-MDF-RM113']}]
     """  
     logger = logging.getLogger(__name__)
+    logger.debug(f'=' * 20 + traceback.extract_stack(None, 2)[1][2] + '=' * 20)
+    # Custom flowchart tracking. This is ideal for large projects that move a lot. 
+    # For any third-party modules, set the flow before making the function call.
+    logger_flowchart = logging.getLogger('flowchart')
+    logger_flowchart.info(f'Flowchart --> Function: {traceback.extract_stack(None, 2)[1][2]}')
 
     logger.debug(f'Starting string grouping with the following list of strings: {list_of_strings}')
     # Validates the sent strings are in a list.
@@ -611,6 +634,220 @@ def string_grouper(list_of_strings, grouping_value, grouping_option, case_insens
             f'  - list_of_strings = list\n\n'
             'Returned Result:\n'
             f'  - list_of_strings = {list_of_strings}\n\n'
+            f'Originating error on line {traceback.extract_stack()[-1].lineno} in <{__name__}>\n' +
+            (('-' * 150) + '\n') * 2 
+        )
+        logger.error(error_message)
+        raise ValueError(error_message)
+
+def find_longest_common_substring(string1, string2):
+    """
+    This function finds the longest substring between two different strings.
+
+    For Example:
+        - Parameters:
+            - string1: mysamplechangeshere
+            - string2: mysampleneverchanges
+        - Results:
+            - mysample
+
+    Args:
+        string1 (string): string to compare against string2
+        string2 (string): string to compare against string1
+
+    Raises:
+        ValueError: The sent list_of_strings are not in list format.
+
+    Returns:
+        string: returns the string upto the point the characters no longer match.
+    """
+
+    logger = logging.getLogger(__name__)
+    logger.debug(f'=' * 20 + traceback.extract_stack(None, 2)[1][2] + '=' * 20)
+    # Custom flowchart tracking. This is ideal for large projects that move a lot. 
+    # For any third-party modules, set the flow before making the function call.
+    logger_flowchart = logging.getLogger('flowchart')
+    logger_flowchart.info(f'Flowchart --> Function: {traceback.extract_stack(None, 2)[1][2]}')
+
+    # Validates the sending parameters are strings.
+    if (
+        isinstance(string1, str) and
+        isinstance(string2, str)
+    ):
+
+        logger.debug(f'Passing parameters [string1] (str):\n    - {string1}')
+        logger.debug(f'Passing parameters [string2] (str):\n    - {string2}')
+
+        def _iter():
+            for a, b in zip(string1, string2):
+                if a == b:
+                    yield a
+                else:
+                    return
+    else:
+        string1_type = type(string1)
+        string2_type = type(string2)
+        if not isinstance(string1, str):
+            error_message = (
+                'The sent string1 parameter is not a string.\n' +
+                (('-' * 150) + '\n') + (('-' * 65) + 'Additional Information' + ('-' * 63) + '\n') + (('-' * 150) + '\n') +
+                'Expected Result:\n'
+                f'  - string1_type == str\n\n'
+                'Returned Result:\n'
+                f'  - string1_type = {string1_type}\n'
+                f'Originating error on line {traceback.extract_stack()[-1].lineno} in <{__name__}>\n' +
+                (('-' * 150) + '\n') * 2 
+            )
+            logger.error(error_message)
+            raise ValueError(error_message)
+        if not isinstance(string2, str):
+            error_message = (
+                'The sent string2 parameter is not a string.\n' +
+                (('-' * 150) + '\n') + (('-' * 65) + 'Additional Information' + ('-' * 63) + '\n') + (('-' * 150) + '\n') +
+                'Expected Result:\n'
+                f'  - string2_type == str\n\n'
+                'Returned Result:\n'
+                f'  - string2_type = {string2_type}\n'
+                f'Originating error on line {traceback.extract_stack()[-1].lineno} in <{__name__}>\n' +
+                (('-' * 150) + '\n') * 2 
+            )
+            logger.error(error_message)
+            raise ValueError(error_message)
+        
+    if ''.join(_iter()):
+        substring = ''.join(_iter())
+    else:
+        substring = None
+    return substring
+
+def user_choice_character_grouping(list_of_strings):
+    logger = logging.getLogger(__name__)
+    logger.debug(f'=' * 20 + traceback.extract_stack(None, 2)[1][2] + '=' * 20)
+    # Custom flowchart tracking. This is ideal for large projects that move a lot. 
+    # For any third-party modules, set the flow before making the function call.
+    logger_flowchart = logging.getLogger('flowchart')
+    logger_flowchart.info(f'Flowchart --> Function: {traceback.extract_stack(None, 2)[1][2]}')
+
+    if isinstance(list_of_strings, list):
+        logger.debug(f'Passing parameters [list_of_strings] (list):' + '\n    - ' + '\n    - '.join(map(str, list_of_strings)))
+
+        # Sets grouping value to None to prevent any reference errors on a retry.
+        groupings = None
+        # Infinite Loop to allow retries.
+        while True:
+
+            try:
+
+                #############################################################
+                ############Requests Options and Gets Groupings##############
+                #############################################################
+                print('')
+                print('A hostname comparison is about to take place to group devices based on similar naming into the IP Network Design spreadsheets. Please continue to select how many character positions you would like to search.')
+                continue_choice = input('Are you ready to continue? \n \n1 - Yes \n2 - No \n \nEnter Selection Number: ')
+                # Adds console blank lines.
+                print('')
+                print('')
+                if int(continue_choice) == 1:
+                    character_choice = input('Do you wish to group based on a character position number or a similar separator? \n \n1 - Similar Separator \n2 - Character Position Number  \n \nEnter Select Number: ')
+                    if int(character_choice) == 1:
+                        character_separater = str(input('Enter the similar separater character: '))
+                        # Adds console blank lines.
+                        print('')
+                        print('')
+                        # Checks the the user entered a number.
+                        if isinstance(character_separater, str):
+                            # Calls function to group the list of strings.
+                            groupings = string_grouper(list_of_strings, character_separater, 1, True)
+                        else:
+                            print('Error: You did not enter a string. Please retry again.')
+                            print('')
+                            print('')
+                            #Continues to top of loop to propt user again
+                    elif int(character_choice) == 2:
+                        character_search_number = input('Enter the characacter position grouping number: ')
+                        # Adds console blank lines.
+                        print('')
+                        print('')
+                        # Checks the the user entered a number.
+                        if character_search_number.isdigit():
+                            # Converts string to int.
+                            character_search_number = int(character_search_number)
+                            # Calls function to group the list of strings.
+                            groupings = string_grouper(list_of_strings, character_search_number, 2, True)
+                        else:
+                            print('Error: You did not enter a number. Please retry again.')
+                            print('')
+                            print('')
+                            #Continues to top of loop to propt user again
+                elif int(continue_choice) == 2:
+                    print('You choose not to continue the hostname comparison. Exiting....')
+                    exit()
+
+                #############################################################
+                ##################Offers Grouping Overview###################
+                #############################################################
+                # Checks if groupings exist before continuing.
+                # No grouping means the user choose to retry.
+                if groupings:
+                    character_grouping_overview = input('Would you like to see the new names before continuing? \n \n1 - Yes \n2 - No  \n \nEnter Select Number: ')
+                    if int(character_grouping_overview) == 1:
+                        print('The grouping output will show the grouping identifier and the grouped devices. The grouping identifier will be used for the IP Network Design spreadsheet.')
+                        print('')
+                        print('')
+                        # Loops through output to show the user the results
+                        for grouping in groupings:
+                            # Sets variables for easier usage.
+                            group_identifier = grouping.get('group_identifier')
+                            grouping = grouping.get('grouping')
+                            print(f'Grouping Identifier = {group_identifier} >>>>> Grouping = {grouping}')
+
+                        print('')
+                        print('')
+                        grouping_acceptance = input('Are you satisfied with the new names that will use for the IP Network Design spreadsheet? \n \n1 - Yes \n2 - No \n3 - Quit  \n \nEnter Select Number: ')
+                        print('')
+                        print('')
+                        if int(grouping_acceptance) == 1:
+                            # Returns the groupings
+                            return groupings
+                        elif int(grouping_acceptance) == 2:
+                            print('User choose to retry character group position')
+                            #Continues to top of loop to propt user again
+                        elif int(grouping_acceptance) == 3:
+                            print('You choose to quit. Exiting....')
+                            exit()
+                    elif int(character_grouping_overview) == 2:
+                        # Returns the groupings
+                        return groupings
+            except ValueError as error:
+                # Checks if the error is because a str was entered for an option selection instead of an int.
+                if 'invalid literal for int() with base' in str(error):
+                    print('You entered a letter as an option, but it should have been a number. Please retry this section.')
+                    print('')
+                    print('')
+                    #Continues to top of loop to propt user again
+                else:
+                    error_message = (f'{error}Addititional traceback reverse path line: {error.__traceback__.tb_lineno} in <{__name__}>\n')
+                    logger.debug(f'Forwarding caught ValueError at line {error.__traceback__.tb_lineno} in <{__name__}>')
+                    raise ValueError(error_message)
+            except Exception as error:
+                error_message = (
+                    f'A general exception occurred when getting the user choice character grouping.\n\n' +
+                    (('-' * 150) + '\n') + (('-' * 65) + 'Additional Information' + ('-' * 63) + '\n') + (('-' * 150) + '\n') +
+                    f'{error}\n\n'
+                    f'Originating error on line {error.__traceback__.tb_lineno} in <{__name__}>\n' +
+                    (('-' * 150) + '\n') * 2 
+                )   
+                logger.error(error_message)
+                raise ValueError(error_message)
+    else:
+        list_of_strings_type = type(list_of_strings)
+        error_message = (
+            'The sent list_of_strings are not in list format.\n' +
+            (('-' * 150) + '\n') + (('-' * 65) + 'Additional Information' + ('-' * 63) + '\n') + (('-' * 150) + '\n') +
+            'Expected Result:\n'
+            f'  - list_of_strings_type = list\n\n'
+            'Returned Result:\n'
+            f'  - list_of_strings_type = {list_of_strings_type}\n\n'
             f'Originating error on line {traceback.extract_stack()[-1].lineno} in <{__name__}>\n' +
             (('-' * 150) + '\n') * 2 
         )

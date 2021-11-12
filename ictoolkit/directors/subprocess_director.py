@@ -5,11 +5,10 @@ This module is designed to assist with subprocess actions.
 """
 
 # Built-in/Generic Imports
-import sys
-import os
 import io
 import traceback
 import subprocess
+import logging
 
 __author__ = 'IncognitoCoding'
 __copyright__ = 'Copyright 2021, subprocess_director'
@@ -54,6 +53,12 @@ def start_subprocess(program_arguments):
             - <process return name>.args
             - <process return name>.stdout
     """
+    logger = logging.getLogger(__name__)
+    logger.debug(f'=' * 20 + traceback.extract_stack(None, 2)[1][2] + '=' * 20)
+    # Custom flowchart tracking. This is ideal for large projects that move a lot. 
+    # For any third-party modules, set the flow before making the function call.
+    logger_flowchart = logging.getLogger('flowchart')
+    logger_flowchart.info(f'Flowchart --> Function: {traceback.extract_stack(None, 2)[1][2]}')
 
     try:
         # Runs the subprocess and returns output
