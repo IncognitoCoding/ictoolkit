@@ -4,7 +4,7 @@
 This module is designed to offer data structure functions. These data structures include lists, tuples, sets, and dictionaries.
 """
 # Built-in/Generic Imports
-import os
+import re
 import logging
 import traceback
 from itertools import groupby
@@ -13,7 +13,7 @@ __author__ = 'IncognitoCoding'
 __copyright__ = 'Copyright 2021, data_structure_director'
 __credits__ = ['IncognitoCoding']
 __license__ = 'GPL'
-__version__ = '1.6'
+__version__ = '1.7'
 __maintainer__ = 'IncognitoCoding'
 __status__ = 'Development'
 
@@ -853,3 +853,72 @@ def user_choice_character_grouping(list_of_strings):
         )
         logger.error(error_message)
         raise ValueError(error_message)
+
+def clean_non_word_characters(string: str) -> str:
+    """
+    This function will remove any non-word hex characters from any passing string. Strings without non-word hex will be passed through without any errors.
+
+    Args:
+        string (str): a string with non-word hex characters.
+
+    Raises:
+        ValueError: The sent string parameter is not a string.
+        ValueError: The string ({string}) with non-word characters did not clean.
+
+    Returns:
+        str: a cleaned string with valid only words.
+    """
+    logger = logging.getLogger(__name__)
+    logger.debug(f'=' * 20 + traceback.extract_stack(None, 2)[1][2] + '=' * 20)
+    # Custom flowchart tracking. This is ideal for large projects that move a lot. 
+    # For any third-party modules, set the flow before making the function call.
+    logger_flowchart = logging.getLogger('flowchart')
+    logger_flowchart.info(f'Flowchart --> Function: {traceback.extract_stack(None, 2)[1][2]}')
+
+    # Validates the sending parameter is a string.
+    if isinstance(string, str):
+        logger.debug(f'Passing parameters [string] (str):\n    - {string}')
+    else:
+        string1_type = type(string)
+        if not isinstance(string, str):
+            error_message = (
+                'The sent string parameter is not a string.\n' +
+                (('-' * 150) + '\n') + (('-' * 65) + 'Additional Information' + ('-' * 63) + '\n') + (('-' * 150) + '\n') +
+                'Expected Result:\n'
+                f'  - string_type == str\n\n'
+                'Returned Result:\n'
+                f'  - string_type = {string1_type}\n'
+                f'Originating error on line {traceback.extract_stack()[-1].lineno} in <{__name__}>\n' +
+                (('-' * 150) + '\n') * 2 
+            )
+            logger.error(error_message)
+            raise ValueError(error_message)
+    
+    # Some Python returned information will return with trailing hex characters (non-words). These are unescaped control characters, which is what Python displays using hexadecimal notation. 
+    # This expression will remove the hex characters. It can be written with either [^\x20-\x7e] or [^ -~].*
+    # Note: When viewing non-word characters it can very from console or logging. You may see output similar BTW-N5K\x06 or BTW-N5K♠ or BTW-N5K\u00006.
+    # Example1:  
+    #   - Input: BTW-N5K\x06
+    #   - Output: BTW-N5K
+    cleaned_string = re.sub(r'[^ -~].*', '', string)
+    encoded_string = cleaned_string.encode('ascii', 'ignore')
+    if '\\x' in str(encoded_string):
+        error_message = (
+            f'The string ({string}) with non-word characters did not clean.\n' +
+            (('-' * 150) + '\n') + (('-' * 65) + 'Additional Information' + ('-' * 63) + '\n') + (('-' * 150) + '\n') +
+            'Expected Result:\n'
+            f'  - The string should not have contained any hex characters.\n\n'
+            'Returned Result:\n'
+            f'  - encoded bytes output = {encoded_string}\n'
+            f'Originating error on line {traceback.extract_stack()[-1].lineno} in <{__name__}>\n' +
+            (('-' * 150) + '\n') * 2 
+        )
+        logger.error(error_message)
+        raise ValueError(error_message)
+    else:
+        # Checks if the lengths are different from the parameter string and cleaned string to know if the string contained non-word values.
+        if len(string) > len(cleaned_string):
+            logger.debug(f'The string was cleaned of all non-word characters. Set Value (str):\n    - Original Value: {string}\n    - Cleaned Value: {cleaned_string}')
+        else:
+            logger.debug(f'The string did not contain any non-word characters. No change required.')
+        return cleaned_string
