@@ -896,7 +896,7 @@ def clean_non_word_characters(string: str) -> str:
     
     # Some Python returned information will return with trailing hex characters (non-words). These are unescaped control characters, which is what Python displays using hexadecimal notation. 
     # This expression will remove the hex characters. It can be written with either [^\x20-\x7e] or [^ -~].*
-    # Note: When viewing non-word characters it can very from console or logging. You may see output similar BTW-N5K\x06 or BTW-N5K♠ or BTW-N5K\u00006.
+    # Note: When viewing non-word characters it can very from console or logging. You may see output similar BTW-N5K\x06 or BTW-N5K♠ or BTW-N5K\u00006 or BTW-N5K.
     # Example1:  
     #   - Input: BTW-N5K\x06
     #   - Output: BTW-N5K
