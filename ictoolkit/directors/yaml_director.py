@@ -16,7 +16,7 @@ __author__ = 'IncognitoCoding'
 __copyright__ = 'Copyright 2021, yaml_director'
 __credits__ = ['IncognitoCoding']
 __license__ = 'GPL'
-__version__ = '1.5'
+__version__ = '1.6'
 __maintainer__ = 'IncognitoCoding'
 __status__ = 'Development'
 
@@ -102,8 +102,6 @@ def yaml_value_validation(key: str, input_value: str, required_value_type: Union
 
     The pre-configured output message uses the key and type entries to notify the user of what value is missing.
 
-    None, empty string, [None], or [''] is considered a non-matching type.
-
     Args:
         key (str): key used inside the YAML configuration file. This entry is only used for the message output and can contain additional information.
         input_value_type (YAML value): value used inside the YAML configuration file
@@ -132,23 +130,7 @@ def yaml_value_validation(key: str, input_value: str, required_value_type: Union
     )
 
     # Verifies a YAML value is returned.
-    if (
-        input_value is None or 
-        'None' == str(input_value) or
-        '' == str(input_value) or
-        [None] == input_value or
-        [''] == input_value
-    ):
-        error_message = (
-            f'No value has been entered for \'{key}\' in the YAML file.\n\n' +
-            (('-' * 150) + '\n') + (('-' * 65) + 'Additional Information' + ('-' * 63) + '\n') + (('-' * 150) + '\n') +
-            'Suggested Resolution:\n'
-            f'  - Please check the YAML configuration for correct formatting.\n\n'
-            f'Originating error on line {traceback.extract_stack()[-1].lineno} in <{__name__}>\n' +
-            (('-' * 150) + '\n') * 2 
-        )   
-        raise ValueError(error_message)
-    else:
+    if input_value is not None:
         if isinstance(required_value_type, list):
             for value_type in required_value_type:
                 if isinstance(input_value, value_type):
@@ -181,3 +163,13 @@ def yaml_value_validation(key: str, input_value: str, required_value_type: Union
             raise ValueError(error_message)
         else:
             logger.debug(f'The value ({input_value}) in for key ({key}) matched the requied value type(s) ({required_value_type})')
+    else:
+        error_message = (
+            f'No value has been entered for \'{key}\' in the YAML file.\n\n' +
+            (('-' * 150) + '\n') + (('-' * 65) + 'Additional Information' + ('-' * 63) + '\n') + (('-' * 150) + '\n') +
+            'Suggested Resolution:\n'
+            f'  - Please check the YAML configuration for correct formatting.\n\n'
+            f'Originating error on line {traceback.extract_stack()[-1].lineno} in <{__name__}>\n' +
+            (('-' * 150) + '\n') * 2 
+        )   
+        raise ValueError(error_message)
