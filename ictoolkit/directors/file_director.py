@@ -18,7 +18,7 @@ __author__ = 'IncognitoCoding'
 __copyright__ = 'Copyright 2021, file_director'
 __credits__ = ['IncognitoCoding']
 __license__ = 'GPL'
-__version__ = '1.1'
+__version__ = '1.2'
 __maintainer__ = 'IncognitoCoding'
 __status__ = 'Development'
 
@@ -115,7 +115,7 @@ def file_exist_check(file_path, file_description):
         logger.debug(f'{file_description} log file exists')
 
 
-def search_file(file_path, searching_value, logger=None):
+def search_file(file_path, searching_value):
     """
     Searches the file for a value. The search can look for multiple values when the searching value arguments are passed as a list. A single-string search is supported as well.
 
@@ -142,7 +142,31 @@ def search_file(file_path, searching_value, logger=None):
     logger_flowchart = logging.getLogger('flowchart')
     logger_flowchart.info(f'Flowchart --> Function: {traceback.extract_stack(None, 2)[1][2]}')
 
+    logger.debug(f'Passing parameters [file_path] (str):\n    - {file_path}')
+    if isinstance(searching_value, list):
+        logger.debug(f'Passing parameters [searching_value] (list):' + '\n    - ' + '\n    - '.join(map(str, searching_value)))
+    else:
+        logger.debug(f'Passing parameters [searching_value] (str):\n    - {searching_value}')
+
     logger.debug(f'Begining to search the file \"{file_path}\" for a value \"{searching_value}\"')
+
+    # Checks that the passing file_path contains a file extension.
+    if '.' not in file_path:
+        error_message = (
+            'A failure occurred while searching the file. The file path does not include a file with an extension.\n' +
+            (('-' * 150) + '\n') + (('-' * 65) + 'Additional Information' + ('-' * 63) + '\n') + (('-' * 150) + '\n') +
+            'Expected Result:\n'
+            f'  - A file with an extension (ex: myfile.txt)\n\n'
+            'Returned Result:\n'
+            f'  - file_path = {file_path}\n\n'
+            'Suggested Resolution:\n'
+            '   - Please verify you have sent a full file path and not a directory.\n\n'
+            f'Originating error on line {traceback.extract_stack()[-1].lineno} in <{__name__}>\n' +
+            (('-' * 150) + '\n') * 2 
+        )  
+        logger.error(error_message) 
+        raise ValueError(error_message)
+
     try:
 
         # Stores the search entry and found info.
@@ -217,7 +241,7 @@ def search_multiple_files(file_paths, searching_value):
     A single-string search is supported as well.
 
     Args:
-        file_path (str): the file path being checked
+        file_paths (list): a list of file path being checked
         searching_value (str or list): search value that is looked for within the file. The entry can be a single string or a list to search
 
     Raises:
@@ -239,6 +263,12 @@ def search_multiple_files(file_paths, searching_value):
     logger_flowchart = logging.getLogger('flowchart')
     logger_flowchart.info(f'Flowchart --> Function: {traceback.extract_stack(None, 2)[1][2]}')
 
+    logger.debug(f'Passing parameters [file_paths] (list):' + '\n    - ' + '\n    - '.join(map(str, file_paths)))
+    if isinstance(searching_value, list):
+        logger.debug(f'Passing parameters [searching_value] (list):' + '\n    - ' + '\n    - '.join(map(str, searching_value)))
+    else:
+        logger.debug(f'Passing parameters [searching_value] (str):\n    - {searching_value}')
+
     logger.debug(f'Begining to search the files \"{file_paths}\" for a value \"{searching_value}\"')
     try:
 
@@ -252,6 +282,22 @@ def search_multiple_files(file_paths, searching_value):
         logger.debug('Starting to loop through file(s)')
         # Loops through each file path to add all lines into a single list.
         for index, file_path in enumerate(file_paths):
+            # Checks that the passing file_path contains a file extension.
+            if '.' not in file_path:
+                error_message = (
+                    'A failure occurred while searching the file. The file path does not include a file with an extension.\n' +
+                    (('-' * 150) + '\n') + (('-' * 65) + 'Additional Information' + ('-' * 63) + '\n') + (('-' * 150) + '\n') +
+                    'Expected Result:\n'
+                    f'  - A file with an extension (ex: myfile.txt)\n\n'
+                    'Returned Result:\n'
+                    f'  - file_path = {file_path}\n\n'
+                    'Suggested Resolution:\n'
+                    '   - Please verify you have sent a full file path and not a directory.\n\n'
+                    f'Originating error on line {traceback.extract_stack()[-1].lineno} in <{__name__}>\n' +
+                    (('-' * 150) + '\n') * 2 
+                )  
+                logger.error(error_message) 
+                raise ValueError(error_message)
             logger.debug(f'Reading in all lines from the file \"{file_path}\"')
             # Sets the basename for cleaner logging output.
             basename_searched_file = os.path.basename(file_path)
