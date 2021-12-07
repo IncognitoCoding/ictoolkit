@@ -11,6 +11,7 @@ import logging
 import logging.config
 import traceback
 from logging.handlers import RotatingFileHandler
+from typing import Optional
 
 # Own modules
 from ictoolkit.directors.yaml_director import read_yaml_config
@@ -19,13 +20,18 @@ __author__ = 'IncognitoCoding'
 __copyright__ = 'Copyright 2021, log_director'
 __credits__ = ['IncognitoCoding']
 __license__ = 'GPL'
-__version__ = '2.1'
+__version__ = '2.2'
 __maintainer__ = 'IncognitoCoding'
 __status__ = 'Development'
 
 
 def create_logger(save_path, logger_name, log_name, max_bytes, file_log_level, console_log_level, backup_count, format_option, handler_option, rollover):
     """
+    
+    #####################################################################
+    # Function is depricated as of 02/05/2021. create_logger version 1.8
+    #####################################################################
+
     Creates a logger based on specific parameters. The logger is passed back and can be used throughout the program.
 
     Checks that existing log handlers do not exist. Log handlers can exist when looping. This check will prevent child loggers from being created and having duplicate entries.
@@ -176,16 +182,17 @@ def create_logger(save_path, logger_name, log_name, max_bytes, file_log_level, c
     return logger
 
 
-def setup_logger_yaml(yaml_path, separate_default_logs=False, allow_basic=None):
+def setup_logger_yaml(yaml_path: str, separate_default_logs: Optional[bool] = False, allow_basic: Optional[bool] = None) -> None:
     """
     This function sets up a logger for the program. The configuration must be setup with a YAML file. This method is the best method for using logging in to additional modules.
     
     Default file log handler paths are supported. Cross-platform usage can be a pain and require the path to be the full path. Having default enabled allows the program to set the\\
     filename for each log handler. This function allows the ability to have all file log handlers log to the same file, which is named the same name as the main program, or be
     individual log files per file hander, which will be named based on the file handler key name. The "filename:" key value has to be "DEFAULT" in call caps to work.\\ 
+    Also, user defined DEFAULT path logs can be added by adding :<log name> to the end of DEFAULT.
     All default logs will be at the root of the main program in a folder called logs.
-    - default YAML example = filename: DEFAULT
-
+    - default YAML example1 = filename: DEFAULT
+    - default YAML example2 = filename: DEFAULT:mylog
 
     See the sample folder for an example configuration file.
 
@@ -231,7 +238,7 @@ def setup_logger_yaml(yaml_path, separate_default_logs=False, allow_basic=None):
                     if 'filename' in str(setting_keys):
                         # Gets the value from the filename: key.
                         filename_value = config['handlers'][handler_key]['filename']
-                        # Checks if the filename value is "DEFAULT".
+                        # Checks if the filename value is "DEFAULT" to set the log with the main program name.
                         if 'DEFAULT' == filename_value:
                             # Splits the program name from the main program path to set the default path.
                             # Original Example: c:/GitHub_Repositories/certmonitor/certmonitor/certmonitor.py
@@ -256,7 +263,34 @@ def setup_logger_yaml(yaml_path, separate_default_logs=False, allow_basic=None):
                                 main_program_name = main_program_file_name.replace('.py','')
                                 log_file_path = os.path.abspath(f'{log_path}/{main_program_name}.log')
                             # Update the file log handler file path to the main root.
-                            config['handlers'][handler_key]['filename'] = log_file_path         
+                            config['handlers'][handler_key]['filename'] = log_file_path  
+                        # Checks if the filename value is "DEFAULT:" to set the log with the user defined log name.    
+                        elif 'DEFAULT:' in filename_value:
+                            # Splits the program name from the main program path to set the default path.
+                            # Original Example: c:/GitHub_Repositories/certmonitor/certmonitor/certmonitor.py
+                            # Split Example:
+                            #   - os.path.split(sys.argv[0])[0] = c:/GitHub_Repositories/certmonitor/certmonitor
+                            #   - os.path.split(sys.argv[0])[1] = certmonitor.py
+                            split_main_program_file_path = os.path.split(sys.argv[0])
+                            main_program_path = split_main_program_file_path[0]
+                            # Sets the program log path for the default log path in the YAML.
+                            log_path = os.path.abspath(f'{main_program_path}/logs')
+                            # Check if main file path exists with a "logs" folder. If not create the folder.
+                            # Checks if the save_log_path exists and if not it will be created.
+                            # This is required because the logs do not save to the root directory.
+                            if not os.path.exists(log_path):
+                                os.makedirs(log_path)
+                            # Checks if the user wants default log file hander files to be separate.
+                            if separate_default_logs:
+                                log_file_path = os.path.abspath(f'{log_path}/{handler_key}.log')
+                            else:
+                                # Removes the .py from the main program name
+                                # Original Example: DEFAULT:mylog
+                                # Returned Example: mylog
+                                user_defined_log_name = filename_value.split(':')[1]
+                                log_file_path = os.path.abspath(f'{log_path}/{user_defined_log_name}.log')
+                            # Update the file log handler file path to the main root.
+                            config['handlers'][handler_key]['filename'] = log_file_path              
         # Sets the logging configuration from the YAML configuration.
         logging.config.dictConfig(config)
     except Exception as err:
