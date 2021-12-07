@@ -16,7 +16,7 @@ __author__ = 'IncognitoCoding'
 __copyright__ = 'Copyright 2021, yaml_director'
 __credits__ = ['IncognitoCoding']
 __license__ = 'GPL'
-__version__ = '1.4'
+__version__ = '1.5'
 __maintainer__ = 'IncognitoCoding'
 __status__ = 'Development'
 
@@ -96,7 +96,7 @@ def read_yaml_config(yaml_file_path: str, loader: str) -> yaml:
         logger.debug(f'Returning value(s):\n  - Return = {config}')
         return config
 
-def yaml_value_validation(key: str, input_value: str, required_value_type: Union[type, list]) -> NoReturn:
+def yaml_value_validation(key: str, input_value: str, required_value_type: Union[type, list]) -> None:
     """
     YAML value validations are performed within this function. Any validation that does not pass will throw a ValueError message statement that a try exception statement can handle.
 
