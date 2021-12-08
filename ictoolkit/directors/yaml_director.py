@@ -7,7 +7,7 @@ This module does not have a test file to run with pytest. The YAML function will
 # Built-in/Generic Imports
 import traceback
 import logging
-from typing import NoReturn, Union
+from typing import Union
 
 # Libraries
 import yaml
