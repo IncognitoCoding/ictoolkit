@@ -51,7 +51,7 @@ def encrypt_info(email_settings, unencrypted_info):
     # Custom flowchart tracking. This is ideal for large projects that move a lot. 
     # For any third-party modules, set the flow before making the function call.
     logger_flowchart = logging.getLogger('flowchart')
-    logger_flowchart.info(f'Flowchart --> Function: {traceback.extract_stack(None, 2)[1][2]}')
+    logger_flowchart.debug(f'Flowchart --> Function: {traceback.extract_stack(None, 2)[1][2]}')
 
     logger.debug(f'Begining to encrypt the info. unencrypted_info = {unencrypted_info}')
     try:
@@ -125,7 +125,7 @@ def decrypt_info(email_settings, encrypted_info):
     # Custom flowchart tracking. This is ideal for large projects that move a lot. 
     # For any third-party modules, set the flow before making the function call.
     logger_flowchart = logging.getLogger('flowchart')
-    logger_flowchart.info(f'Flowchart --> Function: {traceback.extract_stack(None, 2)[1][2]}')
+    logger_flowchart.debug(f'Flowchart --> Function: {traceback.extract_stack(None, 2)[1][2]}')
 
     try:
         logger.debug(f'Begining to decrypt the info. uencrypted_info = {encrypted_info}')
@@ -223,7 +223,7 @@ def send_email(email_settings, subject, body_info):
     # Custom flowchart tracking. This is ideal for large projects that move a lot. 
     # For any third-party modules, set the flow before making the function call.
     logger_flowchart = logging.getLogger('flowchart')
-    logger_flowchart.info(f'Flowchart --> Function: {traceback.extract_stack(None, 2)[1][2]}')
+    logger_flowchart.debug(f'Flowchart --> Function: {traceback.extract_stack(None, 2)[1][2]}')
 
     logger.debug(f'Begining to send an email message. body_info = {body_info}')
 
