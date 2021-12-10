@@ -96,6 +96,7 @@ def read_yaml_config(yaml_file_path: str, loader: str) -> yaml:
         logger.debug(f'Returning value(s):\n  - Return = {config}')
         return config
 
+
 def yaml_value_validation(key: str, input_value: str, required_value_type: Union[type, list]) -> None:
     """
     YAML value validations are performed within this function. Any validation that does not pass will throw a ValueError message statement that a try exception statement can handle.
