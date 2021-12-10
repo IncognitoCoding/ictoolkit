@@ -49,7 +49,7 @@ def remove_duplicate_dict_values_in_list(list_dictionary, element_number=None):
     # Custom flowchart tracking. This is ideal for large projects that move a lot. 
     # For any third-party modules, set the flow before making the function call.
     logger_flowchart = logging.getLogger('flowchart')
-    logger_flowchart.info(f'Flowchart --> Function: {traceback.extract_stack(None, 2)[1][2]}')
+    logger_flowchart.debug(f'Flowchart --> Function: {traceback.extract_stack(None, 2)[1][2]}')
 
     try:
 
@@ -129,7 +129,7 @@ def get_list_of_dicts_duplicates(key, list_dictionary, grouped=False):
     # Custom flowchart tracking. This is ideal for large projects that move a lot. 
     # For any third-party modules, set the flow before making the function call.
     logger_flowchart = logging.getLogger('flowchart')
-    logger_flowchart.info(f'Flowchart --> Function: {traceback.extract_stack(None, 2)[1][2]}')
+    logger_flowchart.debug(f'Flowchart --> Function: {traceback.extract_stack(None, 2)[1][2]}')
 
     try:
 
@@ -244,7 +244,7 @@ def get_list_duplicates(duplicates, match_index=None, grouped=False):
     # Custom flowchart tracking. This is ideal for large projects that move a lot. 
     # For any third-party modules, set the flow before making the function call.
     logger_flowchart = logging.getLogger('flowchart')
-    logger_flowchart.info(f'Flowchart --> Function: {traceback.extract_stack(None, 2)[1][2]}')
+    logger_flowchart.debug(f'Flowchart --> Function: {traceback.extract_stack(None, 2)[1][2]}')
 
     try:
 
@@ -420,7 +420,7 @@ def string_grouper(list_of_strings, grouping_value, grouping_option, case_insens
     # Custom flowchart tracking. This is ideal for large projects that move a lot. 
     # For any third-party modules, set the flow before making the function call.
     logger_flowchart = logging.getLogger('flowchart')
-    logger_flowchart.info(f'Flowchart --> Function: {traceback.extract_stack(None, 2)[1][2]}')
+    logger_flowchart.debug(f'Flowchart --> Function: {traceback.extract_stack(None, 2)[1][2]}')
 
     logger.debug(f'Starting string grouping with the following list of strings: {list_of_strings}')
     # Validates the sent strings are in a list.
@@ -667,7 +667,7 @@ def find_longest_common_substring(string1, string2):
     # Custom flowchart tracking. This is ideal for large projects that move a lot. 
     # For any third-party modules, set the flow before making the function call.
     logger_flowchart = logging.getLogger('flowchart')
-    logger_flowchart.info(f'Flowchart --> Function: {traceback.extract_stack(None, 2)[1][2]}')
+    logger_flowchart.debug(f'Flowchart --> Function: {traceback.extract_stack(None, 2)[1][2]}')
 
     # Validates the sending parameters are strings.
     if (
@@ -726,7 +726,7 @@ def user_choice_character_grouping(list_of_strings):
     # Custom flowchart tracking. This is ideal for large projects that move a lot. 
     # For any third-party modules, set the flow before making the function call.
     logger_flowchart = logging.getLogger('flowchart')
-    logger_flowchart.info(f'Flowchart --> Function: {traceback.extract_stack(None, 2)[1][2]}')
+    logger_flowchart.debug(f'Flowchart --> Function: {traceback.extract_stack(None, 2)[1][2]}')
 
     if isinstance(list_of_strings, list):
         logger.debug(f'Passing parameters [list_of_strings] (list):' + '\n    - ' + '\n    - '.join(map(str, list_of_strings)))
@@ -873,7 +873,7 @@ def clean_non_word_characters(string: str) -> str:
     # Custom flowchart tracking. This is ideal for large projects that move a lot. 
     # For any third-party modules, set the flow before making the function call.
     logger_flowchart = logging.getLogger('flowchart')
-    logger_flowchart.info(f'Flowchart --> Function: {traceback.extract_stack(None, 2)[1][2]}')
+    logger_flowchart.debug(f'Flowchart --> Function: {traceback.extract_stack(None, 2)[1][2]}')
 
     # Validates the sending parameter is a string.
     if isinstance(string, str):
