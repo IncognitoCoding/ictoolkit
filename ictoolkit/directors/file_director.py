@@ -40,7 +40,7 @@ def write_file(file_path, write_value):
     # Custom flowchart tracking. This is ideal for large projects that move a lot. 
     # For any third-party modules, set the flow before making the function call.
     logger_flowchart = logging.getLogger('flowchart')
-    logger_flowchart.info(f'Flowchart --> Function: {traceback.extract_stack(None, 2)[1][2]}')
+    logger_flowchart.debug(f'Flowchart --> Function: {traceback.extract_stack(None, 2)[1][2]}')
 
     logger.debug(f'Begining to write the value to the file. write_value = {write_value}')
     try:
@@ -95,7 +95,7 @@ def file_exist_check(file_path, file_description):
     # Custom flowchart tracking. This is ideal for large projects that move a lot. 
     # For any third-party modules, set the flow before making the function call.
     logger_flowchart = logging.getLogger('flowchart')
-    logger_flowchart.info(f'Flowchart --> Function: {traceback.extract_stack(None, 2)[1][2]}')
+    logger_flowchart.debug(f'Flowchart --> Function: {traceback.extract_stack(None, 2)[1][2]}')
 
     logger.debug(f'Begining to check the file path for {file_description}')
     # Checks if the file does not exist
@@ -140,7 +140,7 @@ def search_file(file_path, searching_value):
     # Custom flowchart tracking. This is ideal for large projects that move a lot. 
     # For any third-party modules, set the flow before making the function call.
     logger_flowchart = logging.getLogger('flowchart')
-    logger_flowchart.info(f'Flowchart --> Function: {traceback.extract_stack(None, 2)[1][2]}')
+    logger_flowchart.debug(f'Flowchart --> Function: {traceback.extract_stack(None, 2)[1][2]}')
 
     logger.debug(f'Passing parameters [file_path] (str):\n    - {file_path}')
     if isinstance(searching_value, list):
@@ -261,7 +261,7 @@ def search_multiple_files(file_paths, searching_value):
     # Custom flowchart tracking. This is ideal for large projects that move a lot. 
     # For any third-party modules, set the flow before making the function call.
     logger_flowchart = logging.getLogger('flowchart')
-    logger_flowchart.info(f'Flowchart --> Function: {traceback.extract_stack(None, 2)[1][2]}')
+    logger_flowchart.debug(f'Flowchart --> Function: {traceback.extract_stack(None, 2)[1][2]}')
 
     logger.debug(f'Passing parameters [file_paths] (list):' + '\n    - ' + '\n    - '.join(map(str, file_paths)))
     if isinstance(searching_value, list):
@@ -390,7 +390,7 @@ def check_file_threshold_size(file_path, size_max_file_size, logger=None):
     # Custom flowchart tracking. This is ideal for large projects that move a lot. 
     # For any third-party modules, set the flow before making the function call.
     logger_flowchart = logging.getLogger('flowchart')
-    logger_flowchart.info(f'Flowchart --> Function: {traceback.extract_stack(None, 2)[1][2]}')
+    logger_flowchart.debug(f'Flowchart --> Function: {traceback.extract_stack(None, 2)[1][2]}')
 
     logger.debug(f'Begining to check if the log file {file_path} has reached {size_max_file_size} bytes')
     # Checks if file exists before starting.
@@ -466,7 +466,7 @@ def convert_relative_to_full_path(relative_path: str) -> str:
     # Custom flowchart tracking. This is ideal for large projects that move a lot. 
     # For any third-party modules, set the flow before making the function call.
     logger_flowchart = logging.getLogger('flowchart')
-    logger_flowchart.info(f'Flowchart --> Function: {traceback.extract_stack(None, 2)[1][2]}')
+    logger_flowchart.debug(f'Flowchart --> Function: {traceback.extract_stack(None, 2)[1][2]}')
 
     if hasattr(sys, '_MEIPASS'):
         # PyInstaller creates a temp folder and stores path in _MEIPASS
@@ -505,7 +505,7 @@ def user_file_selection(prompt: str, criteria: str, root_dir=None) -> str:
     # Custom flowchart tracking. This is ideal for large projects that move a lot.
     # For any third-party modules, set the flow before making the function call.
     logger_flowchart = logging.getLogger('flowchart')
-    logger_flowchart.info(f'Flowchart --> Function: {traceback.extract_stack(None, 2)[1][2]}')
+    logger_flowchart.debug(f'Flowchart --> Function: {traceback.extract_stack(None, 2)[1][2]}')
 
     logger.debug(f'Passing parameters [prompt] (str):\n    - {prompt}')
     logger.debug(f'Passing parameters [criteria] (str):\n    - {criteria}')

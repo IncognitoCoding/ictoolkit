@@ -49,7 +49,7 @@ def read_yaml_config(yaml_file_path: str, loader: str) -> yaml:
     # Custom flowchart tracking. This is ideal for large projects that move a lot. 
     # For any third-party modules, set the flow before making the function call.
     logger_flowchart = logging.getLogger('flowchart')
-    logger_flowchart.info(f'Flowchart --> Function: {traceback.extract_stack(None, 2)[1][2]}')
+    logger_flowchart.debug(f'Flowchart --> Function: {traceback.extract_stack(None, 2)[1][2]}')
     logger.debug(
         'Passing parameters:\n'
         f'  - yaml_file_path (str):\n        - {yaml_file_path}\n'
@@ -116,7 +116,7 @@ def yaml_value_validation(key: str, input_value: str, required_value_type: Union
     # Custom flowchart tracking. This is ideal for large projects that move a lot. 
     # For any third-party modules, set the flow before making the function call.
     logger_flowchart = logging.getLogger('flowchart')
-    logger_flowchart.info(f'Flowchart --> Function: {traceback.extract_stack(None, 2)[1][2]}')
+    logger_flowchart.debug(f'Flowchart --> Function: {traceback.extract_stack(None, 2)[1][2]}')
     # Requires pre-logger formatting because the logger can not use one line if/else or join without excluding sections of the the output.
     if isinstance(required_value_type, list):
         formatted_required_value_type = '  - required_value_type (list):' + str('\n        - ' + '\n        - '.join(map(str, required_value_type)))

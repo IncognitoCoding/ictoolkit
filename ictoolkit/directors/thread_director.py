@@ -51,7 +51,7 @@ def start_function_thread(passing_program_function, program_function_name, infin
     # Custom flowchart tracking. This is ideal for large projects that move a lot. 
     # For any third-party modules, set the flow before making the function call.
     logger_flowchart = logging.getLogger('flowchart')
-    logger_flowchart.info(f'Flowchart --> Function: {traceback.extract_stack(None, 2)[1][2]}')
+    logger_flowchart.debug(f'Flowchart --> Function: {traceback.extract_stack(None, 2)[1][2]}')
 
     # Creates a dedicated thread class to run the companion decryptor.
     # This is required because the main() function will sleep x minutes between checks.
