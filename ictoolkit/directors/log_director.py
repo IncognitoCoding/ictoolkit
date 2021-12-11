@@ -5,6 +5,7 @@ This module is designed to assist with log-related actions.
 # Built-in/Generic Imports
 import os
 import sys
+import pathlib
 import logging
 import logging.config
 import traceback
@@ -18,7 +19,7 @@ __author__ = 'IncognitoCoding'
 __copyright__ = 'Copyright 2021, log_director'
 __credits__ = ['IncognitoCoding']
 __license__ = 'GPL'
-__version__ = '2.4'
+__version__ = '2.5'
 __maintainer__ = 'IncognitoCoding'
 __status__ = 'Development'
 
@@ -307,14 +308,10 @@ def setup_logger_yaml(yaml_path: str, separate_default_logs: Optional[bool] = Fa
                         filename_value = config['handlers'][handler_key]['filename']
                         # Checks if the filename value is "DEFAULT" to set the log with the main program name.
                         if 'DEFAULT' == filename_value:
-                            # Splits the program name from the main program path to set the default path.
-                            # Original Example: c:/GitHub_Repositories/certmonitor/certmonitor/certmonitor.py
-                            # Split Example:
-                            #   - os.path.split(sys.argv[0])[0] = c:/GitHub_Repositories/certmonitor/certmonitor
-                            #   - os.path.split(sys.argv[0])[1] = certmonitor.py
-                            split_main_program_file_path = os.path.split(sys.argv[0])
-                            main_program_path = split_main_program_file_path[0]
-                            main_program_file_name = split_main_program_file_path[1]
+                            # Gets the main program path and file name of the program.
+                            # Note: The main program path should not be pulled from the os.path.split command because it does not work correctly on Linux.
+                            main_program_path = pathlib.Path.cwd()
+                            main_program_file_name = os.path.split(sys.argv[0])[1]
                             # Sets the program log path for the default log path in the YAML.
                             log_path = os.path.abspath(f'{main_program_path}/logs')
                             # Check if main file path exists with a "logs" folder. If not create the folder.
@@ -333,13 +330,9 @@ def setup_logger_yaml(yaml_path: str, separate_default_logs: Optional[bool] = Fa
                             config['handlers'][handler_key]['filename'] = log_file_path
                         # Checks if the filename value is "DEFAULT:" to set the log with the user defined log name.
                         elif 'DEFAULT:' in filename_value:
-                            # Splits the program name from the main program path to set the default path.
-                            # Original Example: c:/GitHub_Repositories/certmonitor/certmonitor/certmonitor.py
-                            # Split Example:
-                            #   - os.path.split(sys.argv[0])[0] = c:/GitHub_Repositories/certmonitor/certmonitor
-                            #   - os.path.split(sys.argv[0])[1] = certmonitor.py
-                            split_main_program_file_path = os.path.split(sys.argv[0])
-                            main_program_path = split_main_program_file_path[0]
+                            # Gets the main program path.
+                            # Note: The main program path should not be pulled from the os.path.split command because it does not work correctly on Linux.
+                            main_program_path = pathlib.Path.cwd()
                             # Sets the program log path for the default log path in the YAML.
                             log_path = os.path.abspath(f'{main_program_path}/logs')
                             # Check if main file path exists with a "logs" folder. If not create the folder.
