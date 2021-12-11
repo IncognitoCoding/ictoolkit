@@ -19,7 +19,7 @@ __author__ = 'IncognitoCoding'
 __copyright__ = 'Copyright 2021, log_director'
 __credits__ = ['IncognitoCoding']
 __license__ = 'GPL'
-__version__ = '2.5'
+__version__ = '2.6'
 __maintainer__ = 'IncognitoCoding'
 __status__ = 'Development'
 
@@ -155,13 +155,14 @@ def create_logger(logger_settings: dict) -> logging.Logger:
         # Checks if a log handler already exists.
         # Log handlers can exist when looping. This check will prevent child loggers from being created and having duplicate entries.
         if existing_logger_flag is False:
+            # Sets logger name.
+            new_logger = logging.getLogger(logger_name)
             # Sets logger level to Debug to cover all handelers levels that are preset.
             # Default = Warning and will restrict output to the handlers even if they are set to a lower level.
-            logger.setLevel(logging.DEBUG)
-
+            new_logger.setLevel(logging.DEBUG)
             # Custom level used for supported programs.
             # Created for use when monitoring logs to show its an alert and not an error.
-            logging.addLevelName(39, "Alert")
+            logging.addLevelName(39, "ALERT")
 
             # Sets the log format based on a number option or manual based on parameter.
             if format_option == 1 or format_option is None:
@@ -202,8 +203,8 @@ def create_logger(logger_settings: dict) -> logging.Logger:
 
                 console_stream_handler.setFormatter(formatter)
                 file_rotation_handler.setFormatter(formatter)
-                logger.addHandler(console_stream_handler)
-                logger.addHandler(file_rotation_handler)
+                new_logger.addHandler(console_stream_handler)
+                new_logger.addHandler(file_rotation_handler)
             elif handler_option == 2:
                 # Sets log rotator.
                 file_rotation_handler = RotatingFileHandler(namespace['logfile'], maxBytes=max_bytes, backupCount=backup_count)
@@ -212,7 +213,7 @@ def create_logger(logger_settings: dict) -> logging.Logger:
                 # Sets the logging level.
                 file_rotation_handler.setLevel(file_level)
                 file_rotation_handler.setFormatter(formatter)
-                logger.addHandler(file_rotation_handler)
+                new_logger.addHandler(file_rotation_handler)
             elif handler_option == 3:
                 # Sets logging stream handler.
                 console_stream_handler = logging.StreamHandler()
@@ -222,7 +223,7 @@ def create_logger(logger_settings: dict) -> logging.Logger:
                 console_stream_handler.setLevel(console_level)
 
                 console_stream_handler.setFormatter(formatter)
-                logger.addHandler(console_stream_handler)
+                new_logger.addHandler(console_stream_handler)
             else:
                 error_message = (
                     'Incorrect handler_option selection.\n\n' +
