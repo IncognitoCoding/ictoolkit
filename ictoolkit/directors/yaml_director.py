@@ -28,7 +28,7 @@ def read_yaml_config(yaml_file_path: str, loader: str) -> yaml:
     Args:
         yaml_file_path (str): YAML file path.
         loader (str): Loader for the YAML file.
-        - loader Options: 
+        - loader Options:
             - FullLoader
                 - Used for more trusted YAML input. This option will avoid unpredictable code execution.
             - SafeLoader
@@ -37,7 +37,7 @@ def read_yaml_config(yaml_file_path: str, loader: str) -> yaml:
                 - Used for the most basic YAML input. All loading is strings.
             - UnsafeLoader
                 - Used for original Loader code but could be easily exploitable by untrusted YAML input.
-        
+
     Raises:
         ValueError: A failure occurred while opening the YAML file.
 
@@ -46,7 +46,7 @@ def read_yaml_config(yaml_file_path: str, loader: str) -> yaml:
     """
     logger = logging.getLogger(__name__)
     logger.debug(f'=' * 20 + traceback.extract_stack(None, 2)[1][2] + '=' * 20)
-    # Custom flowchart tracking. This is ideal for large projects that move a lot. 
+    # Custom flowchart tracking. This is ideal for large projects that move a lot.
     # For any third-party modules, set the flow before making the function call.
     logger_flowchart = logging.getLogger('flowchart')
     logger_flowchart.debug(f'Flowchart --> Function: {traceback.extract_stack(None, 2)[1][2]}')
@@ -73,24 +73,24 @@ def read_yaml_config(yaml_file_path: str, loader: str) -> yaml:
     except Exception as err:
         if 'Incorrect YAML loader parameter' in str(err):
             error_message = (
-                'Incorrect YAML loader parameter.\n\n' +
-                (('-' * 150) + '\n') + (('-' * 65) + 'Additional Information' + ('-' * 63) + '\n') + (('-' * 150) + '\n') +
-                'Expected Result:\n'
+                'Incorrect YAML loader parameter.\n\n'
+                + (('-' * 150) + '\n') + (('-' * 65) + 'Additional Information' + ('-' * 63) + '\n') + (('-' * 150) + '\n')
+                + 'Expected Result:\n'
                 '  - loader = FullLoader or SafeLoader or BaseLoader or UnsafeLoader\n\n'
                 'Returned Result:\n'
                 f'  - loader = {loader}.\n\n'
-                f'Originating error on line {traceback.extract_stack()[-1].lineno} in <{__name__}>\n' +
-                (('-' * 150) + '\n') * 2 
+                f'Originating error on line {traceback.extract_stack()[-1].lineno} in <{__name__}>\n'
+                + (('-' * 150) + '\n') * 2
             )
             raise ValueError(error_message)
         else:
             error_message = (
-                'A failure occurred while opening the YAML file.\n\n' +
-                (('-' * 150) + '\n') + (('-' * 65) + 'Additional Information' + ('-' * 63) + '\n') + (('-' * 150) + '\n') +
-                f'{err}\n\n'
-                f'Originating error on line {traceback.extract_stack()[-1].lineno} in <{__name__}>\n' +
-                (('-' * 150) + '\n') * 2 
-            )   
+                'A failure occurred while opening the YAML file.\n\n'
+                + (('-' * 150) + '\n') + (('-' * 65) + 'Additional Information' + ('-' * 63) + '\n') + (('-' * 150) + '\n')
+                + f'{err}\n\n'
+                f'Originating error on line {traceback.extract_stack()[-1].lineno} in <{__name__}>\n'
+                + (('-' * 150) + '\n') * 2
+            )
         raise ValueError(error_message)
     else:
         logger.debug(f'Returning value(s):\n  - Return = {config}')
@@ -114,7 +114,7 @@ def yaml_value_validation(key: str, input_value: str, required_value_type: Union
     """
     logger = logging.getLogger(__name__)
     logger.debug(f'=' * 20 + traceback.extract_stack(None, 2)[1][2] + '=' * 20)
-    # Custom flowchart tracking. This is ideal for large projects that move a lot. 
+    # Custom flowchart tracking. This is ideal for large projects that move a lot.
     # For any third-party modules, set the flow before making the function call.
     logger_flowchart = logging.getLogger('flowchart')
     logger_flowchart.debug(f'Flowchart --> Function: {traceback.extract_stack(None, 2)[1][2]}')
@@ -145,32 +145,32 @@ def yaml_value_validation(key: str, input_value: str, required_value_type: Union
                 matching_type_flag = False
             else:
                 matching_type_flag = True
-        # Throws the ValueError because the 
+        # Throws the ValueError
         if matching_type_flag is False:
             input_value_type = type(input_value)
             error_message = (
-                f'Incorrect \'{key}\' YAML value.\n\n' +
-                (('-' * 150) + '\n') + (('-' * 65) + 'Additional Information' + ('-' * 63) + '\n') + (('-' * 150) + '\n') +
-                'Expected Result:\n'
-                f'  - The value ({input_value}) in for key ({key}) should have matched the requied value type(s) ({required_value_type})\n\n'
+                f'Incorrect \'{key}\' YAML value.\n\n'
+                + (('-' * 150) + '\n') + (('-' * 65) + 'Additional Information' + ('-' * 63) + '\n') + (('-' * 150) + '\n')
+                + 'Expected Result:\n'
+                f'  - The value ({input_value}) in for key ({key}) should have matched the required value type(s) ({required_value_type})\n\n'
                 'Returned Result:\n'
                 f'  - input_value_type = {input_value_type}\n'
                 f'  - required_value_type = {required_value_type}\n\n'
                 'Suggested Resolution:\n'
                 f'  - Review your YAML configuration to see if it contains the required values.\n\n'
-                f'Originating error on line {traceback.extract_stack()[-1].lineno} in <{__name__}>\n' +
-                (('-' * 150) + '\n') * 2 
-            )   
+                f'Originating error on line {traceback.extract_stack()[-1].lineno} in <{__name__}>\n'
+                + (('-' * 150) + '\n') * 2
+            )
             raise ValueError(error_message)
         else:
-            logger.debug(f'The value ({input_value}) in for key ({key}) matched the requied value type(s) ({required_value_type})')
+            logger.debug(f'The value ({input_value}) in for key ({key}) matched the required value type(s) ({required_value_type})')
     else:
         error_message = (
-            f'No value has been entered for \'{key}\' in the YAML file.\n\n' +
-            (('-' * 150) + '\n') + (('-' * 65) + 'Additional Information' + ('-' * 63) + '\n') + (('-' * 150) + '\n') +
-            'Suggested Resolution:\n'
+            f'No value has been entered for \'{key}\' in the YAML file.\n\n'
+            + (('-' * 150) + '\n') + (('-' * 65) + 'Additional Information' + ('-' * 63) + '\n') + (('-' * 150) + '\n')
+            + 'Suggested Resolution:\n'
             f'  - Please check the YAML configuration for correct formatting.\n\n'
-            f'Originating error on line {traceback.extract_stack()[-1].lineno} in <{__name__}>\n' +
-            (('-' * 150) + '\n') * 2 
-        )   
+            f'Originating error on line {traceback.extract_stack()[-1].lineno} in <{__name__}>\n'
+            + (('-' * 150) + '\n') * 2
+        )
         raise ValueError(error_message)

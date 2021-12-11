@@ -18,7 +18,7 @@ __author__ = 'IncognitoCoding'
 __copyright__ = 'Copyright 2021, log_director'
 __credits__ = ['IncognitoCoding']
 __license__ = 'GPL'
-__version__ = '2.3'
+__version__ = '2.4'
 __maintainer__ = 'IncognitoCoding'
 __status__ = 'Development'
 
@@ -53,7 +53,6 @@ def create_logger(logger_settings: dict) -> logging.Logger:
                         1 - Both (Default)
                         2 - File Handler
                         3 - Console Handler
-                rollover (bool): rolling over to simulate the log file reaching maxBytes size.
 
             \\- For Example: logger_settings = {
                 'save_path': central_log_path,
@@ -65,7 +64,6 @@ def create_logger(logger_settings: dict) -> logging.Logger:
                 'backup_count': 4,
                 'format_option': '%(message)s',
                 'handler_option': 2,
-                'rollover': True,
             }
 
     Raises:
@@ -95,7 +93,7 @@ def create_logger(logger_settings: dict) -> logging.Logger:
     # ###################Dictionary Key Validation########################
     # ####################################################################
     # Gets a list of all expected keys.
-    # Return Output: ['save_path', 'logger_name', 'log_name', 'max_bytes', 'file_log_level', 'console_log_level', 'backup_count', 'format_option', 'handler_option', 'rollover']
+    # Return Output: ['save_path', 'logger_name', 'log_name', 'max_bytes', 'file_log_level', 'console_log_level', 'backup_count', 'format_option', 'handler_option']
     logger_settings_keys = list(logger_settings.keys())
     # Checks if the key words exist in the dictionary.
     # This validates the correct dictionary keys for the logger settings.
@@ -109,9 +107,8 @@ def create_logger(logger_settings: dict) -> logging.Logger:
         or 'backup_count' not in str(logger_settings_keys)
         or 'format_option' not in str(logger_settings_keys)
         or 'handler_option' not in str(logger_settings_keys)
-        or 'rollover' not in str(logger_settings_keys)
     ):
-        required_settings_keys = ['save_path', 'logger_name', 'log_name', 'max_bytes', 'file_log_level', 'console_log_level', 'backup_count', 'format_option', 'handler_option', 'rollover']
+        required_settings_keys = ['save_path', 'logger_name', 'log_name', 'max_bytes', 'file_log_level', 'console_log_level', 'backup_count', 'format_option', 'handler_option']
         error_message = (
             'The logger settings dictionary is missing keys.\n'
             + (('-' * 150) + '\n') + (('-' * 65) + 'Additional Information' + ('-' * 63) + '\n') + (('-' * 150) + '\n')
@@ -136,7 +133,6 @@ def create_logger(logger_settings: dict) -> logging.Logger:
     backup_count = logger_settings.get('backup_count')
     format_option = logger_settings.get('format_option')
     handler_option = logger_settings.get('handler_option')
-    rollover = logger_settings.get('rollover')
 
     try:
 
@@ -144,23 +140,24 @@ def create_logger(logger_settings: dict) -> logging.Logger:
         namespace = {}
         namespace['base_dir'] = os.path.abspath(save_path)
         namespace['logfile'] = os.path.join(namespace['base_dir'], log_name)
+        # Sets flag as False to start.
+        existing_logger_flag = False
 
-        # Sets logger name.
-        logger = logging.getLogger(logger_name)
+        # Loops through all active loggers
+        for active_logger_names, active_logger_details in logging.Logger.manager.loggerDict.items():
+            # Checks if the logger already exists.
+            if logger_name in active_logger_names:
+                existing_logger_flag = True
+                break
+            else:
+                existing_logger_flag = False
         # Checks if a log handler already exists.
         # Log handlers can exist when looping. This check will prevent child loggers from being created and having duplicate entries.
-        if not logger.hasHandlers():
+        if existing_logger_flag is False:
             # Sets logger level to Debug to cover all handelers levels that are preset.
             # Default = Warning and will restrict output to the handlers even if they are set to a lower level.
             logger.setLevel(logging.DEBUG)
 
-            # Changes character format for logging levels.
-            logging.addLevelName(logging.DEBUG, 'Debug')
-            logging.addLevelName(logging.INFO, 'Info')
-            logging.addLevelName(logging.WARNING, 'Warning')
-            logging.addLevelName(logging.ERROR, 'Error')
-            logging.addLevelName(logging.CRITICAL, 'Critical')
-            logging.addLevelName(logging.FATAL, 'Fatal')
             # Custom level used for supported programs.
             # Created for use when monitoring logs to show its an alert and not an error.
             logging.addLevelName(39, "Alert")
@@ -206,11 +203,6 @@ def create_logger(logger_settings: dict) -> logging.Logger:
                 file_rotation_handler.setFormatter(formatter)
                 logger.addHandler(console_stream_handler)
                 logger.addHandler(file_rotation_handler)
-
-                # Checks if log file exists and if Rollover is enabled.
-                if os.path.isfile(namespace['logfile']) and rollover is True:
-                    # Rolling over to simulate the log file reaching maxBytes size.
-                    file_rotation_handler.doRollover()
             elif handler_option == 2:
                 # Sets log rotator.
                 file_rotation_handler = RotatingFileHandler(namespace['logfile'], maxBytes=max_bytes, backupCount=backup_count)
@@ -220,11 +212,6 @@ def create_logger(logger_settings: dict) -> logging.Logger:
                 file_rotation_handler.setLevel(file_level)
                 file_rotation_handler.setFormatter(formatter)
                 logger.addHandler(file_rotation_handler)
-
-                # Checks if log file exists and if Rollover is enabled.
-                if os.path.isfile(namespace['logfile']) and rollover is True:
-                    # Rolling over to simulate the log file reaching maxBytes size.
-                    file_rotation_handler.doRollover()
             elif handler_option == 3:
                 # Sets logging stream handler.
                 console_stream_handler = logging.StreamHandler()
