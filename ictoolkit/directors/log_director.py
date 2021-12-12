@@ -19,7 +19,7 @@ __author__ = 'IncognitoCoding'
 __copyright__ = 'Copyright 2021, log_director'
 __credits__ = ['IncognitoCoding']
 __license__ = 'GPL'
-__version__ = '2.6'
+__version__ = '2.7'
 __maintainer__ = 'IncognitoCoding'
 __status__ = 'Development'
 
@@ -74,7 +74,7 @@ def create_logger(logger_settings: dict) -> logging.Logger:
         ValueError: General exceptions when creating logger
 
     Returns:
-        logger: returns the logger (Return Example: create_logger[0]: <Logger __main__ (DEBUG)>)
+        logger: returns the new logger (Return Example: create_logger: <Logger MySoftware1 (DEBUG)>)
     """
     logger = logging.getLogger(__name__)
     logger.debug(f'=' * 20 + traceback.extract_stack(None, 2)[1][2] + '=' * 20)
@@ -237,7 +237,7 @@ def create_logger(logger_settings: dict) -> logging.Logger:
                 raise ValueError(error_message)
     except Exception as error:
         error_message = (
-            'A general issue occurred while create the logger.\n\n'
+            'A general issue occurred while create the new logger.\n\n'
             + (('-' * 150) + '\n') + (('-' * 65) + 'Additional Information' + ('-' * 63) + '\n') + (('-' * 150) + '\n')
             + f'  - {error}\n\n'
             f'Originating error on line {traceback.extract_stack()[-1].lineno} in <{__name__}>\n'
@@ -246,9 +246,9 @@ def create_logger(logger_settings: dict) -> logging.Logger:
         print(error_message)
         raise ValueError(error_message)
 
-    logger.debug(f'Returning value(s):\n  - Return = {logger}')
+    logger.debug(f'Returning value(s):\n  - Return = {new_logger}')
     # Returns logger
-    return logger
+    return new_logger
 
 
 def setup_logger_yaml(yaml_path: str, separate_default_logs: Optional[bool] = False, allow_basic: Optional[bool] = None) -> None:
