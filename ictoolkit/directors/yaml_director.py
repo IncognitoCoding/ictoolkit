@@ -16,7 +16,7 @@ __author__ = 'IncognitoCoding'
 __copyright__ = 'Copyright 2021, yaml_director'
 __credits__ = ['IncognitoCoding']
 __license__ = 'GPL'
-__version__ = '1.6'
+__version__ = '1.7'
 __maintainer__ = 'IncognitoCoding'
 __status__ = 'Development'
 
@@ -70,8 +70,8 @@ def read_yaml_config(yaml_file_path: str, loader: str) -> yaml:
                 config = yaml.load(file, Loader=yaml.UnsafeLoader)
             else:
                 raise ValueError('Incorrect YAML loader parameter.')
-    except Exception as err:
-        if 'Incorrect YAML loader parameter' in str(err):
+    except Exception as error:
+        if 'Incorrect YAML loader parameter' in str(error):
             error_message = (
                 'Incorrect YAML loader parameter.\n\n'
                 + (('-' * 150) + '\n') + (('-' * 65) + 'Additional Information' + ('-' * 63) + '\n') + (('-' * 150) + '\n')
@@ -79,7 +79,20 @@ def read_yaml_config(yaml_file_path: str, loader: str) -> yaml:
                 '  - loader = FullLoader or SafeLoader or BaseLoader or UnsafeLoader\n\n'
                 'Returned Result:\n'
                 f'  - loader = {loader}.\n\n'
-                f'Originating error on line {traceback.extract_stack()[-1].lineno} in <{__name__}>\n'
+                f'Originating error on line {error.__traceback__.tb_lineno} in <{__name__}>\n'
+                + (('-' * 150) + '\n') * 2
+            )
+            raise ValueError(error_message)
+        elif 'expected <block end>, but found \'<scalar>\'' in str(error):
+            error_message = (
+                'A failure occurred while reading the YAML file.\n'
+                + (('-' * 150) + '\n') + (('-' * 65) + 'Additional Information' + ('-' * 63) + '\n') + (('-' * 150) + '\n')
+                + 'Returned Error:\n'
+                f'{error}\n\n'
+                'Suggested Resolution:\n'
+                '   - Please verify you have the correct punctuation on your entries. For example, having three single quotes will cause this error to occur.\n'
+                '     If you are using three single quotes, it will help if you use double quotes to begin and end with a single quote in the middle.\n\n'
+                f'Originating error on line {error.__traceback__.tb_lineno} in <{__name__}>\n'
                 + (('-' * 150) + '\n') * 2
             )
             raise ValueError(error_message)
@@ -87,8 +100,8 @@ def read_yaml_config(yaml_file_path: str, loader: str) -> yaml:
             error_message = (
                 'A failure occurred while opening the YAML file.\n\n'
                 + (('-' * 150) + '\n') + (('-' * 65) + 'Additional Information' + ('-' * 63) + '\n') + (('-' * 150) + '\n')
-                + f'{err}\n\n'
-                f'Originating error on line {traceback.extract_stack()[-1].lineno} in <{__name__}>\n'
+                + f'{error}\n\n'
+                f'Originating error on line {error.__traceback__.tb_lineno} in <{__name__}>\n'
                 + (('-' * 150) + '\n') * 2
             )
         raise ValueError(error_message)

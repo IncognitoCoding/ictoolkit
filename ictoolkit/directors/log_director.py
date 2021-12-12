@@ -19,7 +19,7 @@ __author__ = 'IncognitoCoding'
 __copyright__ = 'Copyright 2021, log_director'
 __credits__ = ['IncognitoCoding']
 __license__ = 'GPL'
-__version__ = '2.7'
+__version__ = '2.8'
 __maintainer__ = 'IncognitoCoding'
 __status__ = 'Development'
 
@@ -354,6 +354,10 @@ def setup_logger_yaml(yaml_path: str, separate_default_logs: Optional[bool] = Fa
                             config['handlers'][handler_key]['filename'] = log_file_path
         # Sets the logging configuration from the YAML configuration.
         logging.config.dictConfig(config)
+    except ValueError as error:
+        error_message = (f'{error}Additional traceback reverse path line: {error.__traceback__.tb_lineno} in <{__name__}>\n')
+        print(f'Forwarding caught ValueError at line {error.__traceback__.tb_lineno} in <{__name__}>')
+        raise ValueError(error_message)
     except Exception as error:
         # Checks if allow_default is enabled to setup default "Info" logging.
         if allow_basic:
