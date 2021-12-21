@@ -10,7 +10,7 @@ __author__ = 'IncognitoCoding'
 __copyright__ = 'Copyright 2021, validation_director'
 __credits__ = ['IncognitoCoding']
 __license__ = 'GPL'
-__version__ = '1.3'
+__version__ = '1.4'
 __maintainer__ = 'IncognitoCoding'
 __status__ = 'Development'
 
@@ -182,10 +182,23 @@ def value_type_validation(value: any, required_type: Union[type, list], caller_m
             logger.error(error_message)
             raise ValueError(error_message)
     else:
+        if not caller_module:
+            caller_module = 'N/A - No Optional Parameter Sent'
+        if not caller_function:
+            caller_function = 'N/A - No Optional Parameter Sent'
+        if not caller_line:
+            caller_line = 'N/A - No Optional Parameter Sent'
+
         error_message = (
-            f'No value has been entered for type validation.\n\n'
+            f'The value \'{value}\' sent is not an accepted input value.\n'
             + (('-' * 150) + '\n') + (('-' * 65) + 'Additional Information' + ('-' * 63) + '\n') + (('-' * 150) + '\n')
-            + 'Suggested Resolution:\n'
+            + 'Caller Module:\n'
+            f'  - {caller_module}\n\n'
+            'Caller Function:\n'
+            f'  - {caller_function}\n\n'
+            'Caller Line:\n'
+            f'  - {caller_line}\n\n'
+            'Suggested Resolution:\n'
             f'  - Please check the calling function.\n\n'
             f'Originating error on line {traceback.extract_stack()[-1].lineno} in <{__name__}>\n'
             + (('-' * 150) + '\n') * 2
