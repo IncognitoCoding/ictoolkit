@@ -10,7 +10,7 @@ __author__ = 'IncognitoCoding'
 __copyright__ = 'Copyright 2021, validation_director'
 __credits__ = ['IncognitoCoding']
 __license__ = 'GPL'
-__version__ = '1.2'
+__version__ = '1.3'
 __maintainer__ = 'IncognitoCoding'
 __status__ = 'Development'
 
@@ -45,7 +45,10 @@ def value_type_validation(value: any, required_type: Union[type, list], caller_m
     )
 
     # Verifies a value is sent.
-    if value:
+    if (
+        value is not None
+        and value != ''
+    ):
         # Verifies a type or list is sent.
         if (
             isinstance(required_type, list)
