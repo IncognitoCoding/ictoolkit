@@ -25,7 +25,7 @@ __author__ = 'IncognitoCoding'
 __copyright__ = 'Copyright 2021, email_director'
 __credits__ = ['IncognitoCoding', 'Monoloch']
 __license__ = 'GPL'
-__version__ = '1.6'
+__version__ = '1.7'
 __maintainer__ = 'IncognitoCoding'
 __status__ = 'Development'
 
@@ -440,7 +440,7 @@ def create_template_email(email_template_name: str, email_template_path: str, **
             loader=PackageLoader(module_name, email_template_path),
             autoescape=select_autoescape(['html', 'xml'])
         )
-        template = env.select_template(email_template_name)
+        template = env.get_template(email_template_name)
 
         # Returns
         return template.render(**template_args)
