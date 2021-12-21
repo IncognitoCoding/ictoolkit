@@ -25,7 +25,7 @@ __author__ = 'IncognitoCoding'
 __copyright__ = 'Copyright 2021, email_director'
 __credits__ = ['IncognitoCoding', 'Monoloch']
 __license__ = 'GPL'
-__version__ = '1.5'
+__version__ = '1.6'
 __maintainer__ = 'IncognitoCoding'
 __status__ = 'Development'
 
@@ -425,23 +425,35 @@ def create_template_email(email_template_name: str, email_template_path: str, **
     # #############Primary Function Code#############
     # ###############################################
     #
-    # Gets the main program module name.
-    # Output Example: C:\Repositories\smtpredirect\smtpredirect\smtpredirect.py
-    main_module_file_path = os.path.realpath(sys.argv[0]) if sys.argv[0] else None
-    # Gets the main program base name.
-    # Output Example: smtpredirect.py
-    module_base_name = os.path.basename(main_module_file_path)
-    # Gets the main program name.
-    # Output Example: smtpredirect
-    module_name = os.path.splitext(module_base_name)[0]
-    env = Environment(
-        loader=PackageLoader(module_name, email_template_path),
-        autoescape=select_autoescape(['html', 'xml'])
-    )
-    template = env.get_template(email_template_name)
+    try:
+        # Gets the main program module name.
+        # Output Example: C:\Repositories\smtpredirect\smtpredirect\smtpredirect.py
+        main_module_file_path = os.path.realpath(sys.argv[0]) if sys.argv[0] else None
+        # Gets the main program base name.
+        # Output Example: smtpredirect.py
+        module_base_name = os.path.basename(main_module_file_path)
+        # Gets the main program name.
+        # Output Example: smtpredirect
+        module_name = os.path.splitext(module_base_name)[0]
 
-    # Returns
-    return template.render(**template_args)
+        env = Environment(
+            loader=PackageLoader(module_name, email_template_path),
+            autoescape=select_autoescape(['html', 'xml'])
+        )
+        template = env.select_template(email_template_name)
+
+        # Returns
+        return template.render(**template_args)
+    except Exception as error:
+        error_message = (
+            f'A error occurred while rendering the HTML template.\n\n'
+            + (('-' * 150) + '\n') + (('-' * 65) + 'Additional Information' + ('-' * 63) + '\n') + (('-' * 150) + '\n')
+            + f'{error}\n\n'
+            f'Originating error on line {error.__traceback__.tb_lineno} in <{__name__}>\n'
+            + (('-' * 150) + '\n') * 2
+        )
+        logger.error(error_message)
+        raise ValueError(error_message)
 
 
 def send_email(email_settings: dict, subject: str, body: Optional[str] = None, template_args: Optional[dict] = None) -> None:
