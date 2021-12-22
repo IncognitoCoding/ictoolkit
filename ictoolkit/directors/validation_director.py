@@ -9,7 +9,7 @@ __author__ = 'IncognitoCoding'
 __copyright__ = 'Copyright 2021, validation_director'
 __credits__ = ['IncognitoCoding']
 __license__ = 'GPL'
-__version__ = '1.6'
+__version__ = '1.7'
 __maintainer__ = 'IncognitoCoding'
 __status__ = 'Development'
 
@@ -17,11 +17,11 @@ __status__ = 'Development'
 def value_type_validation(value: any, required_type: Union[type, list], caller_module: str, caller_line: int) -> None:
     """
     A simple type validation validation check. This function is designed to be widely used to check any values. No logging will take place within this function.
-    All error output will list that the information originated from the calling function.
+    The error output will have an origination location based on the error section.
 
     Error Output Origination:
         - TypeError: Will originate from the calling function using the passing parameters.
-        - AttributeError: Will originate within this function.
+        - AttributeError: Will originate from the calling function using the passing parameters.
         - Exception: Will originate within this function.
 
     Args:
@@ -50,9 +50,13 @@ def value_type_validation(value: any, required_type: Union[type, list], caller_m
         error_message = (
             f'The value \'{value}\' sent is not an accepted input.\n'
             + (('-' * 150) + '\n') + (('-' * 65) + 'Additional Information' + ('-' * 63) + '\n') + (('-' * 150) + '\n')
+            + 'Expected Result:\n'
+            f'  - Type = Any value other than None or an empty string\n\n'
+            'Returned Result:\n'
+            f'  - Type = {type(value)}\n\n'
             + 'Suggested Resolution:\n'
             f'  - Please check the calling function.\n\n'
-            + f'Originating error on line {traceback.extract_stack()[-1].lineno} in <{__name__}>\n'
+            f'Originating error on line {caller_line} in <{caller_module}>\n'
             + (('-' * 150) + '\n') * 2
         )
         raise AttributeError(error_message)
@@ -64,9 +68,13 @@ def value_type_validation(value: any, required_type: Union[type, list], caller_m
         error_message = (
             f'No type or list of types has been entered for type validation.\n'
             + (('-' * 150) + '\n') + (('-' * 65) + 'Additional Information' + ('-' * 63) + '\n') + (('-' * 150) + '\n')
+            + 'Expected Result:\n'
+            f'  - Type = type or list of types\n\n'
+            'Returned Result:\n'
+            f'  - Type = {type(required_type)}\n\n'
             + 'Suggested Resolution:\n'
             f'  - Please check the calling function.\n\n'
-            + f'Originating error on line {traceback.extract_stack()[-1].lineno} in <{__name__}>\n'
+            f'Originating error on line {caller_line} in <{caller_module}>\n'
             + (('-' * 150) + '\n') * 2
         )
         raise AttributeError(error_message)
@@ -76,9 +84,13 @@ def value_type_validation(value: any, required_type: Union[type, list], caller_m
         error_message = (
             f'The caller_module \'{caller_module}\' sent is not an accepted input.\n'
             + (('-' * 150) + '\n') + (('-' * 65) + 'Additional Information' + ('-' * 63) + '\n') + (('-' * 150) + '\n')
+            + 'Expected Result:\n'
+            f'  - Type = {required_type}\n\n'
+            'Returned Result:\n'
+            f'  - Type = {type(caller_module)}\n\n'
             + 'Suggested Resolution:\n'
             f'  - Please check the calling function.\n\n'
-            + f'Originating error on line {traceback.extract_stack()[-1].lineno} in <{__name__}>\n'
+            f'Originating error on line {caller_line} in <{caller_module}>\n'
             + (('-' * 150) + '\n') * 2
         )
         raise AttributeError(error_message)
@@ -88,9 +100,13 @@ def value_type_validation(value: any, required_type: Union[type, list], caller_m
         error_message = (
             f'The caller_line \'{caller_line}\' sent is not an accepted input.\n'
             + (('-' * 150) + '\n') + (('-' * 65) + 'Additional Information' + ('-' * 63) + '\n') + (('-' * 150) + '\n')
+            + 'Expected Result:\n'
+            f'  - Type = {required_type}\n\n'
+            'Returned Result:\n'
+            f'  - Type = {type(caller_line)}\n\n'
             + 'Suggested Resolution:\n'
             f'  - Please check the calling function.\n\n'
-            + f'Originating error on line {traceback.extract_stack()[-1].lineno} in <{__name__}>\n'
+            f'Originating error on line {caller_line} in <{caller_module}>\n'
             + (('-' * 150) + '\n') * 2
         )
         raise AttributeError(error_message)
