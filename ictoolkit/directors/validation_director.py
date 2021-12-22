@@ -9,7 +9,7 @@ __author__ = 'IncognitoCoding'
 __copyright__ = 'Copyright 2021, validation_director'
 __credits__ = ['IncognitoCoding']
 __license__ = 'GPL'
-__version__ = '1.5'
+__version__ = '1.6'
 __maintainer__ = 'IncognitoCoding'
 __status__ = 'Development'
 
@@ -136,7 +136,7 @@ def value_type_validation(value: any, required_type: Union[type, list], caller_m
             + '            ' + (('~' * 150) + '\n            ') + (('~' * 63) + 'Start Original Exception' + ('~' * 63) + '\n            ') + (('~' * 150) + '\n            \n')
             + f'{original_error}\n\n'
             + '            ' + (('~' * 150) + '\n            ') + (('~' * 65) + 'End Original Exception' + ('~' * 63) + '\n            ') + (('~' * 150) + '\n            \n\n')
-            + f'Originating error on line {traceback.extract_stack()[-1].lineno} in <{__name__}>\n'
+            + f'Originating error on line {error.__traceback__.tb_lineno} in <{__name__}>\n'
             + (('-' * 150) + '\n') * 2
         )
         raise Exception(error_message)
