@@ -13,7 +13,7 @@ __author__ = 'IncognitoCoding'
 __copyright__ = 'Copyright 2021, error_director'
 __credits__ = ['IncognitoCoding']
 __license__ = 'GPL'
-__version__ = '1.0'
+__version__ = '1.1'
 __maintainer__ = 'IncognitoCoding'
 
 
@@ -115,12 +115,6 @@ def error_formatter(error_args: dict, caller_module: str, caller_line: int) -> N
         # The original_error is not validated because the error could be different class types or whatever the user chooses.
         value_type_validation(main_message, str, __name__, get_line_number())
         value_type_validation(error_type, type, __name__, get_line_number())
-        if expected_result:
-            value_type_validation(expected_result, str, __name__, get_line_number())
-        if returned_result:
-            value_type_validation(returned_result, str, __name__, get_line_number())
-        if suggested_resolution:
-            value_type_validation(suggested_resolution, str, __name__, get_line_number())
     except Exception as error:
         raise error
 
@@ -238,6 +232,22 @@ def error_formatter(error_args: dict, caller_module: str, caller_line: int) -> N
                 + f'{original_error}\n\n'
                 + '            ' + (('~' * 150) + '\n            ') + (('~' * 65) + 'End Original Exception' + ('~' * 63) + '\n            ') + (('~' * 150) + '\n            \n')
                 + f'Originating error on line {caller_line} in <{caller_module}>\n'
+                + (('-' * 150) + '\n') * 2
+            )
+            raise error_type(error_message)
+        elif (
+            main_message
+            and not expected_result
+            and not returned_result
+            and suggested_resolution
+            and not original_error
+        ):
+            error_message = (
+                f'{main_message}\n'
+                + (('-' * 150) + '\n') + (('-' * 65) + 'Additional Information' + ('-' * 63) + '\n') + (('-' * 150) + '\n')
+                + 'Suggested Resolution:\n'
+                f'   - {suggested_resolution}\n\n'
+                f'Originating error on line {caller_line} in <{caller_module}>\n'
                 + (('-' * 150) + '\n') * 2
             )
             raise error_type(error_message)
