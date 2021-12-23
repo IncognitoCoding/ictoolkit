@@ -8,18 +8,20 @@ import sys
 import pathlib
 import logging
 import logging.config
-import traceback
 from logging.handlers import RotatingFileHandler
 from typing import Optional
 
 # Own modules
 from ictoolkit.directors.yaml_director import read_yaml_config
+from ictoolkit.directors.validation_director import value_type_validation
+from ictoolkit.directors.error_director import error_formatter
+from ictoolkit.helpers.py_helper import get_function_name, get_line_number
 
 __author__ = 'IncognitoCoding'
 __copyright__ = 'Copyright 2021, log_director'
 __credits__ = ['IncognitoCoding']
 __license__ = 'GPL'
-__version__ = '2.8'
+__version__ = '2.9'
 __maintainer__ = 'IncognitoCoding'
 __status__ = 'Development'
 
@@ -44,7 +46,7 @@ def create_logger(logger_settings: dict) -> logging.Logger:
                 file_log_level (str): file output log level
                 console_log_level (str): console output log level
                 backup_count (int): backup log copies
-                format_option (int or st): allows the ability to select a pre-defined option
+                format_option (int or str): allows the ability to select a pre-defined option
                     options:
                         1 - '%(asctime)s|%(levelname)s|%(message)s (Module:%(module)s, Function:%(funcName)s,  Line:%(lineno)s)',datefmt='%Y-%m-%d %H:%M:%S' (Default)\\
                         2 - '%(message)s'\\
@@ -77,66 +79,111 @@ def create_logger(logger_settings: dict) -> logging.Logger:
         logger: returns the new logger (Return Example: create_logger: <Logger MySoftware1 (DEBUG)>)
     """
     logger = logging.getLogger(__name__)
-    logger.debug(f'=' * 20 + traceback.extract_stack(None, 2)[1][2] + '=' * 20)
+    logger.debug(f'=' * 20 + get_function_name + '=' * 20)
     # Custom flowchart tracking. This is ideal for large projects that move a lot.
     # For any third-party modules, set the flow before making the function call.
     logger_flowchart = logging.getLogger('flowchart')
     # Deletes the flowchart log if one already exists.
-    logger_flowchart.debug(f'Flowchart --> Function: {traceback.extract_stack(None, 2)[1][2]}')
-    # Requires pre-logger formatting because the logger can not use one line if/else or join without excluding sections of the the output.
-    formatted_logger_settings = '  - logger_settings (dict):\n        - ' + '\n        - '.join(': '.join((key, str(val))) for (key, val) in logger_settings.items())
-    logger.debug(
-        'Passing parameters:\n'
-        f'{formatted_logger_settings}\n'
-    )
+    logger_flowchart.debug(f'Flowchart --> Function: {get_function_name}')
 
-    # ####################################################################
-    # ###################Dictionary Key Validation########################
-    # ####################################################################
-    # Gets a list of all expected keys.
-    # Return Output: ['save_path', 'logger_name', 'log_name', 'max_bytes', 'file_log_level', 'console_log_level', 'backup_count', 'format_option', 'handler_option']
-    logger_settings_keys = list(logger_settings.keys())
-    # Checks if the key words exist in the dictionary.
-    # This validates the correct dictionary keys for the logger settings.
-    if (
-        'save_path' not in str(logger_settings_keys)
-        or 'logger_name' not in str(logger_settings_keys)
-        or 'log_name' not in str(logger_settings_keys)
-        or 'max_bytes' not in str(logger_settings_keys)
-        or 'file_log_level' not in str(logger_settings_keys)
-        or 'console_log_level' not in str(logger_settings_keys)
-        or 'backup_count' not in str(logger_settings_keys)
-        or 'format_option' not in str(logger_settings_keys)
-        or 'handler_option' not in str(logger_settings_keys)
-    ):
-        required_settings_keys = ['save_path', 'logger_name', 'log_name', 'max_bytes', 'file_log_level', 'console_log_level', 'backup_count', 'format_option', 'handler_option']
-        error_message = (
-            'The logger settings dictionary is missing keys.\n'
-            + (('-' * 150) + '\n') + (('-' * 65) + 'Additional Information' + ('-' * 63) + '\n') + (('-' * 150) + '\n')
-            + 'Expected Result:\n'
-            f'  - logger settings key\'s = {required_settings_keys}\n\n'
-            'Returned Result:\n'
-            f'  - logger settings key\'s = {logger_settings_keys}\n\n'
-            'Suggested Resolution:\n'
-            '   - Please verify you have set all required keys and try again.\n\n'
-            f'Originating error on line {traceback.extract_stack()[-1].lineno} in <{__name__}>\n'
-            + (('-' * 150) + '\n') * 2
-        )
-        print(error_message)
-        raise ValueError(error_message)
-
-    save_path = logger_settings.get('save_path')
-    logger_name = logger_settings.get('logger_name')
-    log_name = logger_settings.get('log_name')
-    max_bytes = logger_settings.get('max_bytes')
-    file_log_level = logger_settings.get('file_log_level')
-    console_log_level = logger_settings.get('console_log_level')
-    backup_count = logger_settings.get('backup_count')
-    format_option = logger_settings.get('format_option')
-    handler_option = logger_settings.get('handler_option')
-
+    # Checks function launch variables and logs passing parameters.
     try:
+        value_type_validation(logger_settings, dict, __name__, get_line_number())
 
+        # Requires pre-logger formatting because the logger can not use one line if/else or join without excluding sections of the the output.
+        formatted_logger_settings = '  - logger_settings (dict):\n        - ' + '\n        - '.join(': '.join((key, str(val))) for (key, val) in logger_settings.items())
+        logger.debug(
+            'Passing parameters:\n'
+            f'{formatted_logger_settings}\n'
+        )
+    except Exception as error:
+        if 'Originating error on line' in str(error):
+            logger.debug(f'Forwarding caught {type(error).__name__} at line {error.__traceback__.tb_lineno} in <{__name__}>')
+            raise error
+        else:
+            error_args = {
+                'main_message': 'A general exception occurred during the value type validation.',
+                'error_type': Exception,
+                'original_error': error,
+            }
+            error_formatter(error_args, __name__, error.__traceback__.tb_lineno)
+    
+    # Checks for required dictionary keys.
+    try:
+        # ####################################################################
+        # ###################Dictionary Key Validation########################
+        # ####################################################################
+        # Gets a list of all expected keys.
+        # Return Output: ['save_path', 'logger_name', 'log_name', 'max_bytes', 'file_log_level', 'console_log_level', 'backup_count', 'format_option', 'handler_option']
+        logger_settings_keys = list(logger_settings.keys())
+        # Checks if the key words exist in the dictionary.
+        # This validates the correct dictionary keys for the logger settings.
+        if (
+            'save_path' not in str(logger_settings_keys)
+            or 'logger_name' not in str(logger_settings_keys)
+            or 'log_name' not in str(logger_settings_keys)
+            or 'max_bytes' not in str(logger_settings_keys)
+            or 'file_log_level' not in str(logger_settings_keys)
+            or 'console_log_level' not in str(logger_settings_keys)
+            or 'backup_count' not in str(logger_settings_keys)
+            or 'format_option' not in str(logger_settings_keys)
+            or 'handler_option' not in str(logger_settings_keys)
+        ):
+            error_args = {
+                'main_message': 'The logger settings dictionary is missing keys.',
+                'error_type': KeyError,
+                'expected_result': ['save_path', 'logger_name', 'log_name', 'max_bytes', 'file_log_level', 'console_log_level', 'backup_count', 'format_option', 'handler_option'],
+                'returned_result': logger_settings_keys,
+                'suggested_resolution': 'Please verify you have set all required keys and try again.',
+            }
+            error_formatter(error_args, __name__, get_line_number())
+    except Exception as error:
+        if 'Originating error on line' in str(error):
+            logger.debug(f'Forwarding caught {type(error).__name__} at line {error.__traceback__.tb_lineno} in <{__name__}>')
+            raise error
+        else:
+            error_args = {
+                'main_message': 'A general error occurred while validating the logger dictionary keys.',
+                'error_type': Exception,
+                'original_error': error,
+            }
+            error_formatter(error_args, __name__, error.__traceback__.tb_lineno)
+
+    # Gets dictionary values and validates value types.
+    try:
+        save_path = logger_settings.get('save_path')
+        logger_name = logger_settings.get('logger_name')
+        log_name = logger_settings.get('log_name')
+        max_bytes = logger_settings.get('max_bytes')
+        file_log_level = logger_settings.get('file_log_level')
+        console_log_level = logger_settings.get('console_log_level')
+        backup_count = logger_settings.get('backup_count')
+        format_option = logger_settings.get('format_option')
+        handler_option = logger_settings.get('handler_option')
+
+        value_type_validation(save_path, str, __name__, get_line_number())
+        value_type_validation(logger_name, str, __name__, get_line_number())
+        value_type_validation(log_name, str, __name__, get_line_number())
+        value_type_validation(max_bytes, int, __name__, get_line_number())
+        value_type_validation(file_log_level, str, __name__, get_line_number())
+        value_type_validation(console_log_level, str, __name__, get_line_number())
+        value_type_validation(backup_count, int, __name__, get_line_number())
+        value_type_validation(format_option, [str, int], __name__, get_line_number())
+        value_type_validation(handler_option, int, __name__, get_line_number())
+    except Exception as error:
+        if 'Originating error on line' in str(error):
+            logger.debug(f'Forwarding caught {type(error).__name__} at line {error.__traceback__.tb_lineno} in <{__name__}>')
+            raise error
+        else:
+            error_args = {
+                'main_message': 'A general error occurred while getting and validating the logger dictionary values.',
+                'error_type': Exception,
+                'original_error': error,
+            }
+            error_formatter(error_args, __name__, error.__traceback__.tb_lineno)
+
+    # Creates or returns a logger.
+    try:
         # Sets the log save path using namespace.
         namespace = {}
         namespace['base_dir'] = os.path.abspath(save_path)
@@ -156,10 +203,10 @@ def create_logger(logger_settings: dict) -> logging.Logger:
         # Log handlers can exist when looping. This check will prevent child loggers from being created and having duplicate entries.
         if existing_logger_flag is False:
             # Sets logger name.
-            new_logger = logging.getLogger(logger_name)
+            created_logger = logging.getLogger(logger_name)
             # Sets logger level to Debug to cover all handelers levels that are preset.
             # Default = Warning and will restrict output to the handlers even if they are set to a lower level.
-            new_logger.setLevel(logging.DEBUG)
+            created_logger.setLevel(logging.DEBUG)
             # Custom level used for supported programs.
             # Created for use when monitoring logs to show its an alert and not an error.
             logging.addLevelName(39, "ALERT")
@@ -174,16 +221,12 @@ def create_logger(logger_settings: dict) -> logging.Logger:
             elif '%' in f'{format_option}':
                 formatter = logging.Formatter(fmt=format_option)
             else:
-                error_message = (
-                    'Incorrect format_option selection.\n\n' +
-                    + (('-' * 150) + '\n') + (('-' * 65) + 'Additional Information' + ('-' * 63) + '\n') + (('-' * 150) + '\n')
-                    + 'Suggested Resolution:\n'
-                    f'  - Please verify you entered a valid format option number or custom format string.\n\n'
-                    f'Originating error on line {traceback.extract_stack()[-1].lineno} in <{__name__}>\n'
-                    + (('-' * 150) + '\n') * 2
-                )
-                print(error_message)
-                raise ValueError(error_message)
+                error_args = {
+                    'main_message': 'Incorrect format_option selection.',
+                    'error_type': ValueError,
+                    'suggested_resolution': 'Please verify you entered a valid format option number or custom format string.',
+                }
+                error_formatter(error_args, __name__, get_line_number())
 
             # Sets handler option based on parameter.
             if handler_option == 1 or handler_option is None:
@@ -203,8 +246,8 @@ def create_logger(logger_settings: dict) -> logging.Logger:
 
                 console_stream_handler.setFormatter(formatter)
                 file_rotation_handler.setFormatter(formatter)
-                new_logger.addHandler(console_stream_handler)
-                new_logger.addHandler(file_rotation_handler)
+                created_logger.addHandler(console_stream_handler)
+                created_logger.addHandler(file_rotation_handler)
             elif handler_option == 2:
                 # Sets log rotator.
                 file_rotation_handler = RotatingFileHandler(namespace['logfile'], maxBytes=max_bytes, backupCount=backup_count)
@@ -213,7 +256,7 @@ def create_logger(logger_settings: dict) -> logging.Logger:
                 # Sets the logging level.
                 file_rotation_handler.setLevel(file_level)
                 file_rotation_handler.setFormatter(formatter)
-                new_logger.addHandler(file_rotation_handler)
+                created_logger.addHandler(file_rotation_handler)
             elif handler_option == 3:
                 # Sets logging stream handler.
                 console_stream_handler = logging.StreamHandler()
@@ -223,32 +266,32 @@ def create_logger(logger_settings: dict) -> logging.Logger:
                 console_stream_handler.setLevel(console_level)
 
                 console_stream_handler.setFormatter(formatter)
-                new_logger.addHandler(console_stream_handler)
+                created_logger.addHandler(console_stream_handler)
             else:
-                error_message = (
-                    'Incorrect handler_option selection.\n\n' +
-                    + (('-' * 150) + '\n') + (('-' * 65) + 'Additional Information' + ('-' * 63) + '\n') + (('-' * 150) + '\n')
-                    + 'Suggested Resolution:\n'
-                    f'  - Please verify you entered a valid handler option number.\n\n'
-                    f'Originating error on line {traceback.extract_stack()[-1].lineno} in <{__name__}>\n'
-                    + (('-' * 150) + '\n') * 2
-                )
-                print(error_message)
-                raise ValueError(error_message)
+                error_args = {
+                    'main_message': 'Incorrect handler_option selection.',
+                    'error_type': ValueError,
+                    'suggested_resolution': 'Please verify you entered a valid handler option number.',
+                }
+                error_formatter(error_args, __name__, get_line_number())
+        else:
+            # Setting the existing logger.
+            created_logger = logging.getLogger(logger_name)
+        
+        logger.debug(f'Returning value(s):\n  - Return = {created_logger}')
+        # Returns logger
+        return created_logger
     except Exception as error:
-        error_message = (
-            'A general issue occurred while create the new logger.\n\n'
-            + (('-' * 150) + '\n') + (('-' * 65) + 'Additional Information' + ('-' * 63) + '\n') + (('-' * 150) + '\n')
-            + f'  - {error}\n\n'
-            f'Originating error on line {traceback.extract_stack()[-1].lineno} in <{__name__}>\n'
-            + (('-' * 150) + '\n') * 2
-        )
-        print(error_message)
-        raise ValueError(error_message)
-
-    logger.debug(f'Returning value(s):\n  - Return = {new_logger}')
-    # Returns logger
-    return new_logger
+        if 'Originating error on line' in str(error):
+            logger.debug(f'Forwarding caught {type(error).__name__} at line {error.__traceback__.tb_lineno} in <{__name__}>')
+            raise error
+        else:
+            error_args = {
+                'main_message': 'A general issue occurred while create the new logger.',
+                'error_type': Exception,
+                'original_error': error,
+            }
+            error_formatter(error_args, __name__, error.__traceback__.tb_lineno)
 
 
 def setup_logger_yaml(yaml_path: str, separate_default_logs: Optional[bool] = False, allow_basic: Optional[bool] = None) -> None:
@@ -284,6 +327,27 @@ def setup_logger_yaml(yaml_path: str, separate_default_logs: Optional[bool] = Fa
         ValueError: The logging hander failed to create.
         ValueError: The logger failed to setup.
     """
+
+    # Checks function launch variables.
+    try:
+        value_type_validation(yaml_path, str, __name__, get_line_number())
+        if separate_default_logs:
+            value_type_validation(separate_default_logs, bool, __name__, get_line_number())
+        if allow_basic:
+            value_type_validation(allow_basic, bool, __name__, get_line_number())
+    except Exception as error:
+        if 'Originating error on line' in str(error):
+            logger.debug(f'Forwarding caught {type(error).__name__} at line {error.__traceback__.tb_lineno} in <{__name__}>')
+            raise error
+        else:
+            error_args = {
+                'main_message': 'A general exception occurred during the value type validation.',
+                'error_type': Exception,
+                'original_error': error,
+            }
+            error_formatter(error_args, __name__, error.__traceback__.tb_lineno)
+
+    # Sets up the logger based on the YAML.
     try:
         # Calls function to pull in YAML configuration.
         config = read_yaml_config(yaml_path, 'FullLoader')
@@ -354,35 +418,26 @@ def setup_logger_yaml(yaml_path: str, separate_default_logs: Optional[bool] = Fa
                             config['handlers'][handler_key]['filename'] = log_file_path
         # Sets the logging configuration from the YAML configuration.
         logging.config.dictConfig(config)
-    except ValueError as error:
-        error_message = (f'{error}Additional traceback reverse path line: {error.__traceback__.tb_lineno} in <{__name__}>\n')
-        print(f'Forwarding caught ValueError at line {error.__traceback__.tb_lineno} in <{__name__}>')
-        raise ValueError(error_message)
     except Exception as error:
-        # Checks if allow_default is enabled to setup default "Info" logging.
-        if allow_basic:
-            # Sets the basic logger setup configuration.
-            logging.basicConfig(level=logging.INFO)
+        if 'Originating error on line' in str(error):
+            raise error
         else:
-            if 'Unable to configure handler' in str(error):
-                error_message = (
-                    'The logging hander failed to create.\n\n'
-                    + (('-' * 150) + '\n') + (('-' * 65) + 'Additional Information' + ('-' * 63) + '\n') + (('-' * 150) + '\n')
-                    + 'Suggested Resolution:\n'
-                    '  - Please verify YAML file configuration.\n'
-                    '  - Verify your log save path exists.\n\n'
-                    f'Originating error on line {traceback.extract_stack()[-1].lineno} in <{__name__}>\n'
-                    + (('-' * 150) + '\n') * 2
-                )
-                print(error_message)
-                raise ValueError(error_message)
+            # Checks if allow_default is enabled to setup default "Info" logging.
+            if allow_basic:
+                # Sets the basic logger setup configuration.
+                logging.basicConfig(level=logging.INFO)
             else:
-                error_message = (
-                    'The logger failed to setup.\n\n'
-                    + (('-' * 150) + '\n') + (('-' * 65) + 'Additional Information' + ('-' * 63) + '\n') + (('-' * 150) + '\n')
-                    + f'  - {error}\n\n'
-                    f'Originating error on line {traceback.extract_stack()[-1].lineno} in <{__name__}>\n'
-                    + (('-' * 150) + '\n') * 2
-                )
-                print(error_message)
-                raise ValueError(error_message)
+                if 'Unable to configure handler' in str(error):
+                    error_args = {
+                        'main_message': 'The logging hander failed to create.',
+                        'error_type': Exception,
+                        'original_error': 'Please verify YAML file configuration.',
+                    }
+                    error_formatter(error_args, __name__, error.__traceback__.tb_lineno)
+                else:
+                    error_args = {
+                        'main_message': 'A general exception occurred the logger setup.',
+                        'error_type': Exception,
+                        'original_error': error,
+                    }
+                    error_formatter(error_args, __name__, error.__traceback__.tb_lineno)
