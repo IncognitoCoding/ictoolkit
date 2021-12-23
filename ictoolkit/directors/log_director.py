@@ -21,7 +21,7 @@ __author__ = 'IncognitoCoding'
 __copyright__ = 'Copyright 2021, log_director'
 __credits__ = ['IncognitoCoding']
 __license__ = 'GPL'
-__version__ = '2.10'
+__version__ = '2.11'
 __maintainer__ = 'IncognitoCoding'
 __status__ = 'Development'
 
@@ -70,10 +70,17 @@ def create_logger(logger_settings: dict) -> logging.Logger:
             }
 
     Raises:
-        ValueError: The logger settings dictionary is missing keys.
-        ValueError: Incorrect format_option selection
-        ValueError: Incorrect handler_option selection
-        ValueError: General exceptions when creating logger
+        Exception: Forwarding caught {type(error).__name__} at line {error.__traceback__.tb_lineno} in <{__name__}>
+        Exception: A general exception occurred during the value type validation.
+        KeyError: The logger settings dictionary is missing keys.
+        Exception: Forwarding caught {type(error).__name__} at line {error.__traceback__.tb_lineno} in <{__name__}>
+        Exception: A general error occurred while validating the logger dictionary keys.
+        Exception: Forwarding caught {type(error).__name__} at line {error.__traceback__.tb_lineno} in <{__name__}>
+        Exception: A general error occurred while getting and validating the logger dictionary values.
+        ValueError: Incorrect format_option selection.
+        ValueError: Incorrect handler_option selection.
+        Exception: Forwarding caught {type(error).__name__} at line {error.__traceback__.tb_lineno} in <{__name__}>
+        Exception: A general issue occurred while create the new logger.
 
     Returns:
         logger: returns the new logger (Return Example: create_logger: <Logger MySoftware1 (DEBUG)>)
@@ -107,7 +114,7 @@ def create_logger(logger_settings: dict) -> logging.Logger:
                 'original_error': error,
             }
             error_formatter(error_args, __name__, error.__traceback__.tb_lineno)
-    
+
     # Checks for required dictionary keys.
     try:
         # ####################################################################
@@ -277,7 +284,7 @@ def create_logger(logger_settings: dict) -> logging.Logger:
         else:
             # Setting the existing logger.
             created_logger = logging.getLogger(logger_name)
-        
+
         logger.debug(f'Returning value(s):\n  - Return = {created_logger}')
         # Returns logger
         return created_logger
@@ -324,8 +331,11 @@ def setup_logger_yaml(yaml_path: str, separate_default_logs: Optional[bool] = Fa
         allow_basic (bool, optional): Allows the default log level of "INFO" to be used if the YAML file configuration fails when set to "True".
 
     Raises:
-        ValueError: The logging hander failed to create.
-        ValueError: The logger failed to setup.
+        Exception: Forwarding caught {type(error).__name__} at line {error.__traceback__.tb_lineno} in <{__name__}>
+        Exception: A general exception occurred during the value type validation.
+        Exception: Forwarding caught {type(error).__name__} at line {error.__traceback__.tb_lineno} in <{__name__}>
+        Exception: Unable to configure handler
+        Exception: A general exception occurred the logger setup.
     """
 
     # Checks function launch variables.
@@ -337,7 +347,6 @@ def setup_logger_yaml(yaml_path: str, separate_default_logs: Optional[bool] = Fa
             value_type_validation(allow_basic, bool, __name__, get_line_number())
     except Exception as error:
         if 'Originating error on line' in str(error):
-            logger.debug(f'Forwarding caught {type(error).__name__} at line {error.__traceback__.tb_lineno} in <{__name__}>')
             raise error
         else:
             error_args = {
