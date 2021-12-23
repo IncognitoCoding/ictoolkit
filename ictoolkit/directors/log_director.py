@@ -21,7 +21,7 @@ __author__ = 'IncognitoCoding'
 __copyright__ = 'Copyright 2021, log_director'
 __credits__ = ['IncognitoCoding']
 __license__ = 'GPL'
-__version__ = '2.9'
+__version__ = '2.10'
 __maintainer__ = 'IncognitoCoding'
 __status__ = 'Development'
 
@@ -79,12 +79,12 @@ def create_logger(logger_settings: dict) -> logging.Logger:
         logger: returns the new logger (Return Example: create_logger: <Logger MySoftware1 (DEBUG)>)
     """
     logger = logging.getLogger(__name__)
-    logger.debug(f'=' * 20 + get_function_name + '=' * 20)
+    logger.debug(f'=' * 20 + get_function_name() + '=' * 20)
     # Custom flowchart tracking. This is ideal for large projects that move a lot.
     # For any third-party modules, set the flow before making the function call.
     logger_flowchart = logging.getLogger('flowchart')
     # Deletes the flowchart log if one already exists.
-    logger_flowchart.debug(f'Flowchart --> Function: {get_function_name}')
+    logger_flowchart.debug(f'Flowchart --> Function: {get_function_name()}')
 
     # Checks function launch variables and logs passing parameters.
     try:
