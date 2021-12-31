@@ -7,7 +7,6 @@ This module is designed to assist with email-related actions. The module has the
 import os
 import sys
 import logging
-import traceback
 import smtplib
 import re
 from email.message import EmailMessage
@@ -48,7 +47,14 @@ def encrypt_info(email_settings: dict, unencrypted_info: bytes) -> bytes:
         unencrypted_info (bytes): Unencrypted info in bytes format.
 
     Raises:
-        ValueError: A failure occurred while encrypting the info.
+        TypeError: The value '{email_settings}' is not in dict format.
+        TypeError: The value '{unencrypted_info}' is not in bytes format.
+        TypeError: The value '{email_settings.get('message_encryption_password')}' is not in str format.
+        TypeError: The value '{email_settings.get('message_encryption_password')}' is not in bytes format.
+        Exception: Forwarding caught {type(error).__name__} at line {error.__traceback__.tb_lineno} in <{__name__}>
+        Exception: A general exception occurred during the value type validation.
+        Exception: Forwarding caught {type(error).__name__} at line {error.__traceback__.tb_lineno} in <{__name__}>
+        Exception: A general exception occurred while encrypting the info.
 
     Returns:
         bytes: encrypted info
@@ -154,8 +160,17 @@ def decrypt_info(email_settings: dict, encrypted_info: bytes) -> bytes:
         encrypted_info (bytes): Encrypted message in bytes format. Re-encoding may be required.
 
     Raises:
-        ValueError: A failure occurred while decrypting the info.
-        ValueError: An invalid Key failure occurred while decrypting the info.
+        TypeError: The value '{email_settings}' is not in dict format.
+        TypeError: The value '{encrypted_info}' is not in bytes format.
+        TypeError: The value '{email_settings.get('message_encryption_password')}' is not in str format.
+        TypeError: The value '{email_settings.get('message_encryption_password')}' is not in bytes format.
+        Exception: Forwarding caught {type(error).__name__} at line {error.__traceback__.tb_lineno} in <{__name__}>
+        Exception: A general exception occurred during the value type validation.
+        Exception: Forwarding caught {type(error).__name__} at line {error.__traceback__.tb_lineno} in <{__name__}>
+        Exception: A general exception occurred while decrypting the info.
+        Exception: An invalid Key failure occurred while decrypting the info.
+        Exception: Forwarding caught {type(error).__name__} at line {error.__traceback__.tb_lineno} in <{__name__}>
+        Exception: A general exception occurred while decrypting the info.
 
     Returns:
         bytes: Decrypted info.
@@ -275,6 +290,16 @@ def create_template_email(email_template_name: str, email_template_path: str, **
         email_template_path (str): The full path to the templates directory.
         **template_args(dict, optional): The template arguments are used to populate the HTML template variables. Defaults to None.
 
+    Raises:
+        TypeError: The value '{email_template_name}' is not in str format.
+        TypeError: The value '{email_template_path}' is not in str format.
+        TypeError: The value '{template_args}' is not in dict format.
+        Exception: Forwarding caught {type(error).__name__} at line {error.__traceback__.tb_lineno} in <{__name__}>
+        Exception: A general exception occurred during the value type validation.
+        ValueError: The email HTML template path does not exist.
+        Exception: Forwarding caught {type(error).__name__} at line {error.__traceback__.tb_lineno} in <{__name__}>
+        Exception: A general exception occurred while rendering the HTML template.
+
     Returns:
         str: A formatted HTML email template with all the arguments updated.
     """
@@ -354,7 +379,7 @@ def create_template_email(email_template_name: str, email_template_path: str, **
             raise error
         else:
             error_args = {
-                'main_message': 'A general exception occurred while rendering the HTML template..',
+                'main_message': 'A general exception occurred while rendering the HTML template.',
                 'error_type': Exception,
                 'original_error': error,
             }
@@ -408,11 +433,32 @@ def send_email(email_settings: dict, subject: str, body: Optional[str] = None, t
                 \\- <p><a href="{{ url }}">Decrypt</a></p>
 
     Raises:
-        ValueError: Failed to send the email message. No email encryption option was selected
-        ValueError: Failed to initialize SMTP connection using TLS.
+        TypeError: The value '{email_settings}' is not in dict format.
+        TypeError: The value '{subject}' is not in str format.
+        TypeError: The value '{body}' is not in str format.
+        TypeError: The value '{template_args}' is not in dict format.
+        Exception: Forwarding caught {type(error).__name__} at line {error.__traceback__.tb_lineno} in <{__name__}>
+        Exception: A general exception occurred during the value type validation.
+        Exception: An error occurred while sending the email. No body or template was sent.
+        Exception: Forwarding caught {type(error).__name__} at line {error.__traceback__.tb_lineno} in <{__name__}>
+        Exception: A general exception occurred while creating the email message body.
+        ValueError: The attachment path for the email message does not exist.
+        Exception: Forwarding caught {type(error).__name__} at line {error.__traceback__.tb_lineno} in <{__name__}>
+        Exception: A general exception occurred while preparing the email message structure.
+        Exception: Failed to initialize SMTP connection using TLS.
         ValueError: Failed to send the email message. Connection to SMTP server failed.
-        ValueError: Failed to send the email message. SMTP send error occurred.
-        ValueError: Failed to send message. SMTP terminatation error occurred.
+        ValueError: Failed to reach the SMTP server.\\
+            \\- Note: This error should be handled accordingly, or the calling program will exit if the SMTP server is offline.
+        Exception: A general exception occurred while sending the email message.
+        Exception: SMTP authentication is set to required but it is not supported by the server.
+        Exception: The SMTP server rejected the connection.
+        Exception: SMTP server authentication failed.
+        Exception: Incorrect username and/or password or authentication_required is not enabled or Less Secure Apps needs enabled in your gmail settings.
+        Exception: Incorrect username and/or password or the authentication_required setting is not enabled.
+        Exception: A general exception occurred while sending the email.
+        Exception: Forwarding caught {type(error).__name__} at line {error.__traceback__.tb_lineno} in <{__name__}>
+        Exception: Failed to send message. SMTP terminatation error occurred.
+        Exception: A general exception occurred while terminating the SMTP object.
     """
     logger = logging.getLogger(__name__)
     logger.debug(f'=' * 20 + get_function_name() + '=' * 20)
@@ -617,7 +663,7 @@ def send_email(email_settings: dict, subject: str, body: Optional[str] = None, t
                 "target machine actively refused it" in str(error)
                 or "connected party did not properly respond after a period of time" in str(error)
                 or "getaddrinfo failed" in str(error)
-            ): 
+            ):
                 error_args = {
                     'main_message': 'Failed to send the email message. Connection to SMTP server failed.',
                     'error_type': ValueError,
@@ -626,7 +672,7 @@ def send_email(email_settings: dict, subject: str, body: Optional[str] = None, t
                 error_formatter(error_args, __name__, error.__traceback__.tb_lineno)
             elif 'Connection unexpectedly closed' in str(error):
                 error_args = {
-                    'main_message': 'Failed to send the email message. Connection to SMTP server failed.',
+                    'main_message': 'Failed to reach the SMTP server.',
                     'error_type': ValueError,
                     'suggested_resolution': 'Ensure SMTP is reachable.',
                 }
@@ -653,13 +699,6 @@ def send_email(email_settings: dict, subject: str, body: Optional[str] = None, t
             logger.debug(f'Forwarding caught {type(error).__name__} at line {error.__traceback__.tb_lineno} in <{__name__}>')
             raise error
         else:
-            error_args = {
-                'main_message': 'A general exception occurred while creating the email message body.',
-                'error_type': Exception,
-                'original_error': error,
-            }
-            error_formatter(error_args, __name__, error.__traceback__.tb_lineno)
-
             if "SMTP AUTH extension not supported" in str(error):
                 error_args = {
                     'main_message': 'SMTP authentication is set to required but it is not supported by the server.',
