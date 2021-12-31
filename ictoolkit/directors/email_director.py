@@ -395,6 +395,7 @@ def send_email(email_settings: dict, subject: str, body: Optional[str] = None, t
             - password (str): Password for email authentication.
             - from_email (str): From email address.
             - to_email (str): To email address.
+            - attachment_path (str, optional): Allows sending an email attachment. Defaults to None.
             - send_email_template (bool, optional): Allows sending an email with an HTML template. Defaults to False.
             - email_template_name (str, optional): The template name. Defaults to None.
             - email_template_path (str, optional): The template folder path. This directory will hold all HTML templates. This path is commonly the directory of the main program. Defaults to None.
