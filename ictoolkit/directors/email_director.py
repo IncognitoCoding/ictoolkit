@@ -31,7 +31,7 @@ __author__ = 'IncognitoCoding'
 __copyright__ = 'Copyright 2021, email_director'
 __credits__ = ['IncognitoCoding', 'Monoloch']
 __license__ = 'GPL'
-__version__ = '1.8'
+__version__ = '1.9'
 __maintainer__ = 'IncognitoCoding'
 __status__ = 'Development'
 
@@ -72,7 +72,7 @@ def encrypt_info(email_settings: dict, unencrypted_info: bytes) -> bytes:
         # Requires pre-logger formatting because the logger can not use one line if/else or join without excluding sections of the the output.
         formatted_email_settings = '  - email_settings (dict):\n        - ' + '\n        - '.join(': '.join((key, str(val))) for (key, val) in email_settings.items())
         formatted_message_encryption_password = '  - message_encryption_password (str):\n        - ' + email_settings.get('message_encryption_password')
-        formatted_message_encryption_random_salt = '  - message_encryption_random_salt (bytes):\n        - ' + email_settings.get('message_encryption_random_salt')
+        formatted_message_encryption_random_salt = '  - message_encryption_random_salt (bytes):\n        - ' + str(email_settings.get('message_encryption_random_salt'))
 
         logger.debug(
             'Passing parameters:\n'
@@ -179,7 +179,7 @@ def decrypt_info(email_settings: dict, encrypted_info: bytes) -> bytes:
         # Requires pre-logger formatting because the logger can not use one line if/else or join without excluding sections of the the output.
         formatted_email_settings = '  - email_settings (dict):\n        - ' + '\n        - '.join(': '.join((key, str(val))) for (key, val) in email_settings.items())
         formatted_message_encryption_password = '  - message_encryption_password (str):\n        - ' + email_settings.get('message_encryption_password')
-        formatted_message_encryption_random_salt = '  - message_encryption_random_salt (bytes):\n        - ' + email_settings.get('message_encryption_random_salt')
+        formatted_message_encryption_random_salt = '  - message_encryption_random_salt (bytes):\n        - ' + str(email_settings.get('message_encryption_random_salt'))
 
         logger.debug(
             'Passing parameters:\n'
