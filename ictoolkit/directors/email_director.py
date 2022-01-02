@@ -30,7 +30,7 @@ __author__ = 'IncognitoCoding'
 __copyright__ = 'Copyright 2021, email_director'
 __credits__ = ['IncognitoCoding', 'Monoloch']
 __license__ = 'GPL'
-__version__ = '1.9'
+__version__ = '1.10'
 __maintainer__ = 'IncognitoCoding'
 __status__ = 'Development'
 
@@ -693,7 +693,7 @@ def send_email(email_settings: dict, subject: str, body: Optional[str] = None, t
             smtp_Object.login(email_settings.get('username'), email_settings.get('password'))
             logger.debug('Sending the email')
 
-        smtp_Object.sendmail(email_settings.get('from_email'), email_settings.get('to_email'), message.as_string())
+        smtp_Object.sendmail(email_settings.get('from_email'), email_settings.get('to_email'), str(message).encode('utf-8').strip())
     except Exception as error:
         if 'Originating error on line' in str(error):
             logger.debug(f'Forwarding caught {type(error).__name__} at line {error.__traceback__.tb_lineno} in <{__name__}>')
