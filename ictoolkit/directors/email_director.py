@@ -1,5 +1,3 @@
-#!interpreter
-
 """
 This module is designed to assist with email-related actions. The module has the ability to send emails encrypted or unencrypted.
 """
@@ -14,14 +12,10 @@ import mimetypes
 from typing import Optional
 
 # Libraries
-from cryptography.fernet import Fernet, InvalidToken
-import base64
-from cryptography.hazmat.backends import default_backend
-from cryptography.hazmat.primitives import hashes
-from cryptography.hazmat.primitives.kdf.pbkdf2 import PBKDF2HMAC
 from jinja2 import Environment, PackageLoader, select_autoescape
 
 # Own module
+from ictoolkit.directors.encryption_director import encrypt_info
 from ictoolkit.directors.validation_director import value_type_validation
 from ictoolkit.directors.error_director import error_formatter
 from ictoolkit.helpers.py_helper import get_function_name, get_line_number
@@ -33,252 +27,6 @@ __license__ = 'GPL'
 __version__ = '1.10'
 __maintainer__ = 'IncognitoCoding'
 __status__ = 'Development'
-
-
-def encrypt_info(email_settings: dict, unencrypted_info: bytes) -> bytes:
-    """
-    This function encrypts any message that is sent.
-
-    Args:
-        email_settings (dict): Email settings constructed within a dictionary.\n
-        - email_settings Key/Value:
-            - message_encryption_password (str): The password needing to be used to encrypt the info.
-            - message_encryption_random_salt (bytes): A random salt in bytes format.\n
-        unencrypted_info (bytes): Unencrypted info in bytes format.
-
-    Raises:
-        TypeError: The value '{email_settings}' is not in dict format.
-        TypeError: The value '{unencrypted_info}' is not in bytes format.
-        TypeError: The value '{email_settings.get('message_encryption_password')}' is not in str format.
-        TypeError: The value '{email_settings.get('message_encryption_password')}' is not in bytes format.
-        Exception: Forwarding caught {type(error).__name__} at line {error.__traceback__.tb_lineno} in <{__name__}>
-        Exception: A general exception occurred during the value type validation.
-        Exception: Forwarding caught {type(error).__name__} at line {error.__traceback__.tb_lineno} in <{__name__}>
-        Exception: A general exception occurred while encrypting the info.
-
-    Returns:
-        bytes: encrypted info
-    """
-    logger = logging.getLogger(__name__)
-    logger.debug(f'=' * 20 + get_function_name() + '=' * 20)
-    # Custom flowchart tracking. This is ideal for large projects that move a lot.
-    # For any third-party modules, set the flow before making the function call.
-    logger_flowchart = logging.getLogger('flowchart')
-    # Deletes the flowchart log if one already exists.
-    logger_flowchart.debug(f'Flowchart --> Function: {get_function_name()}')
-
-    # Checks function launch variables and logs passing parameters.
-    try:
-        # Validates required types.
-        value_type_validation(email_settings, dict, __name__, get_line_number())
-        value_type_validation(unencrypted_info, bytes, __name__, get_line_number())
-        value_type_validation(email_settings.get('message_encryption_password'), str, __name__, get_line_number())
-        value_type_validation(email_settings.get('message_encryption_random_salt'), bytes, __name__, get_line_number())
-
-        # Requires pre-logger formatting because the logger can not use one line if/else or join without excluding sections of the the output.
-        formatted_email_settings = '  - email_settings (dict):\n        - ' + '\n        - '.join(': '.join((key, str(val))) for (key, val) in email_settings.items())
-        formatted_message_encryption_password = '  - message_encryption_password (str):\n        - ' + email_settings.get('message_encryption_password')
-        formatted_message_encryption_random_salt = '  - message_encryption_random_salt (bytes):\n        - ' + str(email_settings.get('message_encryption_random_salt'))
-
-        logger.debug(
-            'Passing parameters:\n'
-            f'{formatted_email_settings}\n'
-            f'{formatted_message_encryption_password}\n'
-            f'{formatted_message_encryption_random_salt}\n'
-        )
-    except Exception as error:
-        if 'Originating error on line' in str(error):
-            logger.debug(f'Forwarding caught {type(error).__name__} at line {error.__traceback__.tb_lineno} in <{__name__}>')
-            raise error
-        else:
-            error_args = {
-                'main_message': 'A general exception occurred during the value type validation.',
-                'error_type': Exception,
-                'original_error': error,
-            }
-            error_formatter(error_args, __name__, error.__traceback__.tb_lineno)
-
-    logger.debug(f'Starting to encrypt the info')
-    try:
-        logger.debug('Converting the pre-defined encryption password to bytes')
-        # Converting the pre-defined encryption password to bytes.
-        password = email_settings.get('message_encryption_password').encode()
-
-        logger.debug('Setting random salt string that is (16 bytes) used to help protect from dictionary attacks')
-        # Setting random salt string that is a (byte) used to help protect from dictionary attacks.
-        # The salt string is randomly generated on the initial setup but static after the initial setup.
-        salt = email_settings.get('message_encryption_random_salt')
-
-        logger.debug('Deriving a cryptographic key from a password')
-        # Calling function to derive a cryptographic key from a password.
-        kdf = PBKDF2HMAC(
-            algorithm=hashes.SHA256(),  # An instance of HashAlgorithm
-            length=32,  # The desired length of the derived key in bytes. Maximum is (232 - 1)
-            salt=salt,  # Secure values [1] are 128-bits (16 bytes) or longer and randomly generated
-            iterations=100000,  # The number of iterations to perform of the hash function
-            backend=default_backend()  # An optional instance of PBKDF2HMACBackend
-        )
-
-        logger.debug('Returned from imported function (PBKDF2HMAC) to function (encrypt_info)')
-        logger.debug('Encoding the string using the pre-defined encryption password and the cryptographic key into the binary form')
-        # Encoding the string using the pre-defined encryption password and the cryptographic key into the binary form.
-        key = base64.urlsafe_b64encode(kdf.derive(password))
-
-        logger.debug('Creating a symmetric authenticated cryptography (secret key)')
-        # Creating a symmetric authenticated cryptography (secret key).
-        f = Fernet(key)
-
-        logger.debug('Encrypting the info using the secret key to create a Fernet token')
-        # Encrypting the info using the secret key to create a Fernet token.
-        encrypted_info = f.encrypt(unencrypted_info)
-    except Exception as error:
-        if 'Originating error on line' in str(error):
-            logger.debug(f'Forwarding caught {type(error).__name__} at line {error.__traceback__.tb_lineno} in <{__name__}>')
-            raise error
-        else:
-            error_args = {
-                'main_message': 'A general exception occurred while encrypting the info.',
-                'error_type': Exception,
-                'original_error': error,
-            }
-            error_formatter(error_args, __name__, error.__traceback__.tb_lineno)
-    else:
-        logger.debug(f'Returning the encrypted info. encrypted_info = {encrypted_info}')
-        # Returning the encrypted info.
-        return encrypted_info
-
-
-def decrypt_info(email_settings: dict, encrypted_info: bytes) -> bytes:
-    """
-    This function decrypts any message that is sent.
-
-    Args:
-        email_settings (dict): email settings constructed within a dictionary\n
-        - email_settings Key/Value:
-            - message_encryption_password (str): The password needing to be used to encrypt the info.
-            - message_encryption_random_salt (bytes): A random salt in bytes format.\n
-        encrypted_info (bytes): Encrypted message in bytes format. Re-encoding may be required.
-
-    Raises:
-        TypeError: The value '{email_settings}' is not in dict format.
-        TypeError: The value '{encrypted_info}' is not in bytes format.
-        TypeError: The value '{email_settings.get('message_encryption_password')}' is not in str format.
-        TypeError: The value '{email_settings.get('message_encryption_password')}' is not in bytes format.
-        Exception: Forwarding caught {type(error).__name__} at line {error.__traceback__.tb_lineno} in <{__name__}>
-        Exception: A general exception occurred during the value type validation.
-        Exception: Forwarding caught {type(error).__name__} at line {error.__traceback__.tb_lineno} in <{__name__}>
-        Exception: A general exception occurred while decrypting the info.
-        Exception: An invalid Key failure occurred while decrypting the info.
-        Exception: Forwarding caught {type(error).__name__} at line {error.__traceback__.tb_lineno} in <{__name__}>
-        Exception: A general exception occurred while decrypting the info.
-
-    Returns:
-        bytes: Decrypted info.
-    """
-    logger = logging.getLogger(__name__)
-    logger.debug(f'=' * 20 + get_function_name() + '=' * 20)
-    # Custom flowchart tracking. This is ideal for large projects that move a lot.
-    # For any third-party modules, set the flow before making the function call.
-    logger_flowchart = logging.getLogger('flowchart')
-    # Deletes the flowchart log if one already exists.
-    logger_flowchart.debug(f'Flowchart --> Function: {get_function_name()}')
-
-    # Checks function launch variables and logs passing parameters.
-    try:
-        # Validates required types.
-        value_type_validation(email_settings, dict, __name__, get_line_number())
-        value_type_validation(encrypted_info, bytes, __name__, get_line_number())
-        value_type_validation(email_settings.get('message_encryption_password'), str, __name__, get_line_number())
-        value_type_validation(email_settings.get('message_encryption_random_salt'), bytes, __name__, get_line_number())
-
-        # Requires pre-logger formatting because the logger can not use one line if/else or join without excluding sections of the the output.
-        formatted_email_settings = '  - email_settings (dict):\n        - ' + '\n        - '.join(': '.join((key, str(val))) for (key, val) in email_settings.items())
-        formatted_message_encryption_password = '  - message_encryption_password (str):\n        - ' + email_settings.get('message_encryption_password')
-        formatted_message_encryption_random_salt = '  - message_encryption_random_salt (bytes):\n        - ' + str(email_settings.get('message_encryption_random_salt'))
-
-        logger.debug(
-            'Passing parameters:\n'
-            f'{formatted_email_settings}\n'
-            f'{formatted_message_encryption_password}\n'
-            f'{formatted_message_encryption_random_salt}\n'
-        )
-    except Exception as error:
-        if 'Originating error on line' in str(error):
-            logger.debug(f'Forwarding caught {type(error).__name__} at line {error.__traceback__.tb_lineno} in <{__name__}>')
-            raise error
-        else:
-            error_args = {
-                'main_message': 'A general exception occurred during the value type validation.',
-                'error_type': Exception,
-                'original_error': error,
-            }
-            error_formatter(error_args, __name__, error.__traceback__.tb_lineno)
-
-    logger.debug(f'Starting to decrypt the info')
-    try:
-        # Converting the pre-defined encryption password to bytes.
-        password = email_settings.get('message_encryption_password').encode()
-
-        logger.debug('Setting random salt string that is (16 bytes) used to help protect from dictionary attacks')
-        # Setting random salt string that is a (byte) used to help protect from dictionary attacks.
-        # The salt string is randomly generated on the initial setup but static after the initial setup.
-        salt = email_settings.get('message_encryption_random_salt')
-
-        # Calling function to derive a cryptographic key from a password
-        kdf = PBKDF2HMAC(
-            algorithm=hashes.SHA256(),  # An instance of HashAlgorithm
-            length=32,  # The desired length of the derived key in bytes. Maximum is (232 - 1)
-            salt=salt,  # Secure values [1] are 128-bits (16 bytes) or longer and randomly generated
-            iterations=100000,  # The number of iterations to perform of the hash function
-            backend=default_backend()  # An optional instance of PBKDF2HMACBackend
-        )
-
-        logger.debug('Returned from imported function (PBKDF2HMAC) to function (encrypt_info)')
-        logger.debug('Encoding the string using the pre-defined encryption password and the cryptographic key into the binary form')
-        # Encoding the string using the pre-defined encryption password and the cryptographic key into the binary form.
-        key = base64.urlsafe_b64encode(kdf.derive(password))
-
-        # Creating a symmetric authenticated cryptography (secret key)
-        f = Fernet(key)
-    except Exception as error:
-        if 'Originating error on line' in str(error):
-            logger.debug(f'Forwarding caught {type(error).__name__} at line {error.__traceback__.tb_lineno} in <{__name__}>')
-            raise error
-        else:
-            error_args = {
-                'main_message': 'A general exception occurred while decrypting the info.',
-                'error_type': Exception,
-                'original_error': error,
-            }
-            error_formatter(error_args, __name__, error.__traceback__.tb_lineno)
-    else:
-
-        try:
-            logger.debug('Decrypting the info using the secret key to create a Fernet token.')
-            # Decrypting the info using the secret key to create a Fernet token.
-            decrypted_info = f.decrypt(encrypted_info)
-
-            logger.debug(f'Returning the decrypted info. decrypted_info = {decrypted_info}')
-            # Returning the decrypted info
-            return decrypted_info
-        except InvalidToken as error:
-            error_args = {
-                'main_message': 'An invalid Key failure occurred while decrypting the info.',
-                'error_type': InvalidToken,
-                'original_error': error,
-            }
-            error_formatter(error_args, __name__, error.__traceback__.tb_lineno)
-        except Exception as error:
-            if 'Originating error on line' in str(error):
-                logger.debug(f'Forwarding caught {type(error).__name__} at line {error.__traceback__.tb_lineno} in <{__name__}>')
-                raise error
-            else:
-                error_args = {
-                    'main_message': 'A general exception occurred while decrypting the info.',
-                    'error_type': Exception,
-                    'original_error': error,
-                }
-                error_formatter(error_args, __name__, error.__traceback__.tb_lineno)
 
 
 def create_template_email(email_template_name: str, email_template_path: str, **template_args: Optional[dict]) -> str:
@@ -308,7 +56,6 @@ def create_template_email(email_template_name: str, email_template_path: str, **
     # Custom flowchart tracking. This is ideal for large projects that move a lot.
     # For any third-party modules, set the flow before making the function call.
     logger_flowchart = logging.getLogger('flowchart')
-    # Deletes the flowchart log if one already exists.
     logger_flowchart.debug(f'Flowchart --> Function: {get_function_name()}')
 
     # Checks function launch variables and logs passing parameters.
@@ -465,7 +212,6 @@ def send_email(email_settings: dict, subject: str, body: Optional[str] = None, t
     # Custom flowchart tracking. This is ideal for large projects that move a lot.
     # For any third-party modules, set the flow before making the function call.
     logger_flowchart = logging.getLogger('flowchart')
-    # Deletes the flowchart log if one already exists.
     logger_flowchart.debug(f'Flowchart --> Function: {get_function_name()}')
 
     # Checks function launch variables and logs passing parameters.
@@ -554,11 +300,11 @@ def send_email(email_settings: dict, subject: str, body: Optional[str] = None, t
                 # Matched String: This is my original string
                 unencrypted_string = (re.search('@START-ENCRYPT@(.*)@END-ENCRYPT@', email_line)).group(1)
                 logger.debug('Converting unencrypted message string into bytes')
-                # Converts unencrypted message string into bytes.
-                encoded_message = unencrypted_string.encode()
+                password = email_settings.get('message_encryption_password')
+                salt = email_settings.get('message_encryption_random_salt')
                 # Calls function to sends unencrypted message for encryption.
                 # Return Example: <encrypted message>
-                encrypted_info = encrypt_info(email_settings, encoded_message)
+                encrypted_info = encrypt_info(unencrypted_string, password, salt)
                 # Removes the encryption string identifiers and sets encryption on the string.
                 updating_body.append(email_line.replace('@START-ENCRYPT@', '').replace('@END-ENCRYPT@', '').replace(unencrypted_string, str(encrypted_info)))
             else:
