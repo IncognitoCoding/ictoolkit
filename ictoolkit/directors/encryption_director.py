@@ -22,7 +22,6 @@ from flask import Flask, render_template, request
 from waitress import serve
 
 # Own module
-from ictoolkit.directors.encryption_director import decrypt_info
 from ictoolkit.directors.validation_director import value_type_validation
 from ictoolkit.directors.error_director import error_formatter
 from ictoolkit.directors.file_director import file_exist_check
