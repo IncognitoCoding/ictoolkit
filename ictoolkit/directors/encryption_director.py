@@ -31,7 +31,7 @@ __author__ = 'IncognitoCoding'
 __copyright__ = 'Copyright 2021, encryption_director'
 __credits__ = ['IncognitoCoding']
 __license__ = 'GPL'
-__version__ = '1.2'
+__version__ = '1.3'
 __maintainer__ = 'IncognitoCoding'
 __status__ = 'Development'
 
@@ -301,7 +301,7 @@ def launch_decryptor_website(encryption_password: str, random_salt: Union[bytes,
         encryption_password (str): Password used to encrypt the info.
         random_salt (bytes or str): Random salt string used to encrypt the info. If the value is sent as str format the value will be re-encoded.
                                                   A string type can happen if the value is set in a YAML or configuration file and not re-encoded correctly.
-        decryptor_template_path (str): The full path to the decryptor template directory. Defaults to None. Default templates folder path is the programs main program path.
+        decryptor_template_path (str): The full path to the decryptor template directory. Default creates/uses a template folder in the programs main program path.
         port (int): A port number to access the decrytor site. Defaults to port 5000.
 
     Raises:
@@ -360,13 +360,7 @@ def launch_decryptor_website(encryption_password: str, random_salt: Union[bytes,
         if decryptor_template_path is None:
             # Gets the main program root directory.
             main_script_path = pathlib.Path.cwd()
-
-            # Checks that the main root program directory has the correct save folders created.
-            # Sets the template directory save path. Checks if the path includes the templates folder or not.
-            if 'templates' in str(main_script_path):
-                decryptor_template_path = os.path.abspath(main_script_path)
-            else:
-                decryptor_template_path = os.path.abspath(f'{main_script_path}/templates')
+            decryptor_template_path = os.path.abspath(f'{main_script_path}/templates')
             # Checks if the decryptor_template_path exists and if not it will be created.
             if not os.path.exists(decryptor_template_path):
                 os.makedirs(decryptor_template_path)
