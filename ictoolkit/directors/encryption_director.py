@@ -3,6 +3,7 @@ This module is designed to assist with message encryption. The module has the ab
 """
 # Built-in/Generic Imports
 import logging
+from typing import Union
 
 # Libraries
 from cryptography.fernet import Fernet, InvalidToken
@@ -20,19 +21,20 @@ __author__ = 'IncognitoCoding'
 __copyright__ = 'Copyright 2021, encryption_director'
 __credits__ = ['IncognitoCoding']
 __license__ = 'GPL'
-__version__ = '1.0'
+__version__ = '1.1'
 __maintainer__ = 'IncognitoCoding'
 __status__ = 'Development'
 
 
-def encrypt_info(unencrypted_info: str, message_encryption_password: str, message_encryption_random_salt: bytes) -> bytes:
+def encrypt_info(unencrypted_info: str, message_encryption_password: str, message_encryption_random_salt: Union[bytes, str]) -> bytes:
     """
     This function encrypts any message that is sent.
 
     Args:
         unencrypted_info (str): Unencrypted info in bytes format.
         message_encryption_password (str): The password needing to be used to encrypt the info.
-        message_encryption_random_salt (bytes): A random salt in bytes format.\n
+        message_encryption_random_salt (bytes or str): A random salt in bytes format. If the value is sent as str format the value will be re-encoded. 
+                                                                                     A string type can happen if the value is set in a YAML or configuration file and not re-encoded correctly.\n
 
     Raises:
         TypeError: The value '{unencrypted_info}' is not in str format.
@@ -58,13 +60,13 @@ def encrypt_info(unencrypted_info: str, message_encryption_password: str, messag
         # Validates required types.
         value_type_validation(unencrypted_info, str, __name__, get_line_number())
         value_type_validation(message_encryption_password, str, __name__, get_line_number())
-        value_type_validation(message_encryption_random_salt, bytes, __name__, get_line_number())
+        value_type_validation(message_encryption_random_salt, [bytes, str], __name__, get_line_number())
 
         logger.debug(
             'Passing parameters:\n'
             f'  - unencrypted_info (str):\n        - {str(unencrypted_info)}'
             f'  - message_encryption_password (str):\n        - {message_encryption_password}'
-            f'  - message_encryption_random_salt (bytes):\n        - {str(message_encryption_random_salt)}'
+            f'  - message_encryption_random_salt (bytes, str):\n        - {str(message_encryption_random_salt)}'
         )
     except Exception as error:
         if 'Originating error on line' in str(error):
@@ -85,6 +87,17 @@ def encrypt_info(unencrypted_info: str, message_encryption_password: str, messag
         unencrypted_info = unencrypted_info.encode()
         # Converting the pre-defined encryption password to bytes.
         password = message_encryption_password.encode()
+
+        # Checks if incoming salt is in str format, so the salt can be re-encoded.
+        if isinstance(message_encryption_random_salt, str):
+            if message_encryption_random_salt[:2] == "b'":
+                # Strips the bytes section off the input.
+                # Removes first 2 characters.
+                unconverted_message_encryption_random_salt = message_encryption_random_salt[2:]
+                # Removes last character.
+                unconverted_message_encryption_random_salt = unconverted_message_encryption_random_salt[:-1]
+                # Re-encodes the info.
+                message_encryption_random_salt = unconverted_message_encryption_random_salt.encode().decode('unicode_escape').encode("raw_unicode_escape")
 
         logger.debug('Deriving a cryptographic key from a password')
         # Calling function to derive a cryptographic key from a password.
@@ -125,14 +138,16 @@ def encrypt_info(unencrypted_info: str, message_encryption_password: str, messag
         return encrypted_info
 
 
-def decrypt_info(encrypted_info: bytes, message_encryption_password: str, message_encryption_random_salt: bytes) -> bytes:
+def decrypt_info(encrypted_info: Union[bytes, str], message_encryption_password: str, message_encryption_random_salt: Union[bytes, str]) -> bytes:
     """
     This function decrypts any message that is sent.
 
     Args:
-        encrypted_info (bytes): Encrypted message in bytes format. Re-encoding may be required.
+        encrypted_info (bytes or str): Encrypted message in bytes format. If the value is sent as str format the value will be re-encoded. 
+                                                       A string type can happen if the value is set in a YAML or configuration file and not re-encoded correctly.\n
         message_encryption_password (str): The password needing to be used to encrypt the info.
-        message_encryption_random_salt (bytes): A random salt in bytes format.\n
+        message_encryption_random_salt (bytes or str): A random salt in bytes format. If the value is sent as str format the value will be re-encoded. 
+                                                                                     A string type can happen if the value is set in a YAML or configuration file and not re-encoded correctly.\n
 
     Raises:
         TypeError: The value '{encrypted_info}' is not in bytes format.
@@ -159,15 +174,15 @@ def decrypt_info(encrypted_info: bytes, message_encryption_password: str, messag
     # Checks function launch variables and logs passing parameters.
     try:
         # Validates required types.
-        value_type_validation(encrypted_info, bytes, __name__, get_line_number())
+        value_type_validation(encrypted_info, [bytes, str], __name__, get_line_number())
         value_type_validation(message_encryption_password, str, __name__, get_line_number())
-        value_type_validation(message_encryption_random_salt, bytes, __name__, get_line_number())
+        value_type_validation(message_encryption_random_salt, [bytes, str], __name__, get_line_number())
 
         logger.debug(
             'Passing parameters:\n'
-            f'  - encrypted_info (bytes):\n        - {str(encrypted_info)}'
+            f'  - encrypted_info (bytes, str):\n        - {str(encrypted_info)}'
             f'  - message_encryption_password (str):\n        - {message_encryption_password}'
-            f'  - message_encryption_random_salt (bytes):\n        - {str(message_encryption_random_salt)}'
+            f'  - message_encryption_random_salt (bytes, str):\n        - {str(message_encryption_random_salt)}'
         )
     except Exception as error:
         if 'Originating error on line' in str(error):
@@ -187,6 +202,28 @@ def decrypt_info(encrypted_info: bytes, message_encryption_password: str, messag
         password = message_encryption_password.encode()
 
         logger.debug('Setting random salt string that is (16 bytes) used to help protect from dictionary attacks')
+
+        # Checks if incoming salt is in str format, so the salt can be re-encoded.
+        if isinstance(message_encryption_random_salt, str):
+            if message_encryption_random_salt[:2] == "b'":
+                # Strips the bytes section off the input.
+                # Removes first 2 characters.
+                unconverted_message_encryption_random_salt = message_encryption_random_salt[2:]
+                # Removes last character.
+                unconverted_message_encryption_random_salt = unconverted_message_encryption_random_salt[:-1]
+                # Re-encodes the info.
+                message_encryption_random_salt = unconverted_message_encryption_random_salt.encode().decode('unicode_escape').encode("raw_unicode_escape")
+
+        # Checks if incoming salt is in str format, so the salt can be re-encoded.
+        if isinstance(encrypted_info, str):
+            if encrypted_info[:2] == "b'":
+                # Strips the bytes section off the input.
+                # Removes first 2 characters.
+                unconverted_encrypted_info = encrypted_info[2:]
+                # Removes last character.
+                unconverted_encrypted_info = unconverted_encrypted_info[:-1]
+                # Re-encodes the info.
+                encrypted_info = unconverted_encrypted_info.encode().decode('unicode_escape').encode("raw_unicode_escape")
 
         # Calling function to derive a cryptographic key from a password
         kdf = PBKDF2HMAC(
@@ -221,7 +258,8 @@ def decrypt_info(encrypted_info: bytes, message_encryption_password: str, messag
             logger.debug('Decrypting the info using the secret key to create a Fernet token.')
             # Decrypting the info using the secret key to create a Fernet token.
             decrypted_info = f.decrypt(encrypted_info)
-
+            # Converts bytes to Unicode string.
+            decrypted_info = decrypted_info.decode()
             logger.debug(f'Returning the decrypted info. decrypted_info = {decrypted_info}')
             # Returning the decrypted info
             return decrypted_info
