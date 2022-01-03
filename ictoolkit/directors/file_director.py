@@ -112,7 +112,7 @@ def file_exist_check(file_path, file_description):
         logger.error(error_message)
         raise ValueError(error_message)
     else:
-        logger.debug(f'{file_description} log file exists')
+        logger.debug(f'{file_description} file exists')
 
 
 def search_file(file_path, searching_value):
