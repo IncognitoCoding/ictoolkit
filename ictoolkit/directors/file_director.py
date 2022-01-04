@@ -58,8 +58,8 @@ def write_file(file_path: str, write_value: str) -> None:
 
         logger.debug(
             'Passing parameters:\n'
-            f'  - file_path (str):\n        - {file_path}'
-            f'  - write_value (str):\n        - {write_value}'
+            f'  - file_path (str):\n        - {file_path}\n'
+            f'  - write_value (str):\n        - {write_value}\n'
         )
     except Exception as error:
         if 'Originating error on line' in str(error):
@@ -137,8 +137,8 @@ def file_exist_check(file_path: str, file_description: str) -> None:
 
         logger.debug(
             'Passing parameters:\n'
-            f'  - file_path (str):\n        - {file_path}'
-            f'  - file_description (str):\n        - {file_description}'
+            f'  - file_path (str):\n        - {file_path}\n'
+            f'  - file_description (str):\n        - {file_description}\n'
         )
     except Exception as error:
         if 'Originating error on line' in str(error):
@@ -223,8 +223,8 @@ def search_file(file_path: str, searching_value: Union[str, list]) -> Union[list
 
         logger.debug(
             'Passing parameters:\n'
-            f'  - file_path (str):\n        - {file_path}'
-            f'{formatted_searching_value}'
+            f'  - file_path (str):\n        - {file_path}\n'
+            f'{formatted_searching_value}\n'
         )
     except Exception as error:
         if 'Originating error on line' in str(error):
@@ -365,8 +365,8 @@ def search_multiple_files(file_paths: list, searching_value: Union[str, list]) -
 
         logger.debug(
             'Passing parameters:\n'
-            f'{formatted_file_paths}'
-            f'{formatted_searching_value}'
+            f'{formatted_file_paths}\n'
+            f'{formatted_searching_value}\n'
         )
     except Exception as error:
         if 'Originating error on line' in str(error):
@@ -511,7 +511,7 @@ def convert_relative_to_full_path(relative_path: str) -> str:
 
         logger.debug(
             'Passing parameters:\n'
-            f'  - relative_path(str):\n        - {relative_path}'
+            f'  - relative_path(str):\n        - {relative_path}\n'
         )
     except Exception as error:
         if 'Originating error on line' in str(error):
@@ -595,9 +595,9 @@ def user_file_selection(prompt: str, criteria: str, root_dir: Optional[str] = No
 
         logger.debug(
             'Passing parameters:\n'
-            f'  - prompt (str):\n        - {prompt}'
-            f'  - criteria (str):\n        - {criteria}'
-            f'{formatted_root_dir}'
+            f'  - prompt (str):\n        - {prompt}\n'
+            f'  - criteria (str):\n        - {criteria}\n'
+            f'{formatted_root_dir}\n'
         )
     except Exception as error:
         if 'Originating error on line' in str(error):

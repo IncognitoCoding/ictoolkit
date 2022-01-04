@@ -43,8 +43,8 @@ class HTMLConverter(HTMLParser):
 
             logger.debug(
                 'Passing parameters:\n'
-                f'  - html_output (str):\n        - {str(html_output)}'
-                f'  - convert_option (str):\n        - {convert_option}'
+                f'  - html_output (str):\n        - {str(html_output)}\n'
+                f'  - convert_option (str):\n        - {convert_option}\n'
             )
         except Exception as error:
             if 'Originating error on line' in str(error):

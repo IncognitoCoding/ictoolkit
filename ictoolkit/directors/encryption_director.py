@@ -74,9 +74,9 @@ def encrypt_info(decrypted_info: str, message_encryption_password: str, message_
 
         logger.debug(
             'Passing parameters:\n'
-            f'  - decrypted_info (str):\n        - {str(decrypted_info)}'
-            f'  - message_encryption_password (str):\n        - {message_encryption_password}'
-            f'  - message_encryption_random_salt (bytes, str):\n        - {str(message_encryption_random_salt)}'
+            f'  - decrypted_info (str):\n        - {str(decrypted_info)}\n'
+            f'  - message_encryption_password (str):\n        - {message_encryption_password}\n'
+            f'  - message_encryption_random_salt (bytes, str):\n        - {str(message_encryption_random_salt)}\n'
         )
     except Exception as error:
         if 'Originating error on line' in str(error):
@@ -190,9 +190,9 @@ def decrypt_info(encrypted_info: Union[bytes, str], message_encryption_password:
 
         logger.debug(
             'Passing parameters:\n'
-            f'  - encrypted_info (bytes, str):\n        - {str(encrypted_info)}'
-            f'  - message_encryption_password (str):\n        - {message_encryption_password}'
-            f'  - message_encryption_random_salt (bytes, str):\n        - {str(message_encryption_random_salt)}'
+            f'  - encrypted_info (bytes, str):\n        - {str(encrypted_info)}\n'
+            f'  - message_encryption_password (str):\n        - {message_encryption_password}\n'
+            f'  - message_encryption_random_salt (bytes, str):\n        - {str(message_encryption_random_salt)}\n'
         )
     except Exception as error:
         if 'Originating error on line' in str(error):
@@ -339,10 +339,10 @@ def launch_decryptor_website(encryption_password: str, random_salt: Union[bytes,
 
         logger.debug(
             'Passing parameters:\n'
-            f'  - encryption_password (str):\n        - {encryption_password}'
-            f'  - random_salt (bytes, str):\n        - {str(random_salt)}'
-            f'{formatted_decryptor_template_path}'
-            f'{formatted_port}'
+            f'  - encryption_password (str):\n        - {encryption_password}\n'
+            f'  - random_salt (bytes, str):\n        - {str(random_salt)}\n'
+            f'{formatted_decryptor_template_path}\n'
+            f'{formatted_port}\n'
         )
     except Exception as error:
         if 'Originating error on line' in str(error):

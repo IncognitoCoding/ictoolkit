@@ -75,8 +75,8 @@ def remove_duplicate_dict_values_in_list(list_dictionary: list, element_number: 
 
         logger.debug(
             'Passing parameters:\n'
-            f'{formatted_list_dictionary}'
-            f'{formatted_element_number}'
+            f'{formatted_list_dictionary}\n '
+            f'{formatted_element_number}\n'
         )
     except Exception as error:
         if 'Originating error on line' in str(error):
@@ -191,9 +191,9 @@ def get_list_of_dicts_duplicates(key: str, list_dictionary: list, grouped: bool 
 
         logger.debug(
             'Passing parameters:\n'
-            f'  - key (int):\n        - {key}'
-            f'{formatted_list_dictionary}'
-            f'  - grouped (bool):\n        - {grouped}'
+            f'  - key (int):\n        - {key}\n'
+            f'{formatted_list_dictionary}\n'
+            f'  - grouped (bool):\n        - {grouped}\n'
         )
     except Exception as error:
         if 'Originating error on line' in str(error):
@@ -345,9 +345,9 @@ def get_list_duplicates(duplicates: list, match_index: Optional[int] = None, gro
 
         logger.debug(
             'Passing parameters:\n'
-            f'{formatted_duplicates}'
-            f'{formatted_match_index}'
-            f'  - grouped (bool):\n        - {grouped}'
+            f'{formatted_duplicates}\n'
+            f'{formatted_match_index}\n'
+            f'  - grouped (bool):\n        - {grouped}\n'
         )
     except Exception as error:
         if 'Originating error on line' in str(error):
@@ -565,10 +565,10 @@ def string_grouper(list_of_strings: list, grouping_value: Union[str, int, None],
 
         logger.debug(
             'Passing parameters:\n'
-            f'{formatted_list_of_strings}'
-            f'{formatted_grouping_value}'
-            f'  - grouping_option (int):\n        - {grouping_option}'
-            f'  - case_insensitive (bool):\n        - {case_insensitive}'
+            f'{formatted_list_of_strings}\n'
+            f'{formatted_grouping_value}\n'
+            f'  - grouping_option (int):\n        - {grouping_option}\n'
+            f'  - case_insensitive (bool):\n        - {case_insensitive}\n'
         )
     except Exception as error:
         if 'Originating error on line' in str(error):
@@ -829,8 +829,8 @@ def find_longest_common_substring(string1: str, string2: str) -> str:
 
         logger.debug(
             'Passing parameters:\n'
-            f'  - string1 (str):\n        - {string1}'
-            f'  - string2 (str):\n        - {string2}'
+            f'  - string1 (str):\n        - {string1}\n'
+            f'  - string2 (str):\n        - {string2}\n'
         )
     except Exception as error:
         if 'Originating error on line' in str(error):
@@ -903,7 +903,7 @@ def user_choice_character_grouping(list_of_strings: list) -> list:
 
         logger.debug(
             'Passing parameters:\n'
-            f'{formatted_list_of_strings}'
+            f'{formatted_list_of_strings}\n'
         )
     except Exception as error:
         if 'Originating error on line' in str(error):
@@ -1053,7 +1053,7 @@ def clean_non_word_characters(string: str) -> str:
 
         logger.debug(
             'Passing parameters:\n'
-            f'  - string (str):\n        - {string}'
+            f'  - string (str):\n        - {string}\n'
         )
     except Exception as error:
         if 'Originating error on line' in str(error):

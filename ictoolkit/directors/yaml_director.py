@@ -71,8 +71,8 @@ def read_yaml_config(yaml_file_path: str, loader: str) -> yaml:
 
         logger.debug(
             'Passing parameters:\n'
-            f'  - yaml_file_path (str):\n        - {yaml_file_path}'
-            f'  - loader (str):\n        - {loader}'
+            f'  - yaml_file_path (str):\n        - {yaml_file_path}\n'
+            f'  - loader (str):\n        - {loader}\n'
         )
     except Exception as error:
         if 'Originating error on line' in str(error):
@@ -176,9 +176,9 @@ def yaml_value_validation(key: str, input_value: any, required_value_type: Union
 
         logger.debug(
             'Passing parameters:\n'
-            f'  - key (str):\n        - {key}'
-            f'  - input_value (any):\n        - {input_value}'
-            f'{formatted_required_value_type}'
+            f'  - key (str):\n        - {key}\n'
+            f'  - input_value (any):\n        - {input_value}\n'
+            f'{formatted_required_value_type}\n'
         )
     except Exception as error:
         if 'Originating error on line' in str(error):

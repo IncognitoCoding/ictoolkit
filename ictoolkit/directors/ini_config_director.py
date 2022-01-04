@@ -58,7 +58,7 @@ def read_ini_config(ini_file_path: str) -> configparser:
 
         logger.debug(
             'Passing parameters:\n'
-            f'  - ini_file_path (str):\n        - {ini_file_path}'
+            f'  - ini_file_path (str):\n        - {ini_file_path}\n'
         )
     except Exception as error:
         if 'Originating error on line' in str(error):
@@ -124,9 +124,9 @@ def get_ini_config(ini_config: configparser, section: str, key: str) -> str:
 
         logger.debug(
             'Passing parameters:\n'
-            f'  - ini_config (configparser):\n        - {ini_config}'
-            f'  - section (str):\n        - {section}'
-            f'  - key (str):\n        - {key}'
+            f'  - ini_config (configparser):\n        - {ini_config}\n'
+            f'  - section (str):\n        - {section}\n'
+            f'  - key (str):\n        - {key}\n'
         )
     except Exception as error:
         if 'Originating error on line' in str(error):

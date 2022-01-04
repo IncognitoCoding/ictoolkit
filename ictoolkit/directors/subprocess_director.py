@@ -81,7 +81,7 @@ def start_subprocess(program_arguments: Union[str, list]) -> dict:
 
         logger.debug(
             'Passing parameters:\n'
-            f'{formatted_program_arguments}'
+            f'{formatted_program_arguments}\n'
         )
     except Exception as error:
         if 'Originating error on line' in str(error):

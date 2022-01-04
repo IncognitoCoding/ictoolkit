@@ -70,8 +70,8 @@ def start_function_thread(passing_program_function, program_function_name: str, 
 
         logger.debug(
             'Passing parameters:\n'
-            f'  - program_function_name (str):\n        - {program_function_name}'
-            f'  - infinite_loop_option (bool):\n        - {infinite_loop_option}'
+            f'  - program_function_name (str):\n        - {program_function_name}\n'
+            f'  - infinite_loop_option (bool):\n        - {infinite_loop_option}\n'
         )
     except Exception as error:
         if 'Originating error on line' in str(error):
