@@ -8,22 +8,25 @@ import os
 import sys
 import logging
 import pathlib
-import traceback
 from pathlib import Path
+from typing import Optional, Union
 
 # Own modules
-from ictoolkit.directors.dict_director import remove_duplicate_dict_values_in_list
+from ictoolkit.directors.data_structure_director import remove_duplicate_dict_values_in_list
+from ictoolkit.directors.validation_director import value_type_validation
+from ictoolkit.directors.error_director import error_formatter
+from ictoolkit.helpers.py_helper import get_function_name, get_line_number
 
 __author__ = 'IncognitoCoding'
-__copyright__ = 'Copyright 2021, file_director'
+__copyright__ = 'Copyright 2022, file_director'
 __credits__ = ['IncognitoCoding']
 __license__ = 'GPL'
-__version__ = '1.2'
+__version__ = '2.0'
 __maintainer__ = 'IncognitoCoding'
-__status__ = 'Development'
+__status__ = 'Production'
 
 
-def write_file(file_path, write_value):
+def write_file(file_path: str, write_value: str) -> None:
     """
     Writes a value to the file.
 
@@ -32,90 +35,150 @@ def write_file(file_path, write_value):
         write_value (str): The value being written into the file.
 
     Raises:
-        ValueError: A failure occurred while writing the file
-        ValueError: Writing file value <Value Being Written> to file <File Path Being Written> did not complete. The value does not exist after being written
+        TypeError: The value '{file_path}' is not in str format.
+        TypeError: The value '{write_value}' is not in str format.
+        Exception: Forwarding caught {type(error).__name__} at line {error.__traceback__.tb_lineno} in <{__name__}>
+        Exception: A general exception occurred during the value type validation.
+        Exception: Forwarding caught {type(error).__name__} at line {error.__traceback__.tb_lineno} in <{__name__}>
+        Exception: A general failure occurred while writing the file.
+        ValueError: Writing file value '{write_value}' to file '{file_path}' did not complete.
     """
     logger = logging.getLogger(__name__)
-    logger.debug(f'=' * 20 + traceback.extract_stack(None, 2)[1][2] + '=' * 20)
-    # Custom flowchart tracking. This is ideal for large projects that move a lot. 
+    logger.debug(f'=' * 20 + get_function_name() + '=' * 20)
+    # Custom flowchart tracking. This is ideal for large projects that move a lot.
     # For any third-party modules, set the flow before making the function call.
     logger_flowchart = logging.getLogger('flowchart')
-    logger_flowchart.debug(f'Flowchart --> Function: {traceback.extract_stack(None, 2)[1][2]}')
+    logger_flowchart.debug(f'Flowchart --> Function: {get_function_name()}')
 
-    logger.debug(f'Begining to write the value to the file. write_value = {write_value}')
+    # Checks function launch variables and logs passing parameters.
     try:
+        # Validates required types.
+        value_type_validation(file_path, str, __name__, get_line_number())
+        value_type_validation(write_value, str, __name__, get_line_number())
+
+        logger.debug(
+            'Passing parameters:\n'
+            f'  - file_path (str):\n        - {file_path}'
+            f'  - write_value (str):\n        - {write_value}'
+        )
+    except Exception as error:
+        if 'Originating error on line' in str(error):
+            logger.debug(f'Forwarding caught {type(error).__name__} at line {error.__traceback__.tb_lineno} in <{__name__}>')
+            raise error
+        else:
+            error_args = {
+                'main_message': 'A general exception occurred during the value type validation.',
+                'error_type': Exception,
+                'original_error': error,
+            }
+            error_formatter(error_args, __name__, error.__traceback__.tb_lineno)
+
+    try:
+        logger.debug(f'Begining to write the value to the file. write_value = {write_value}')
         logger.debug('Writing the value to the file')
         # Using "with" to take care of open and closing.
         with open(file_path, 'a+') as f:
             f.writelines(write_value + "\n")
-    except Exception as err:
-        error_message = (
-            f'A failure occurred while writing the file.\n\n' +
-            (('-' * 150) + '\n') + (('-' * 65) + 'Additional Information' + ('-' * 63) + '\n') + (('-' * 150) + '\n') +
-            f'{err}\n\n'
-            f'Originating error on line {traceback.extract_stack()[-1].lineno} in <{__name__}>\n' +
-            (('-' * 150) + '\n') * 2
-        )
-        logger.error(error_message)
-        raise ValueError(error_message)
-
+    except Exception as error:
+        if 'Originating error on line' in str(error):
+            logger.debug(f'Forwarding caught {type(error).__name__} at line {error.__traceback__.tb_lineno} in <{__name__}>')
+            raise error
+        else:
+            error_args = {
+                'main_message': 'A general failure occurred while writing the file.',
+                'error_type': Exception,
+                'original_error': error,
+            }
+            error_formatter(error_args, __name__, error.__traceback__.tb_lineno)
     else:
         # Checking if the file entry written to the file.
         # Calling Example: search_file(<log file>, <search string>, <configured logger>)
         return_search = search_file(file_path, write_value)
         # Validates file entry wrote.
         if return_search is None:
-            error_message = (
-                f'Writing file value \"{write_value}\" to file \"{file_path}\" did not complete.\n' +
-                (('-' * 150) + '\n') + (('-' * 65) + 'Additional Information' + ('-' * 63) + '\n') + (('-' * 150) + '\n') +
-                'Expected Result:\n'
-                '  - Return search value. != 2\n\n'
-                'Returned Result:\n'
-                f'  - No return search value was returned.\n\n'
-                f'Originating error on line {traceback.extract_stack()[-1].lineno} in <{__name__}>\n' +
-                (('-' * 150) + '\n') * 2
-            )
-            logger.error(error_message)
-            raise ValueError(error_message)
+            error_args = {
+                'main_message': f'Writing file value \'{write_value}\' to file \'{file_path}\' did not complete.',
+                'error_type': ValueError,
+                'expected_result': 2,
+                'returned_result': ' No return search value was returned.',
+            }
+            error_formatter(error_args, __name__, get_line_number())
 
 
-def file_exist_check(file_path, file_description):
+def file_exist_check(file_path: str, file_description: str) -> None:
     """
-    Validates the file exists.
+    Validates the file exists. An error will throw if the file does not exist.
 
     Args:
         file_path (str): The file path being checked.
         file_description (str): Name of the file being checked.
 
     Raises:
-        ValueError: Log file does not exist.
+        TypeError: The value '{file_path}' is not in str format.
+        TypeError: The value '{file_description}' is not in str format.
+        Exception: Forwarding caught {type(error).__name__} at line {error.__traceback__.tb_lineno} in <{__name__}>
+        Exception: A general exception occurred during the value type validation.
+        FileNotFoundError: {file_description} log file does not exist.
+        Exception: Forwarding caught {type(error).__name__} at line {error.__traceback__.tb_lineno} in <{__name__}>
+        Exception: A general failure occurred while checking if the file exists.
     """
     logger = logging.getLogger(__name__)
-    logger.debug(f'=' * 20 + traceback.extract_stack(None, 2)[1][2] + '=' * 20)
-    # Custom flowchart tracking. This is ideal for large projects that move a lot. 
+    logger.debug(f'=' * 20 + get_function_name() + '=' * 20)
+    # Custom flowchart tracking. This is ideal for large projects that move a lot.
     # For any third-party modules, set the flow before making the function call.
     logger_flowchart = logging.getLogger('flowchart')
-    logger_flowchart.debug(f'Flowchart --> Function: {traceback.extract_stack(None, 2)[1][2]}')
+    logger_flowchart.debug(f'Flowchart --> Function: {get_function_name()}')
 
-    logger.debug(f'Begining to check the file path for {file_description}')
-    # Checks if the file does not exist
-    file = pathlib.Path(file_path)
-    if not file.exists():
-        error_message = (
-            f'{file_description} log file does not exist.\n\n' +
-            (('-' * 150) + '\n') + (('-' * 65) + 'Additional Information' + ('-' * 63) + '\n') + (('-' * 150) + '\n') +
-            'Suggested Resolution:\n'
-            '  - Ensure the file path is the correct path to your file.\n\n'
-            f'Originating error on line {traceback.extract_stack()[-1].lineno} in <{__name__}>\n' +
-            (('-' * 150) + '\n') * 2
+    # Checks function launch variables and logs passing parameters.
+    try:
+        # Validates required types.
+        value_type_validation(file_path, str, __name__, get_line_number())
+        value_type_validation(file_description, str, __name__, get_line_number())
+
+        logger.debug(
+            'Passing parameters:\n'
+            f'  - file_path (str):\n        - {file_path}'
+            f'  - file_description (str):\n        - {file_description}'
         )
-        logger.error(error_message)
-        raise ValueError(error_message)
-    else:
-        logger.debug(f'{file_description} file exists')
+    except Exception as error:
+        if 'Originating error on line' in str(error):
+            logger.debug(f'Forwarding caught {type(error).__name__} at line {error.__traceback__.tb_lineno} in <{__name__}>')
+            raise error
+        else:
+            error_args = {
+                'main_message': 'A general exception occurred during the value type validation.',
+                'error_type': Exception,
+                'original_error': error,
+            }
+            error_formatter(error_args, __name__, error.__traceback__.tb_lineno)
+
+    try:
+        logger.debug(f'Begining to check the file path for {file_description}')
+        # Checks if the file does not exist
+        file = pathlib.Path(file_path)
+        if not file.exists():
+            error_args = {
+                'main_message': f'{file_description} log file does not exist.',
+                'error_type': FileNotFoundError,
+                'suggested_resolution': 'Ensure the file path is the correct path to your file.',
+            }
+            error_formatter(error_args, __name__, get_line_number())
+        else:
+            logger.debug(f'{file_description} file exists')
+    except Exception as error:
+        if 'Originating error on line' in str(error):
+            logger.debug(f'Forwarding caught {type(error).__name__} at line {error.__traceback__.tb_lineno} in <{__name__}>')
+            raise error
+        else:
+            error_args = {
+                'main_message': 'A general failure occurred while checking if the file exists.',
+                'error_type': Exception,
+                'original_error': error,
+            }
+            error_formatter(error_args, __name__, error.__traceback__.tb_lineno)
 
 
-def search_file(file_path, searching_value):
+def search_file(file_path: str, searching_value: Union[str, list]) -> Union[list, None]:
     """
     Searches the file for a value. The search can look for multiple values when the searching value arguments are passed as a list. A single-string search is supported as well.
 
@@ -124,51 +187,71 @@ def search_file(file_path, searching_value):
         searching_value (str or list): search value that is looked for within the file. The entry can be a single string or a list to search
 
     Raises:
-        ValueError: A failure occurred while searching the file
+        TypeError: The value '{file_path}' is not in str format.
+        TypeError: The value '{searching_value}' is not in str or list format.
+        Exception: Forwarding caught {type(error).__name__} at line {error.__traceback__.tb_lineno} in <{__name__}>
+        Exception: A general exception occurred during the value type validation.
+        ValueError: A failure occurred while searching the file. The file path does not include a file with an extension.
+        Exception: Forwarding caught {type(error).__name__} at line {error.__traceback__.tb_lineno} in <{__name__}>
+        Exception: A general failure occurred while while searching the file.
 
     Returns:
         list: a dictionary in a list
+        \tExample: [{'search_entry': '|Error|', 'found_entry': 'the entry found'}, {'search_entry': '|Warning|', 'found_entry': 'the entry found'}]
 
         Usage Keys:
             - search_entry
             - found_entry
-
-        Return Example: Return Example: [{'search_entry': '|Error|', 'found_entry': 'the entry found'}, {'search_entry': '|Warning|', 'found_entry': 'the entry found'}]
     """
     logger = logging.getLogger(__name__)
-    logger.debug(f'=' * 20 + traceback.extract_stack(None, 2)[1][2] + '=' * 20)
-    # Custom flowchart tracking. This is ideal for large projects that move a lot. 
+    logger.debug(f'=' * 20 + get_function_name() + '=' * 20)
+    # Custom flowchart tracking. This is ideal for large projects that move a lot.
     # For any third-party modules, set the flow before making the function call.
     logger_flowchart = logging.getLogger('flowchart')
-    logger_flowchart.debug(f'Flowchart --> Function: {traceback.extract_stack(None, 2)[1][2]}')
+    logger_flowchart.debug(f'Flowchart --> Function: {get_function_name()}')
 
-    logger.debug(f'Passing parameters [file_path] (str):\n    - {file_path}')
-    if isinstance(searching_value, list):
-        logger.debug(f'Passing parameters [searching_value] (list):' + '\n    - ' + '\n    - '.join(map(str, searching_value)))
-    else:
-        logger.debug(f'Passing parameters [searching_value] (str):\n    - {searching_value}')
+    # Checks function launch variables and logs passing parameters.
+    try:
+        # Validates required types.
+        value_type_validation(file_path, str, __name__, get_line_number())
+        value_type_validation(searching_value, [str, list], __name__, get_line_number())
+
+        if isinstance(searching_value, list):
+            formatted_searching_value = '  - searching_value (list):' + str('\n        - ' + '\n        - '.join(map(str, searching_value)))
+        elif isinstance(searching_value, str):
+            formatted_searching_value = f'  - searching_value (str):\n        - {searching_value}'
+
+        logger.debug(
+            'Passing parameters:\n'
+            f'  - file_path (str):\n        - {file_path}'
+            f'{formatted_searching_value}'
+        )
+    except Exception as error:
+        if 'Originating error on line' in str(error):
+            logger.debug(f'Forwarding caught {type(error).__name__} at line {error.__traceback__.tb_lineno} in <{__name__}>')
+            raise error
+        else:
+            error_args = {
+                'main_message': 'A general exception occurred during the value type validation.',
+                'error_type': Exception,
+                'original_error': error,
+            }
+            error_formatter(error_args, __name__, error.__traceback__.tb_lineno)
 
     logger.debug(f'Begining to search the file \"{file_path}\" for a value \"{searching_value}\"')
 
     # Checks that the passing file_path contains a file extension.
     if '.' not in file_path:
-        error_message = (
-            'A failure occurred while searching the file. The file path does not include a file with an extension.\n' +
-            (('-' * 150) + '\n') + (('-' * 65) + 'Additional Information' + ('-' * 63) + '\n') + (('-' * 150) + '\n') +
-            'Expected Result:\n'
-            f'  - A file with an extension (ex: myfile.txt)\n\n'
-            'Returned Result:\n'
-            f'  - file_path = {file_path}\n\n'
-            'Suggested Resolution:\n'
-            '   - Please verify you have sent a full file path and not a directory.\n\n'
-            f'Originating error on line {traceback.extract_stack()[-1].lineno} in <{__name__}>\n' +
-            (('-' * 150) + '\n') * 2 
-        )  
-        logger.error(error_message) 
-        raise ValueError(error_message)
+        error_args = {
+            'main_message': 'A failure occurred while searching the file. The file path does not include a file with an extension.',
+            'error_type': ValueError,
+            'expected_result': 'A file with an extension (ex: myfile.txt)',
+            'returned_result': file_path,
+            'suggested_resolution': 'Please verify you have sent a full file path and not a directory.',
+        }
+        error_formatter(error_args, __name__, get_line_number())
 
     try:
-
         # Stores the search entry and found info.
         # Required to return multiple found strings.
         matched_entries = []
@@ -200,7 +283,7 @@ def search_file(file_path, searching_value):
 
             logger.debug('Checking if the list \"matched_entries\" has matched values')
 
-        # Checking if the listy has discovered values for potential cleanup.
+        # Checking if the list has discovered values for potential cleanup.
         if matched_entries:
             # Checks if searching_value is str or list to clean up any potential duplicates
             if isinstance(searching_value, list):
@@ -212,16 +295,17 @@ def search_file(file_path, searching_value):
                 matched_entries = remove_duplicate_dict_values_in_list(matched_entries, 1)
 
                 logger.debug(f'The adjusted match list with removed duplicates is listed below: {matched_entries}')
-    except Exception as err:
-        error_message = (
-            f'A failure occurred while searching the file.\n\n' +
-            (('-' * 150) + '\n') + (('-' * 65) + 'Additional Information' + ('-' * 63) + '\n') + (('-' * 150) + '\n') +
-            f'{err}\n\n'
-            f'Originating error on line {traceback.extract_stack()[-1].lineno} in <{__name__}>\n' +
-            (('-' * 150) + '\n') * 2
-        )
-        logger.error(error_message)
-        raise ValueError(error_message)
+    except Exception as error:
+        if 'Originating error on line' in str(error):
+            logger.debug(f'Forwarding caught {type(error).__name__} at line {error.__traceback__.tb_lineno} in <{__name__}>')
+            raise error
+        else:
+            error_args = {
+                'main_message': 'A general failure occurred while while searching the file.',
+                'error_type': Exception,
+                'original_error': error,
+            }
+            error_formatter(error_args, __name__, error.__traceback__.tb_lineno)
     else:
         # Checking if the list has discovered log entry values.
         if matched_entries:
@@ -235,7 +319,7 @@ def search_file(file_path, searching_value):
             return None
 
 
-def search_multiple_files(file_paths, searching_value):
+def search_multiple_files(file_paths: list, searching_value: Union[str, list]) -> Union[list, None]:
     """
     Searches multiple files for a value. Requires the file_path to be sent as a list. The search can look for multiple values when the searching value arguments are passed as a list.
     A single-string search is supported as well.
@@ -245,33 +329,60 @@ def search_multiple_files(file_paths, searching_value):
         searching_value (str or list): search value that is looked for within the file. The entry can be a single string or a list to search
 
     Raises:
-        ValueError: A failure occurred while searching the file
+        TypeError: The value '{file_paths}' is not in list format.
+        TypeError: The value '{searching_value}' is not in str or list format.
+        Exception: Forwarding caught {type(error).__name__} at line {error.__traceback__.tb_lineno} in <{__name__}>
+        Exception: A general exception occurred during the value type validation.
+        ValueError: A failure occurred while searching the file. The file path does not include a file with an extension.
+        Exception: Forwarding caught {type(error).__name__} at line {error.__traceback__.tb_lineno} in <{__name__}>
+        Exception: A general failure occurred while while searching the file
 
     Returns:
         list: A list of discovered search values. Each discovered value is per element. No discovered values will return None.
-
+        \tExample: [{'search_entry': '|Error|', 'found_entry': 'the entry found'}, {'search_entry': '|Warning|', 'found_entry': 'the entry found'}]
         Useage Keys:
             - search_entry
             - found_entry
-
-        Return Example: Return Example: [{'search_entry': '|Error|', 'found_entry': 'the entry found'}, {'search_entry': '|Warning|', 'found_entry': 'the entry found'}]
     """
     logger = logging.getLogger(__name__)
-    logger.debug(f'=' * 20 + traceback.extract_stack(None, 2)[1][2] + '=' * 20)
-    # Custom flowchart tracking. This is ideal for large projects that move a lot. 
+    logger.debug(f'=' * 20 + get_function_name() + '=' * 20)
+    # Custom flowchart tracking. This is ideal for large projects that move a lot.
     # For any third-party modules, set the flow before making the function call.
     logger_flowchart = logging.getLogger('flowchart')
-    logger_flowchart.debug(f'Flowchart --> Function: {traceback.extract_stack(None, 2)[1][2]}')
+    logger_flowchart.debug(f'Flowchart --> Function: {get_function_name()}')
 
-    logger.debug(f'Passing parameters [file_paths] (list):' + '\n    - ' + '\n    - '.join(map(str, file_paths)))
-    if isinstance(searching_value, list):
-        logger.debug(f'Passing parameters [searching_value] (list):' + '\n    - ' + '\n    - '.join(map(str, searching_value)))
-    else:
-        logger.debug(f'Passing parameters [searching_value] (str):\n    - {searching_value}')
+    # Checks function launch variables and logs passing parameters.
+    try:
+        # Validates required types.
+        value_type_validation(file_paths, list, __name__, get_line_number())
+        value_type_validation(searching_value, [str, list], __name__, get_line_number())
+
+        formatted_file_paths = '  - file_paths (list):' + str('\n        - ' + '\n        - '.join(map(str, file_paths)))
+        if isinstance(searching_value, list):
+            formatted_searching_value = '  - searching_value (list):' + str('\n        - ' + '\n        - '.join(map(str, searching_value)))
+        elif isinstance(searching_value, str):
+            formatted_searching_value = f'  - searching_value (str):\n        - {searching_value}'
+
+        logger.debug(
+            'Passing parameters:\n'
+            f'{formatted_file_paths}'
+            f'{formatted_searching_value}'
+        )
+    except Exception as error:
+        if 'Originating error on line' in str(error):
+            logger.debug(f'Forwarding caught {type(error).__name__} at line {error.__traceback__.tb_lineno} in <{__name__}>')
+            raise error
+        else:
+            error_args = {
+                'main_message': 'A general exception occurred during the value type validation.',
+                'error_type': Exception,
+                'original_error': error,
+            }
+            error_formatter(error_args, __name__, error.__traceback__.tb_lineno)
 
     logger.debug(f'Begining to search the files \"{file_paths}\" for a value \"{searching_value}\"')
-    try:
 
+    try:
         # Assigns list variable to be used in this function.
         # Required to return multiple found strings.
         grouped_found_files = []
@@ -284,20 +395,14 @@ def search_multiple_files(file_paths, searching_value):
         for index, file_path in enumerate(file_paths):
             # Checks that the passing file_path contains a file extension.
             if '.' not in file_path:
-                error_message = (
-                    'A failure occurred while searching the file. The file path does not include a file with an extension.\n' +
-                    (('-' * 150) + '\n') + (('-' * 65) + 'Additional Information' + ('-' * 63) + '\n') + (('-' * 150) + '\n') +
-                    'Expected Result:\n'
-                    f'  - A file with an extension (ex: myfile.txt)\n\n'
-                    'Returned Result:\n'
-                    f'  - file_path = {file_path}\n\n'
-                    'Suggested Resolution:\n'
-                    '   - Please verify you have sent a full file path and not a directory.\n\n'
-                    f'Originating error on line {traceback.extract_stack()[-1].lineno} in <{__name__}>\n' +
-                    (('-' * 150) + '\n') * 2 
-                )  
-                logger.error(error_message) 
-                raise ValueError(error_message)
+                error_args = {
+                    'main_message': 'A failure occurred while searching the file. The file path does not include a file with an extension.',
+                    'error_type': ValueError,
+                    'expected_result': 'A file with an extension (ex: myfile.txt)',
+                    'returned_result': file_path,
+                    'suggested_resolution': 'Please verify you have sent a full file path and not a directory.',
+                }
+                error_formatter(error_args, __name__, get_line_number())
             logger.debug(f'Reading in all lines from the file \"{file_path}\"')
             # Sets the basename for cleaner logging output.
             basename_searched_file = os.path.basename(file_path)
@@ -336,7 +441,7 @@ def search_multiple_files(file_paths, searching_value):
 
             logger.debug('Checking if the list has discovered file entry values')
 
-        # Checking if the listy has discovered values for potential cleanup.
+        # Checking if the list has discovered values for potential cleanup.
         if matched_entries:
             # Checks if searching_value is str or list to clean up any potential duplicates
             if isinstance(searching_value, str):
@@ -349,16 +454,17 @@ def search_multiple_files(file_paths, searching_value):
                 # Example Return: [{'search_entry': '|Error|', 'found_entry': 'the entry found2'}]
                 matched_entries = remove_duplicate_dict_values_in_list(matched_entries, 1)
                 logger.debug(f'The adjusted match list with removed duplicates is listed below: {matched_entries}')
-    except Exception as err:
-        error_message = (
-            f'A failure occurred while searching the file.\n\n' +
-            (('-' * 150) + '\n') + (('-' * 65) + 'Additional Information' + ('-' * 63) + '\n') + (('-' * 150) + '\n') +
-            f'{err}\n\n'
-            f'Originating error on line {traceback.extract_stack()[-1].lineno} in <{__name__}>\n' +
-            (('-' * 150) + '\n') * 2
-        )
-        logger.error(error_message)
-        raise ValueError(error_message)
+    except Exception as error:
+        if 'Originating error on line' in str(error):
+            logger.debug(f'Forwarding caught {type(error).__name__} at line {error.__traceback__.tb_lineno} in <{__name__}>')
+            raise error
+        else:
+            error_args = {
+                'main_message': 'A general failure occurred while while searching the file.',
+                'error_type': Exception,
+                'original_error': error,
+            }
+            error_formatter(error_args, __name__, error.__traceback__.tb_lineno)
     else:
         # Checking if the list has discovered log entry values.
         if matched_entries:
@@ -372,249 +478,206 @@ def search_multiple_files(file_paths, searching_value):
             return None
 
 
-def check_file_threshold_size(file_path, size_max_file_size, logger=None):
-    """
-    Checks threshold on the log file. If the threshold is exceeded, the log file will be cleared.
-
-    Args:
-        file_path (str): the file path being checked
-        size_max_file_size (int): the max size of the file being checked
-
-    Raises:
-        ValueError: Failure occured while clearing log file
-        ValueError: Log file size is <File Size> bytes after clearing. Failed to clear log
-        ValueError: <File Path> file does not exist., <General Error>
-    """
-    logger = logging.getLogger(__name__)
-    logger.debug(f'=' * 20 + traceback.extract_stack(None, 2)[1][2] + '=' * 20)
-    # Custom flowchart tracking. This is ideal for large projects that move a lot. 
-    # For any third-party modules, set the flow before making the function call.
-    logger_flowchart = logging.getLogger('flowchart')
-    logger_flowchart.debug(f'Flowchart --> Function: {traceback.extract_stack(None, 2)[1][2]}')
-
-    logger.debug(f'Begining to check if the log file {file_path} has reached {size_max_file_size} bytes')
-    # Checks if file exists before starting.
-    # Log files may not exist on the initial start.
-    file = pathlib.Path(file_path)
-    if file.exists():
-        # Gets log file size.
-        size_file_path = os.path.getsize(file_path)
-        # Checks if the log file is greater than the threshold.
-        if size_file_path > size_max_file_size:
-            logger.debug(f'Log file size is {size_file_path} bytes and over threashold of {size_max_file_size} bytes')
-            logger.info('Clearing the log file because it is over the file size threshold')
-            # Clears older entries in the log file.
-            try:
-                # Clears log file.
-                f = open(file_path, "w")
-                f.close()
-            except Exception as err:
-                error_message = (
-                    f'Failure occured while clearing log file.\n\n' +
-                    (('-' * 150) + '\n') + (('-' * 65) + 'Additional Information' + ('-' * 63) + '\n') + (('-' * 150) + '\n') +
-                    f'{err}\n\n'
-                    f'Originating error on line {traceback.extract_stack()[-1].lineno} in <{__name__}>\n' +
-                    (('-' * 150) + '\n') * 2
-                )
-                logger.error(error_message)
-                raise ValueError(error_message)
-
-            # Gets log file size again.
-            size_file_path = os.path.getsize(file_path)
-            # Checks if log file cleared.
-            if size_file_path > size_max_file_size:
-                error_message = (
-                    f'Log file size is {size_file_path} bytes after clearing. Failed to clear log.\n\n' +
-                    (('-' * 150) + '\n') + (('-' * 65) + 'Additional Information' + ('-' * 63) + '\n') + (('-' * 150) + '\n') +
-                    'Suggested Resolution:\n'
-                    '  - Check permissions.\n\n'
-                    f'Originating error on line {traceback.extract_stack()[-1].lineno} in <{__name__}>\n' +
-                    (('-' * 150) + '\n') * 2
-                )
-                logger.error(error_message)
-                raise ValueError(error_message)
-            else:
-                logger.info('Log file cleared successfully')
-        else:
-            logger.debug(f'Log file size is {size_file_path} bytes and under threshold of {size_max_file_size} bytes. No action required.')
-    else:
-        error_message = (
-            f'{file_path} file does not exist.\n\n' +
-            (('-' * 150) + '\n') + (('-' * 65) + 'Additional Information' + ('-' * 63) + '\n') + (('-' * 150) + '\n') +
-            'Suggested Resolution:\n'
-            '  - Ensure the file path is the correct path to your file.\n\n'
-            f'Originating error on line {traceback.extract_stack()[-1].lineno} in <{__name__}>\n' +
-            (('-' * 150) + '\n') * 2
-        )
-        logger.error(error_message)
-        raise ValueError(error_message)
-
-
 def convert_relative_to_full_path(relative_path: str) -> str:
-    """ Determine full path to file given a relative file path with compatibility with PyInstaller(compiler) built-in
+    """
+    Determine full path to file given a relative file path with compatibility with PyInstaller(compiler) built-in
 
     Args:
         relative_path (string): The unqualified (relative) file path that needs to converted to a qualified full path format
-            - Example: "\\[directory]\\[file].[extension]"
+        \t\- Example: "\\[directory]\\[file].[extension]"
+
+    Raises:
+        TypeError: The value '{relative_path}' is not in str format.
+        Exception: Forwarding caught {type(error).__name__} at line {error.__traceback__.tb_lineno} in <{__name__}>
+        Exception: A general exception occurred during the value type validation.
+        Exception: Forwarding caught {type(error).__name__} at line {error.__traceback__.tb_lineno} in <{__name__}>
+        Exception: A general exception occurred during the relative to full path conversion.
 
     Returns:
         [string]: Full file path
-            - Example: "C:\\[root directory]\\[directory]\\[file].[extension]"
+        \t\- Example: "C:\\[root directory]\\[directory]\\[file].[extension]"
     """
     logger = logging.getLogger(__name__)
-    logger.debug(f'=' * 20 + traceback.extract_stack(None, 2)[1][2] + '=' * 20)
-    # Custom flowchart tracking. This is ideal for large projects that move a lot. 
+    logger.debug(f'=' * 20 + get_function_name() + '=' * 20)
+    # Custom flowchart tracking. This is ideal for large projects that move a lot.
     # For any third-party modules, set the flow before making the function call.
     logger_flowchart = logging.getLogger('flowchart')
-    logger_flowchart.debug(f'Flowchart --> Function: {traceback.extract_stack(None, 2)[1][2]}')
+    logger_flowchart.debug(f'Flowchart --> Function: {get_function_name()}')
 
-    if hasattr(sys, '_MEIPASS'):
-        # PyInstaller creates a temp folder and stores path in _MEIPASS
-        base_path = sys._MEIPASS
-    else:
-        # When running uncompiled, use normal os calls to determine location
-        base_path = os.getcwd()
+    # Checks function launch variables and logs passing parameters.
+    try:
+        # Validates required types.
+        value_type_validation(relative_path, str, __name__, get_line_number())
 
-    return f'{base_path}\\{relative_path}'
+        logger.debug(
+            'Passing parameters:\n'
+            f'  - relative_path(str):\n        - {relative_path}'
+        )
+    except Exception as error:
+        if 'Originating error on line' in str(error):
+            logger.debug(f'Forwarding caught {type(error).__name__} at line {error.__traceback__.tb_lineno} in <{__name__}>')
+            raise error
+        else:
+            error_args = {
+                'main_message': 'A general exception occurred during the value type validation.',
+                'error_type': Exception,
+                'original_error': error,
+            }
+            error_formatter(error_args, __name__, error.__traceback__.tb_lineno)
+
+    try:
+        if hasattr(sys, '_MEIPASS'):
+            # PyInstaller creates a temp folder and stores path in _MEIPASS
+            base_path = sys._MEIPASS
+        else:
+            # When running un-compiled, use normal os calls to determine location
+            base_path = os.getcwd()
+
+        return f'{base_path}\\{relative_path}'
+    except Exception as error:
+        if 'Originating error on line' in str(error):
+            logger.debug(f'Forwarding caught {type(error).__name__} at line {error.__traceback__.tb_lineno} in <{__name__}>')
+            raise error
+        else:
+            error_args = {
+                'main_message': 'A general exception occurred during the relative to full path conversion.',
+                'error_type': Exception,
+                'original_error': error,
+            }
+            error_formatter(error_args, __name__, error.__traceback__.tb_lineno)
 
 
-def user_file_selection(prompt: str, criteria: str, root_dir=None) -> str:
-    """ Provides a simple user interface that numerically lists a set of files found using user submitted criteria.  User is prompted to submit the numeric value of the file that is to be used.
+def user_file_selection(prompt: str, criteria: str, root_dir: Optional[str] = None) -> str:
+    """
+    Provides a simple user interface that numerically lists a set of files found using user submitted criteria.  User is prompted to submit the numeric value of the file that is to be used.
 
     Args:
         prompt (str): Literal prompt string to present to user\r
         \tExample: "Enter the database name to import"\n
         criteria (str): Filter to apply when searching for files. Expects standard OS search criteria
         \tExample: "*.db" or "*config*"\n
-        root_dir (str): Manually sets the root directory to search.  Requires an absolute path format.\r
+        root_dir (str, optional): Manually sets the root directory to search.  Requires an absolute path format. Defaults to None.\r
         \tExample: "C:\\Directory\\Subdirectory\"\n
 
     Raises:
-        TypeError: prompt is not a string
-        TypeError: criteria is not a string
-        TypeError: root_dir is not a string
-        FileNotFound: No files were found given the search criteria
+        TypeError: The value '{prompt}' is not in str format.
+        TypeError: The value '{criteria}' is not in str format.
+        TypeError: The value '{root_dir}' is not in str format.
+        Exception: Forwarding caught {type(error).__name__} at line {error.__traceback__.tb_lineno} in <{__name__}>
+        Exception: A general exception occurred during the value type validation.
+        FileNotFoundError: No files were found matching the required criteria
+        Exception: Forwarding caught {type(error).__name__} at line {error.__traceback__.tb_lineno} in <{__name__}>
+        Exception: A general failure occurred during the user file selection.
 
     Returns:
         [string]: Returns the path of the file that was selected in the format provided\r
         \tExample: "test.py" or "c:\\folder\\test.py"
-
     """
     logger = logging.getLogger(__name__)
-    logger.debug(f'=' * 20 + traceback.extract_stack(None, 2)[1][2] + '=' * 20)
+    logger.debug(f'=' * 20 + get_function_name() + '=' * 20)
     # Custom flowchart tracking. This is ideal for large projects that move a lot.
     # For any third-party modules, set the flow before making the function call.
     logger_flowchart = logging.getLogger('flowchart')
-    logger_flowchart.debug(f'Flowchart --> Function: {traceback.extract_stack(None, 2)[1][2]}')
+    logger_flowchart.debug(f'Flowchart --> Function: {get_function_name()}')
 
-    logger.debug(f'Passing parameters [prompt] (str):\n    - {prompt}')
-    logger.debug(f'Passing parameters [criteria] (str):\n    - {criteria}')
-    logger.debug(f'Passing parameters [path_format] (str):\n    - {root_dir}')
+    # Checks function launch variables and logs passing parameters.
+    try:
+        # Validates required types.
+        value_type_validation(prompt, str, __name__, get_line_number())
+        value_type_validation(criteria, str, __name__, get_line_number())
+        if root_dir:
+            value_type_validation(root_dir, str, __name__, get_line_number())
 
-    # Verify the provided criteria is in string format
-    if not isinstance(prompt, str):
-        error_message = (
-            'The provided prompt is not in string format.\n' +
-            (('-' * 150) + '\n') + (('-' * 65) + 'Additional Information' + ('-' * 63) + '\n') + (('-' * 150) + '\n') +
-            'Expected Result:\n'
-            f'  - Type = str\n\n'
-            'Returned Result:\n'
-            f'  - Type = {type(prompt)}\n\n'
-            f'Originating error on line {traceback.extract_stack()[-1].lineno} in <{__name__}>\n' +
-            (('-' * 150) + '\n') * 2
+        if root_dir:
+            formatted_root_dir = f'  - relative_path (str):\n        - {root_dir}'
+        else:
+            formatted_root_dir = f'  - relative_path (str):\n        - None'
+
+        logger.debug(
+            'Passing parameters:\n'
+            f'  - prompt (str):\n        - {prompt}'
+            f'  - criteria (str):\n        - {criteria}'
+            f'{formatted_root_dir}'
         )
-        logger.error(error_message)
-        raise TypeError(error_message)
+    except Exception as error:
+        if 'Originating error on line' in str(error):
+            logger.debug(f'Forwarding caught {type(error).__name__} at line {error.__traceback__.tb_lineno} in <{__name__}>')
+            raise error
+        else:
+            error_args = {
+                'main_message': 'A general exception occurred during the value type validation.',
+                'error_type': Exception,
+                'original_error': error,
+            }
+            error_formatter(error_args, __name__, error.__traceback__.tb_lineno)
 
-    # Verify the provided criteria is in string format
-    if not isinstance(criteria, str):
-        error_message = (
-            'The provided criteria is not in string format.\n' +
-            (('-' * 150) + '\n') + (('-' * 65) + 'Additional Information' + ('-' * 63) + '\n') + (('-' * 150) + '\n') +
-            'Expected Result:\n'
-            f'  - Type = str\n\n'
-            'Returned Result:\n'
-            f'  - Type = {type(criteria)}\n\n'
-            f'Originating error on line {traceback.extract_stack()[-1].lineno} in <{__name__}>\n' +
-            (('-' * 150) + '\n') * 2
-        )
-        logger.error(error_message)
-        raise TypeError(error_message)
+    try:
+        # Initialize an empty list that will contain files found during search
+        files = []
+        # Print the prompt
+        print(prompt)
+        """
+        # Search for files in current working directory
+        for file in glob(criteria):
+            # Do not match on temporary files beginning with '~'
+            if search('^~', file) is None:
+                # Add file to list
+                files.append(file)
+                print(f'  [{[i for i, x in enumerate(files) if x == file][0]}] {file}')
+        """
+        if root_dir:
+            # Use provided root directory for search
+            search_path = root_dir
+        else:
+            # If path not provided, use current working directory
+            search_path = os.path.abspath(os.curdir)
 
-    # Verify the provided path_format is in string format when not None
-    if root_dir is not None and not isinstance(root_dir, str):
-        error_message = (
-            'The provided root_dir is not in string format.\n' +
-            (('-' * 150) + '\n') + (('-' * 65) + 'Additional Information' + ('-' * 63) + '\n') + (('-' * 150) + '\n') +
-            'Expected Result:\n'
-            f'  - Type = str\n\n'
-            'Returned Result:\n'
-            f'  - Type = {type(root_dir)}\n\n'
-            f'Originating error on line {traceback.extract_stack()[-1].lineno} in <{__name__}>\n' +
-            (('-' * 150) + '\n') * 2
-        )
-        logger.error(error_message)
-        raise TypeError(error_message)
-
-    # Initialize an empty list that will contain files found during search
-    files = []
-    # Print the prompt
-    print(prompt)
-    """
-    # Search for files in current working directory
-    for file in glob(criteria):
-        # Do not match on temporary files beginning with '~'
-        if search('^~', file) is None:
+        for file in Path(search_path).glob(criteria):
             # Add file to list
             files.append(file)
-            print(f'  [{[i for i, x in enumerate(files) if x == file][0]}] {file}')
-    """
-    if root_dir:
-        # Use provided root directory for search
-        search_path = root_dir
-    else:
-        # If path not provided, use current working directory
-        search_path = os.path.abspath(os.curdir)
+            print(f'  [{[i for i, x in enumerate(files) if x == file][0]}] {os.path.basename(file)}')
 
-    for file in Path(search_path).glob(criteria):
-        # Add file to list
-        files.append(file)
-        print(f'  [{[i for i, x in enumerate(files) if x == file][0]}] {os.path.basename(file)}')
+        # If no files were found matching user provided criteria,  raise exception
+        if len(files) == 0:
+            error_args = {
+                'main_message': 'No files were found matching the required criteria',
+                'error_type': FileNotFoundError,
+                'expected_result': 'A matching file',
+                'returned_result': 0,
+                'suggested_resolution': 'Please verify you have set all required keys and try again.',
+            }
+            error_formatter(error_args, __name__, get_line_number())
 
-    # If no files were found matching user provided criteria,  raise exception
-    if len(files) == 0:
-        # User indicated that the required file was not in the list
-        error_message = (
-            'No files were found matching the required criteria\n' +
-            (('-' * 150) + '\n') + (('-' * 65) + 'Additional Information' + ('-' * 63) + '\n') + (('-' * 150) + '\n') +
-            f'Provided criteria: {criteria}\n'
-            f'Directory: {search_path}\n'
-            f'Originating error on line {traceback.extract_stack()[-1].lineno} in <{__name__}>\n' +
-            (('-' * 150) + '\n') * 2
-        )
-        logger.debug(error_message)
-        # Raise exception and let calling module determine how to handle
-        raise FileNotFoundError(error_message)
-
-    # Loop until valid input is provided by user
-    while True:
-        try:
-            selection = int(input('\nSelection [#]:  '))
-        except ValueError:
-            print("Invalid entry")
-            logger.debug("User entered non-numeric input")
-            continue
-        # Check user input for basic validity
-        if selection < 0:
-            # User is being a dick and submitted a negative number, re-prompt
-            print("Invalid entry")
-            logger.debug("User entered negative number input")
-            continue
-        elif selection not in range(len(files)):
-            # Number input is greater than max selectable value, re-prompt
-            print("Invalid entry")
-            logger.debug("User entered number greater than returned file count")
-            continue
+        # Loop until valid input is provided by user
+        while True:
+            try:
+                selection = int(input('\nSelection [#]:  '))
+            except ValueError:
+                print("Invalid entry")
+                logger.debug("User entered non-numeric input")
+                continue
+            # Check user input for basic validity
+            if selection < 0:
+                # User is being a dick and submitted a negative number, re-prompt
+                print("Invalid entry")
+                logger.debug("User entered negative number input")
+                continue
+            elif selection not in range(len(files)):
+                # Number input is greater than max selectable value, re-prompt
+                print("Invalid entry")
+                logger.debug("User entered number greater than returned file count")
+                continue
+            else:
+                # Valid input provided, return absolute path of file selected
+                return files[selection]
+    except Exception as error:
+        if 'Originating error on line' in str(error):
+            logger.debug(f'Forwarding caught {type(error).__name__} at line {error.__traceback__.tb_lineno} in <{__name__}>')
+            raise error
         else:
-            # Valid input provided, return absolute path of file selected
-            return files[selection]
+            error_args = {
+                'main_message': 'A general failure occurred during the user file selection.',
+                'error_type': Exception,
+                'original_error': error,
+            }
+            error_formatter(error_args, __name__, error.__traceback__.tb_lineno)

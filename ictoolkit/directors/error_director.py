@@ -2,19 +2,17 @@
 This module creates formatted error output for clean consistency across all modules. All modules will not return any data but throw exception errors when validation fails.
 """
 
-# Built-in/Generic Imports
-import traceback
-
 # Own modules
 from ictoolkit.directors.validation_director import value_type_validation
 from ictoolkit.helpers.py_helper import get_line_number
 
 __author__ = 'IncognitoCoding'
-__copyright__ = 'Copyright 2021, error_director'
+__copyright__ = 'Copyright 2022, error_director'
 __credits__ = ['IncognitoCoding']
 __license__ = 'GPL'
-__version__ = '1.1'
+__version__ = '2.0'
 __maintainer__ = 'IncognitoCoding'
+__status__ = 'Production'
 
 
 def error_formatter(error_args: dict, caller_module: str, caller_line: int) -> None:
@@ -53,54 +51,22 @@ def error_formatter(error_args: dict, caller_module: str, caller_line: int) -> N
         error: [raised] formatted message
         Exception: A general error has occurred while validating a value type.
     """
-
-    # Verifies the error arguments are sent.
-    if not isinstance(error_args, dict):
-        error_message = (
-            f'The error_args \'{error_args}\' sent is not an accepted input.\n'
-            + (('-' * 150) + '\n') + (('-' * 65) + 'Additional Information' + ('-' * 63) + '\n') + (('-' * 150) + '\n')
-            + 'Expected Result:\n'
-            f'  - Type = dict\n\n'
-            'Returned Result:\n'
-            f'  - Type = {type(error_args)}\n\n'
-            + 'Suggested Resolution:\n'
-            f'  - Please check the calling function.\n\n'
-            + f'Originating error on line {traceback.extract_stack()[-1].lineno} in <{__name__}>\n'
-            + (('-' * 150) + '\n') * 2
-        )
-        raise AttributeError(error_message)
-
-    # Verifies the caller module is sent.
-    if not isinstance(caller_module, str):
-        error_message = (
-            f'The caller_module \'{caller_module}\' sent is not an accepted input.\n'
-            + (('-' * 150) + '\n') + (('-' * 65) + 'Additional Information' + ('-' * 63) + '\n') + (('-' * 150) + '\n')
-            + 'Expected Result:\n'
-            f'  - Type = str\n\n'
-            'Returned Result:\n'
-            f'  - Type = {type(caller_module)}\n\n'
-            + 'Suggested Resolution:\n'
-            f'  - Please check the calling function.\n\n'
-            + f'Originating error on line {traceback.extract_stack()[-1].lineno} in <{__name__}>\n'
-            + (('-' * 150) + '\n') * 2
-        )
-        raise AttributeError(error_message)
-
-    # Verifies the caller line number is sent.
-    if not isinstance(caller_line, int):
-        error_message = (
-            f'The caller_line \'{caller_line}\' sent is not an accepted input.\n'
-            + (('-' * 150) + '\n') + (('-' * 65) + 'Additional Information' + ('-' * 63) + '\n') + (('-' * 150) + '\n')
-            + 'Expected Result:\n'
-            f'  - Type = int\n\n'
-            'Returned Result:\n'
-            f'  - Type = {type(caller_line)}\n\n'
-            + 'Suggested Resolution:\n'
-            f'  - Please check the calling function.\n\n'
-            + f'Originating error on line {traceback.extract_stack()[-1].lineno} in <{__name__}>\n'
-            + (('-' * 150) + '\n') * 2
-        )
-        raise AttributeError(error_message)
+    # Checks function launch variables and logs passing parameters.
+    try:
+        # Validates required types.
+        value_type_validation(error_args, dict, __name__, get_line_number())
+        value_type_validation(caller_module, str, __name__, get_line_number())
+        value_type_validation(caller_line, int, __name__, get_line_number())
+    except Exception as error:
+        if 'Originating error on line' in str(error):
+            raise error
+        else:
+            error_args = {
+                'main_message': 'A general exception occurred during the value type validation.',
+                'error_type': Exception,
+                'original_error': error,
+            }
+            error_formatter(error_args, __name__, error.__traceback__.tb_lineno)
 
     # Gets all error_args.
     try:

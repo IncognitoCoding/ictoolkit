@@ -28,8 +28,6 @@ ictoolkit is designed to be the swiss army knife of programming methods. This pa
       - Searches the file for a value. The search can look for multiple values when the searching value arguments are passed as a list. A single-string search is supported as well.
     - Function: search_multiple_files
       - Searches multiple files for a value. Requires the file_path to be sent as a list. The search can look for multiple values when the searching value arguments are passed as a list. A single-string search is supported as well.
-    - Function: check_file_threshold_size
-      - Checks threshold on the log file. If the threshold is exceeded, the log file will be cleared.
   - Method: ini_config_director
     - Function: read_ini_config
       - Reads configuration ini file data and returns the returns the read configuration.

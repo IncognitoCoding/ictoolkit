@@ -12,20 +12,23 @@ import time
 import traceback
 import logging
 
-# Own module
+# Own modules
+from ictoolkit.directors.error_director import error_formatter
+from ictoolkit.helpers.py_helper import get_function_name, get_line_number
+from ictoolkit.directors.validation_director import value_type_validation
 from ictoolkit.directors.error_director import error_formatter
 from ictoolkit.helpers.py_helper import get_function_name, get_line_number
 
 __author__ = 'IncognitoCoding'
-__copyright__ = 'Copyright 2021, thread_director'
+__copyright__ = 'Copyright 2022, thread_director'
 __credits__ = ['IncognitoCoding']
 __license__ = 'GPL'
-__version__ = '1.5'
+__version__ = '2.0'
 __maintainer__ = 'IncognitoCoding'
-__status__ = 'Development'
+__status__ = 'Production'
 
 
-def start_function_thread(passing_program_function, program_function_name, infinite_loop_option):
+def start_function_thread(passing_program_function, program_function_name: str, infinite_loop_option: bool) -> None:
     """
     This function is used to start any other function inside it's own thread. This is ideal if you need to have part of the program sleep and another part of the program always
     active (ex: Web Interface = Always Active & Log Checking = 10 Minute Sleep)
@@ -45,15 +48,42 @@ def start_function_thread(passing_program_function, program_function_name, infin
         infinite_loop_option (bool): Enabled infinite loop.
 
     Raises:
+        TypeError: The value '{program_function_name}' is not in str format.
+        TypeError: The value '{infinite_loop_option}' is not in bool format.
+        Exception: Forwarding caught {type(error).__name__} at line {error.__traceback__.tb_lineno} in <{__name__}>
+        Exception: A general exception occurred during the value type validation.
         Exception: A failure occurred while staring the function thread.
         Exception: The thread ({program_function_name}) timeout has reached its threshold of 1 minute.
     """
     logger = logging.getLogger(__name__)
-    logger.debug(f'=' * 20 + traceback.extract_stack(None, 2)[1][2] + '=' * 20)
+    logger.debug(f'=' * 20 + get_function_name() + '=' * 20)
     # Custom flowchart tracking. This is ideal for large projects that move a lot.
     # For any third-party modules, set the flow before making the function call.
     logger_flowchart = logging.getLogger('flowchart')
-    logger_flowchart.debug(f'Flowchart --> Function: {traceback.extract_stack(None, 2)[1][2]}')
+    logger_flowchart.debug(f'Flowchart --> Function: {get_function_name()}')
+
+    # Checks function launch variables and logs passing parameters.
+    try:
+        # Validates required types.
+        value_type_validation(program_function_name, str, __name__, get_line_number())
+        value_type_validation(infinite_loop_option, bool, __name__, get_line_number())
+
+        logger.debug(
+            'Passing parameters:\n'
+            f'  - program_function_name (str):\n        - {program_function_name}'
+            f'  - infinite_loop_option (bool):\n        - {infinite_loop_option}'
+        )
+    except Exception as error:
+        if 'Originating error on line' in str(error):
+            logger.debug(f'Forwarding caught {type(error).__name__} at line {error.__traceback__.tb_lineno} in <{__name__}>')
+            raise error
+        else:
+            error_args = {
+                'main_message': 'A general exception occurred during the value type validation.',
+                'error_type': Exception,
+                'original_error': error,
+            }
+            error_formatter(error_args, __name__, error.__traceback__.tb_lineno)
 
     # Creates a dedicated thread class to run the companion decryptor.
     # This is required because the main() function will sleep x minutes between checks.

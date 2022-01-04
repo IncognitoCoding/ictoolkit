@@ -9,12 +9,12 @@ from types import FrameType
 from typing import cast
 
 __author__ = 'IncognitoCoding'
-__copyright__ = 'Copyright 2021, py_helper'
+__copyright__ = 'Copyright 2022, py_helper'
 __credits__ = ['IncognitoCoding']
 __license__ = 'GPL'
-__version__ = '1.0'
+__version__ = '2.0'
 __maintainer__ = 'IncognitoCoding'
-__status__ = 'Development'
+__status__ = 'Production'
 
 
 def get_line_number() -> int:

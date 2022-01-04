@@ -18,12 +18,12 @@ from ictoolkit.directors.error_director import error_formatter
 from ictoolkit.helpers.py_helper import get_function_name, get_line_number
 
 __author__ = 'IncognitoCoding'
-__copyright__ = 'Copyright 2021, log_director'
+__copyright__ = 'Copyright 2022, log_director'
 __credits__ = ['IncognitoCoding']
 __license__ = 'GPL'
-__version__ = '2.11'
+__version__ = '2.0'
 __maintainer__ = 'IncognitoCoding'
-__status__ = 'Development'
+__status__ = 'Production'
 
 
 def create_logger(logger_settings: dict) -> logging.Logger:

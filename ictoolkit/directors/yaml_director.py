@@ -12,13 +12,18 @@ from typing import Union
 # Libraries
 import yaml
 
+# Own modules
+from ictoolkit.directors.validation_director import value_type_validation
+from ictoolkit.directors.error_director import error_formatter
+from ictoolkit.helpers.py_helper import get_function_name, get_line_number
+
 __author__ = 'IncognitoCoding'
-__copyright__ = 'Copyright 2021, yaml_director'
+__copyright__ = 'Copyright 2022, yaml_director'
 __credits__ = ['IncognitoCoding']
 __license__ = 'GPL'
-__version__ = '1.7'
+__version__ = '2.0'
 __maintainer__ = 'IncognitoCoding'
-__status__ = 'Development'
+__status__ = 'Production'
 
 
 def read_yaml_config(yaml_file_path: str, loader: str) -> yaml:
@@ -39,22 +44,47 @@ def read_yaml_config(yaml_file_path: str, loader: str) -> yaml:
                 - Used for original Loader code but could be easily exploitable by untrusted YAML input.
 
     Raises:
-        ValueError: A failure occurred while opening the YAML file.
+        TypeError: The value '{yaml_file_path}' is not in str format.
+        TypeError: The value '{loader}' is not in str format.
+        Exception: Forwarding caught {type(error).__name__} at line {error.__traceback__.tb_lineno} in <{__name__}>
+        Exception: A general exception occurred during the value type validation.
+        ValueError: Incorrect YAML loader parameter.
+        ValueError: A failure occurred while reading the YAML file.
+        Exception: Forwarding caught {type(error).__name__} at line {error.__traceback__.tb_lineno} in <{__name__}>
+        Exception: A general failure occurred while opening the YAML file.
 
     Returns:
         yaml: YAML read configuration.
     """
     logger = logging.getLogger(__name__)
-    logger.debug(f'=' * 20 + traceback.extract_stack(None, 2)[1][2] + '=' * 20)
+    logger.debug(f'=' * 20 + get_function_name() + '=' * 20)
     # Custom flowchart tracking. This is ideal for large projects that move a lot.
     # For any third-party modules, set the flow before making the function call.
     logger_flowchart = logging.getLogger('flowchart')
-    logger_flowchart.debug(f'Flowchart --> Function: {traceback.extract_stack(None, 2)[1][2]}')
-    logger.debug(
-        'Passing parameters:\n'
-        f'  - yaml_file_path (str):\n        - {yaml_file_path}\n'
-        f'  - loader (str):\n        - {loader}\n'
-    )
+    logger_flowchart.debug(f'Flowchart --> Function: {get_function_name()}')
+
+    # Checks function launch variables and logs passing parameters.
+    try:
+        # Validates required types.
+        value_type_validation(yaml_file_path, str, __name__, get_line_number())
+        value_type_validation(loader, str, __name__, get_line_number())
+
+        logger.debug(
+            'Passing parameters:\n'
+            f'  - yaml_file_path (str):\n        - {yaml_file_path}'
+            f'  - loader (str):\n        - {loader}'
+        )
+    except Exception as error:
+        if 'Originating error on line' in str(error):
+            logger.debug(f'Forwarding caught {type(error).__name__} at line {error.__traceback__.tb_lineno} in <{__name__}>')
+            raise error
+        else:
+            error_args = {
+                'main_message': 'A general exception occurred during the value type validation.',
+                'error_type': Exception,
+                'original_error': error,
+            }
+            error_formatter(error_args, __name__, error.__traceback__.tb_lineno)
 
     # Checks for issues while reading the yaml file.
     try:
@@ -72,39 +102,34 @@ def read_yaml_config(yaml_file_path: str, loader: str) -> yaml:
                 raise ValueError('Incorrect YAML loader parameter.')
     except Exception as error:
         if 'Incorrect YAML loader parameter' in str(error):
-            error_message = (
-                'Incorrect YAML loader parameter.\n\n'
-                + (('-' * 150) + '\n') + (('-' * 65) + 'Additional Information' + ('-' * 63) + '\n') + (('-' * 150) + '\n')
-                + 'Expected Result:\n'
-                '  - loader = FullLoader or SafeLoader or BaseLoader or UnsafeLoader\n\n'
-                'Returned Result:\n'
-                f'  - loader = {loader}.\n\n'
-                f'Originating error on line {error.__traceback__.tb_lineno} in <{__name__}>\n'
-                + (('-' * 150) + '\n') * 2
-            )
-            raise ValueError(error_message)
+            error_args = {
+                'main_message': 'Incorrect YAML loader parameter.',
+                'error_type': ValueError,
+                'expected_result': 'FullLoader or SafeLoader or BaseLoader or UnsafeLoader',
+                'returned_result': loader,
+                'suggested_resolution': 'Please verify you have set all required keys and try again.',
+            }
+            error_formatter(error_args, __name__, error.__traceback__.tb_lineno)
         elif 'expected <block end>, but found \'<scalar>\'' in str(error):
-            error_message = (
-                'A failure occurred while reading the YAML file.\n'
-                + (('-' * 150) + '\n') + (('-' * 65) + 'Additional Information' + ('-' * 63) + '\n') + (('-' * 150) + '\n')
-                + 'Returned Error:\n'
-                f'{error}\n\n'
-                'Suggested Resolution:\n'
-                '   - Please verify you have the correct punctuation on your entries. For example, having three single quotes will cause this error to occur.\n'
-                '     If you are using three single quotes, it will help if you use double quotes to begin and end with a single quote in the middle.\n\n'
-                f'Originating error on line {error.__traceback__.tb_lineno} in <{__name__}>\n'
-                + (('-' * 150) + '\n') * 2
-            )
-            raise ValueError(error_message)
+            error_args = {
+                'main_message': 'A failure occurred while reading the YAML file.',
+                'error_type': ValueError,
+                'expected_result': 'FullLoader or SafeLoader or BaseLoader or UnsafeLoader',
+                'returned_result': loader,
+                'suggested_resolution': '- Please verify you have the correct punctuation on your entries. For example, having three single quotes will cause this error to occur.\n- If '
+                'you are using three single quotes, it will help if you use double quotes to begin and end with a single quote in the middle.',
+            }
+            error_formatter(error_args, __name__, error.__traceback__.tb_lineno)
+        elif 'Originating error on line' in str(error):
+            logger.debug(f'Forwarding caught {type(error).__name__} at line {error.__traceback__.tb_lineno} in <{__name__}>')
+            raise error
         else:
-            error_message = (
-                'A failure occurred while opening the YAML file.\n\n'
-                + (('-' * 150) + '\n') + (('-' * 65) + 'Additional Information' + ('-' * 63) + '\n') + (('-' * 150) + '\n')
-                + f'{error}\n\n'
-                f'Originating error on line {error.__traceback__.tb_lineno} in <{__name__}>\n'
-                + (('-' * 150) + '\n') * 2
-            )
-        raise ValueError(error_message)
+            error_args = {
+                'main_message': 'A general failure occurred while opening the YAML file.',
+                'error_type': Exception,
+                'original_error': error,
+            }
+            error_formatter(error_args, __name__, error.__traceback__.tb_lineno)
     else:
         logger.debug(f'Returning value(s):\n  - Return = {config}')
         return config
@@ -122,68 +147,97 @@ def yaml_value_validation(key: str, input_value: str, required_value_type: Union
         required_value_type (type or list): The type of value used inside the YAML configuration file or a list of types.
 
     Raises:
-        ValueError: Incorrect {key} YAML value.
+        TypeError: The value '{key}' is not in str format.
+        TypeError: The value '{input_value}' is not in str format.
+        TypeError: The value '{required_value_type}' is not in str or list format.
+        Exception: Forwarding caught {type(error).__name__} at line {error.__traceback__.tb_lineno} in <{__name__}>
+        Exception: A general exception occurred during the value type validation.
+        ValueError: Incorrect \'{key}\' YAML value.
         ValueError: No value has been entered for \'{key}\' in the YAML file.
+        Exception: Forwarding caught {type(error).__name__} at line {error.__traceback__.tb_lineno} in <{__name__}>
+        Exception: A general failure occurred while while validating the YAML value.
     """
     logger = logging.getLogger(__name__)
-    logger.debug(f'=' * 20 + traceback.extract_stack(None, 2)[1][2] + '=' * 20)
+    logger.debug(f'=' * 20 + get_function_name() + '=' * 20)
     # Custom flowchart tracking. This is ideal for large projects that move a lot.
     # For any third-party modules, set the flow before making the function call.
     logger_flowchart = logging.getLogger('flowchart')
-    logger_flowchart.debug(f'Flowchart --> Function: {traceback.extract_stack(None, 2)[1][2]}')
-    # Requires pre-logger formatting because the logger can not use one line if/else or join without excluding sections of the the output.
-    if isinstance(required_value_type, list):
-        formatted_required_value_type = '  - required_value_type (list):' + str('\n        - ' + '\n        - '.join(map(str, required_value_type)))
-    else:
-        formatted_required_value_type = f'  - required_value_type (type):\n        - {required_value_type}'
-    logger.debug(
-        'Passing parameters:\n'
-        f'  - key (str):\n        - {key}\n'
-        f'  - input_value (str):\n        - {input_value}\n'
-        f'{formatted_required_value_type}\n'
-    )
+    logger_flowchart.debug(f'Flowchart --> Function: {get_function_name()}')
 
-    # Verifies a YAML value is returned.
-    if input_value is not None:
+    # Checks function launch variables and logs passing parameters.
+    try:
+        # Validates required types.
+        value_type_validation(key, str, __name__, get_line_number())
+        value_type_validation(input_value, str, __name__, get_line_number())
+        value_type_validation(required_value_type, [str, list], __name__, get_line_number())
+
         if isinstance(required_value_type, list):
-            for value_type in required_value_type:
-                if isinstance(input_value, value_type):
-                    matching_type_flag = True
-                    break
-                else:
-                    matching_type_flag = False
-        else:
-            # Verifies the returning YAML value.
-            if not isinstance(input_value, required_value_type):
-                matching_type_flag = False
-            else:
-                matching_type_flag = True
-        # Throws the ValueError
-        if matching_type_flag is False:
-            input_value_type = type(input_value)
-            error_message = (
-                f'Incorrect \'{key}\' YAML value.\n\n'
-                + (('-' * 150) + '\n') + (('-' * 65) + 'Additional Information' + ('-' * 63) + '\n') + (('-' * 150) + '\n')
-                + 'Expected Result:\n'
-                f'  - The value ({input_value}) in for key ({key}) should have matched the required value type(s) ({required_value_type})\n\n'
-                'Returned Result:\n'
-                f'  - input_value_type = {input_value_type}\n'
-                f'  - required_value_type = {required_value_type}\n\n'
-                'Suggested Resolution:\n'
-                f'  - Review your YAML configuration to see if it contains the required values.\n\n'
-                f'Originating error on line {traceback.extract_stack()[-1].lineno} in <{__name__}>\n'
-                + (('-' * 150) + '\n') * 2
-            )
-            raise ValueError(error_message)
-        else:
-            logger.debug(f'The value ({input_value}) in for key ({key}) matched the required value type(s) ({required_value_type})')
-    else:
-        error_message = (
-            f'No value has been entered for \'{key}\' in the YAML file.\n\n'
-            + (('-' * 150) + '\n') + (('-' * 65) + 'Additional Information' + ('-' * 63) + '\n') + (('-' * 150) + '\n')
-            + 'Suggested Resolution:\n'
-            f'  - Please check the YAML configuration for correct formatting.\n\n'
-            f'Originating error on line {traceback.extract_stack()[-1].lineno} in <{__name__}>\n'
-            + (('-' * 150) + '\n') * 2
+            formatted_required_value_type = '  - required_value_type (list):' + str('\n        - ' + '\n        - '.join(map(str, required_value_type)))
+        elif isinstance(required_value_type, type):
+            formatted_required_value_type = f'  - required_value_type (str):\n        - {required_value_type}'
+
+        logger.debug(
+            'Passing parameters:\n'
+            f'  - key (str):\n        - {key}'
+            f'  - input_value (str):\n        - {input_value}'
+            f'{formatted_required_value_type}'
         )
-        raise ValueError(error_message)
+    except Exception as error:
+        if 'Originating error on line' in str(error):
+            logger.debug(f'Forwarding caught {type(error).__name__} at line {error.__traceback__.tb_lineno} in <{__name__}>')
+            raise error
+        else:
+            error_args = {
+                'main_message': 'A general exception occurred during the value type validation.',
+                'error_type': Exception,
+                'original_error': error,
+            }
+            error_formatter(error_args, __name__, error.__traceback__.tb_lineno)
+
+    try:
+        # Verifies a YAML value is returned.
+        if input_value is not None:
+            if isinstance(required_value_type, list):
+                for value_type in required_value_type:
+                    if isinstance(input_value, value_type):
+                        matching_type_flag = True
+                        break
+                    else:
+                        matching_type_flag = False
+            else:
+                # Verifies the returning YAML value.
+                if not isinstance(input_value, required_value_type):
+                    matching_type_flag = False
+                else:
+                    matching_type_flag = True
+            # Throws the ValueError
+            if matching_type_flag is False:
+                input_value_type = type(input_value)
+                error_args = {
+                    'main_message': f'Incorrect \'{key}\' YAML value.',
+                    'error_type': ValueError,
+                    'expected_result': f'The value ({input_value}) in for key ({key}) should have matched the required value type(s) ({required_value_type})',
+                    'returned_result': f'  - input_value_type = {input_value_type}\n- required_value_type = {required_value_type}',
+                    'suggested_resolution': 'Review your YAML configuration to see if it contains the required values.',
+                }
+                error_formatter(error_args, __name__, get_line_number())
+            else:
+                logger.debug(f'The value ({input_value}) in for key ({key}) matched the required value type(s) ({required_value_type})')
+        else:
+            error_args = {
+                'main_message': f'No value has been entered for \'{key}\' in the YAML file.\n',
+                'error_type': ValueError,
+                'suggested_resolution': 'Please check the YAML configuration for correct formatting.',
+            }
+            error_formatter(error_args, __name__, get_line_number())
+    except Exception as error:
+        if 'Originating error on line' in str(error):
+            logger.debug(f'Forwarding caught {type(error).__name__} at line {error.__traceback__.tb_lineno} in <{__name__}>')
+            raise error
+        else:
+            error_args = {
+                'main_message': 'A general failure occurred while while validating the YAML value.',
+                'error_type': Exception,
+                'original_error': error,
+            }
+            error_formatter(error_args, __name__, error.__traceback__.tb_lineno)

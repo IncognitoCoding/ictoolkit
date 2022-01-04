@@ -14,12 +14,12 @@ from ictoolkit.directors.error_director import error_formatter
 from ictoolkit.helpers.py_helper import get_function_name, get_line_number
 
 __author__ = 'IncognitoCoding'
-__copyright__ = 'Copyright 2021, html_director'
+__copyright__ = 'Copyright 2022, html_director'
 __credits__ = ['IncognitoCoding']
 __license__ = 'GPL'
-__version__ = '1.0'
+__version__ = '2.0'
 __maintainer__ = 'IncognitoCoding'
-__status__ = 'Development'
+__status__ = 'Production'
 
 
 class HTMLConverter(HTMLParser):

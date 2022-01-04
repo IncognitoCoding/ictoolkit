@@ -28,12 +28,12 @@ from ictoolkit.directors.file_director import file_exist_check
 from ictoolkit.helpers.py_helper import get_function_name, get_line_number
 
 __author__ = 'IncognitoCoding'
-__copyright__ = 'Copyright 2021, encryption_director'
+__copyright__ = 'Copyright 2022, encryption_director'
 __credits__ = ['IncognitoCoding']
 __license__ = 'GPL'
-__version__ = '1.3'
+__version__ = '2.0'
 __maintainer__ = 'IncognitoCoding'
-__status__ = 'Development'
+__status__ = 'Production'
 
 
 def encrypt_info(decrypted_info: str, message_encryption_password: str, message_encryption_random_salt: Union[bytes, str]) -> bytes:

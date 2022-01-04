@@ -14,12 +14,12 @@ from ictoolkit.directors.error_director import error_formatter
 from ictoolkit.helpers.py_helper import get_function_name, get_line_number
 
 __author__ = 'IncognitoCoding'
-__copyright__ = 'Copyright 2021, data_structure_director'
+__copyright__ = 'Copyright 2022, data_structure_director'
 __credits__ = ['IncognitoCoding']
 __license__ = 'GPL'
-__version__ = '1.8'
+__version__ = '2.0'
 __maintainer__ = 'IncognitoCoding'
-__status__ = 'Development'
+__status__ = 'Production'
 
 
 def remove_duplicate_dict_values_in_list(list_dictionary: list, element_number: Optional[int] = None) -> list:

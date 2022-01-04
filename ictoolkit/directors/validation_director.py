@@ -6,12 +6,12 @@ import traceback
 from typing import Union
 
 __author__ = 'IncognitoCoding'
-__copyright__ = 'Copyright 2021, validation_director'
+__copyright__ = 'Copyright 2022, validation_director'
 __credits__ = ['IncognitoCoding']
 __license__ = 'GPL'
-__version__ = '1.7'
+__version__ = '2.0'
 __maintainer__ = 'IncognitoCoding'
-__status__ = 'Development'
+__status__ = 'Production'
 
 
 def value_type_validation(value: any, required_type: Union[type, list], caller_module: str, caller_line: int) -> None:
@@ -41,6 +41,10 @@ def value_type_validation(value: any, required_type: Union[type, list], caller_m
     Calling Example:
         value_type_validation('My String', str, __name__, get_line_number())
     """
+
+    # ################################################################################################################################
+    # Note: This module has to have manually formatted error output because the error_formatter uses this function to validate types.
+    # ################################################################################################################################
 
     # Verifies a value is sent.
     if (

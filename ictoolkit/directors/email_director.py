@@ -21,12 +21,12 @@ from ictoolkit.directors.error_director import error_formatter
 from ictoolkit.helpers.py_helper import get_function_name, get_line_number
 
 __author__ = 'IncognitoCoding'
-__copyright__ = 'Copyright 2021, email_director'
+__copyright__ = 'Copyright 2022, email_director'
 __credits__ = ['IncognitoCoding', 'Monoloch']
 __license__ = 'GPL'
-__version__ = '1.10'
+__version__ = '2.0'
 __maintainer__ = 'IncognitoCoding'
-__status__ = 'Development'
+__status__ = 'Production'
 
 
 def create_template_email(email_template_name: str, email_template_path: str, **template_args: Optional[dict]) -> str:
@@ -221,7 +221,6 @@ def send_email(email_settings: dict, subject: str, body: Optional[str] = None, t
         value_type_validation(subject, str, __name__, get_line_number())
         if body:
             value_type_validation(body, str, __name__, get_line_number())
-        value_type_validation(email_settings.get('message_encryption_random_salt'), bytes, __name__, get_line_number())
         if template_args:
             value_type_validation(template_args, dict, __name__, get_line_number())
 
