@@ -480,7 +480,7 @@ def search_multiple_files(file_paths: list, searching_value: Union[str, list]) -
 
 def convert_relative_to_full_path(relative_path: str) -> str:
     """
-    Determine full path to file given a relative file path with compatibility with PyInstaller(compiler) built-in
+    Determines a full file path to file given a relative file path compatible with PyInstaller(compiler) built-in.
 
     Args:
         relative_path (string): The unqualified (relative) file path that needs to converted to a qualified full path format

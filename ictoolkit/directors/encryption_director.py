@@ -295,7 +295,7 @@ def decrypt_info(encrypted_info: Union[bytes, str], message_encryption_password:
 
 def launch_decryptor_website(encryption_password: str, random_salt: Union[bytes, str], decryptor_template_path: str = None, port: int = None) -> None:
     """
-    Starts the decryptor website. The html file in the templates path must be called decryptor.html, but the file can be edited.
+    Creates the decryptor website to decrypt messages. The html file in the templates path must be called decryptor.html, but the file can be edited.
 
     Args:
         encryption_password (str): Password used to encrypt the info.

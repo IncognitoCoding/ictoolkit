@@ -303,7 +303,7 @@ def create_logger(logger_settings: dict) -> logging.Logger:
 
 def setup_logger_yaml(yaml_path: str, separate_default_logs: Optional[bool] = False, allow_basic: Optional[bool] = None) -> None:
     """
-    This function sets up a logger for the program. The configuration must be setup with a YAML file. This method is the best method for using logging in to additional modules.
+    This function sets up a logger for the program using a YAML file. The configuration must be setup with a YAML file. This method is the best method for using logging in to additional modules.
 
     Default file log handler paths are supported. Cross-platform usage can be a pain and require the path to be the full path. Having default enabled allows the program to set the\\
     filename for each log handler. This function allows the ability to have all file log handlers log to the same file, which is named the same name as the main program, or be
