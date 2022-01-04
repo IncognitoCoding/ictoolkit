@@ -21,7 +21,7 @@ __author__ = 'IncognitoCoding'
 __copyright__ = 'Copyright 2022, yaml_director'
 __credits__ = ['IncognitoCoding']
 __license__ = 'GPL'
-__version__ = '2.0'
+__version__ = '2.1'
 __maintainer__ = 'IncognitoCoding'
 __status__ = 'Production'
 
@@ -135,7 +135,7 @@ def read_yaml_config(yaml_file_path: str, loader: str) -> yaml:
         return config
 
 
-def yaml_value_validation(key: str, input_value: str, required_value_type: Union[type, list]) -> None:
+def yaml_value_validation(key: str, input_value: any, required_value_type: Union[type, list]) -> None:
     """
     YAML value validations are performed within this function. Any validation that does not pass will throw a ValueError message statement that a try exception statement can handle.
 
@@ -143,12 +143,11 @@ def yaml_value_validation(key: str, input_value: str, required_value_type: Union
 
     Args:
         key (str): key used inside the YAML configuration file. This entry is only used for the message output and can contain additional information.
-        input_value_type (YAML value): value used inside the YAML configuration file
+        input_value_type (any): value used inside the YAML configuration file
         required_value_type (type or list): The type of value used inside the YAML configuration file or a list of types.
 
     Raises:
         TypeError: The value '{key}' is not in str format.
-        TypeError: The value '{input_value}' is not in str format.
         TypeError: The value '{required_value_type}' is not in str or list format.
         Exception: Forwarding caught {type(error).__name__} at line {error.__traceback__.tb_lineno} in <{__name__}>
         Exception: A general exception occurred during the value type validation.
@@ -168,8 +167,7 @@ def yaml_value_validation(key: str, input_value: str, required_value_type: Union
     try:
         # Validates required types.
         value_type_validation(key, str, __name__, get_line_number())
-        value_type_validation(input_value, str, __name__, get_line_number())
-        value_type_validation(required_value_type, [str, list], __name__, get_line_number())
+        value_type_validation(required_value_type, [type, list], __name__, get_line_number())
 
         if isinstance(required_value_type, list):
             formatted_required_value_type = '  - required_value_type (list):' + str('\n        - ' + '\n        - '.join(map(str, required_value_type)))
@@ -179,7 +177,7 @@ def yaml_value_validation(key: str, input_value: str, required_value_type: Union
         logger.debug(
             'Passing parameters:\n'
             f'  - key (str):\n        - {key}'
-            f'  - input_value (str):\n        - {input_value}'
+            f'  - input_value (any):\n        - {input_value}'
             f'{formatted_required_value_type}'
         )
     except Exception as error:
