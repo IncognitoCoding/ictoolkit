@@ -49,7 +49,7 @@ def encrypt_info(decrypted_info: str, message_encryption_password: str, message_
     Raises:
         TypeError: The value '{decrypted_info}' is not in str format.
         TypeError: The value '{message_encryption_password}' is not in str format.
-        TypeError: The value '{message_encryption_random_salt}' is not in bytes format.
+        TypeError: The value '{message_encryption_random_salt}' is not in bytes or str format.
         Exception: Forwarding caught {type(error).__name__} at line {error.__traceback__.tb_lineno} in <{__name__}>
         Exception: A general exception occurred during the value type validation.
         Exception: Forwarding caught {type(error).__name__} at line {error.__traceback__.tb_lineno} in <{__name__}>
@@ -162,7 +162,7 @@ def decrypt_info(encrypted_info: Union[bytes, str], message_encryption_password:
     Raises:
         TypeError: The value '{encrypted_info}' is not in bytes format.
         TypeError: The value '{message_encryption_password}' is not in str format.
-        TypeError: The value '{message_encryption_random_salt}' is not in bytes format.
+        TypeError: The value '{message_encryption_random_salt}' is not in bytes or str format.
         Exception: Forwarding caught {type(error).__name__} at line {error.__traceback__.tb_lineno} in <{__name__}>
         Exception: A general exception occurred during the value type validation.
         Exception: Forwarding caught {type(error).__name__} at line {error.__traceback__.tb_lineno} in <{__name__}>
