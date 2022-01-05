@@ -158,7 +158,7 @@ def file_exist_check(file_path: str, file_description: str) -> None:
         file = pathlib.Path(file_path)
         if not file.exists():
             error_args = {
-                'main_message': f'{file_description} log file does not exist.',
+                'main_message': f'The file \'{file_description}\' file does not exist in the validating file path \'{file_path}\'',
                 'error_type': FileNotFoundError,
                 'suggested_resolution': 'Ensure the file path is the correct path to your file.',
             }
