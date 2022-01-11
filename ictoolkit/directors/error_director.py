@@ -10,7 +10,7 @@ __author__ = 'IncognitoCoding'
 __copyright__ = 'Copyright 2022, error_director'
 __credits__ = ['IncognitoCoding']
 __license__ = 'GPL'
-__version__ = '2.0'
+__version__ = '2.1'
 __maintainer__ = 'IncognitoCoding'
 __status__ = 'Production'
 
@@ -26,30 +26,24 @@ def error_formatter(error_args: dict, caller_module: str, caller_line: int) -> N
 
     Args:
         error_args (dict): Dictionary values to populate the formatted error message.
-            Parmaters:\\
-                \\- main_message (str): The main error message.\\
-                \\- type_error (error type): The error type. Example: KeyError, ValueError, TypeError.\\
-                \\- expected_result (str, Optional): The expected result.\\
-                \\- returned_result (str, Optional): The returned result.\\
-                \\- suggested_resolution (str, Optional): A suggested resolution.\\
-                \\- original_error (any, Optional): The original error.\\
+        \tParmaters:\\
+        \t\tmain_message (str): The main error message.\\
+        \t\ttype_error (error type): The error type. Example: KeyError, ValueError, TypeError.\\
+        \t\texpected_result (Union[str, list], Optional): The expected result.\\
+        \t\t\tstr vs list:
+        \t\t\t\tA string will be a single formatted line.\\
+        \t\t\t\tA list will be split into individual formatted lines.\\
+        \t\treturned_result (Union[str, list], Optional): The returned result.\\
+        \t\t\tstr vs list:
+        \t\t\t\tA string will be a single formatted line.\\
+        \t\t\t\tA list will be split into individual formatted lines.\\
+        \t\tsuggested_resolution (Union[str, list], Optional): A suggested resolution.\\
+        \t\t\tstr vs list:
+        \t\t\t\tA string will be a single formatted line.\\
+        \t\t\t\tA list will be split into individual formatted lines.\\
+        \t\toriginal_error (any, Optional): The original error.\\
         caller_module (str): The name of the caller module. Use '__name__'.
         caller_line (int): The calling function line. Use 'ictoolkit.helpers.py_helper' to pull the line.
-
-    Raises:
-        AttributeError: The error_args \'{error_args}\' sent is not an accepted input.
-        AttributeError: The caller_module \'{caller_module}\' sent is not an accepted input.
-        AttributeError: The caller_line \'{caller_line}\' sent is not an accepted input.
-        error: [raise] called function error
-        error_type: [formatted error option 1]
-        error_type: [formatted error option 2]
-        error_type: [formatted error option 3]
-        error_type: [formatted error option 4]
-        error_type: [formatted error option 5]
-        error_type: [formatted error option 6]
-        error_type: [formatted error option 7]
-        error: [raised] formatted message
-        Exception: A general error has occurred while validating a value type.
     """
     # Checks function launch variables and logs passing parameters.
     try:
@@ -85,6 +79,24 @@ def error_formatter(error_args: dict, caller_module: str, caller_line: int) -> N
         raise error
 
     try:
+        if expected_result:
+            if isinstance(expected_result, list):
+                formatted_expected_result = str('  - ' + '\n  - '.join(map(str, expected_result)))
+            else:
+                formatted_expected_result = f'  - {expected_result}'
+        if returned_result:
+            if isinstance(returned_result, list):
+                formatted_returned_result = str('  - ' + '\n  - '.join(map(str, returned_result)))
+            else:
+                formatted_returned_result = f'  - {returned_result}'
+        if suggested_resolution:
+            if isinstance(suggested_resolution, list):
+                formatted_suggested_resolution = str('  - ' + '\n  - '.join(map(str, suggested_resolution)))
+            else:
+                formatted_suggested_resolution = f'  - {suggested_resolution}'
+        if original_error:
+            formatted_original_error = str('\n            ' + '\n            '.join(map(str, str(original_error).splitlines())))
+
         # Checks which variables are populated with data to create the formatted error message.
         if (
             main_message
@@ -112,7 +124,7 @@ def error_formatter(error_args: dict, caller_module: str, caller_line: int) -> N
                 f'{main_message}\n'
                 + (('-' * 150) + '\n') + (('-' * 65) + 'Additional Information' + ('-' * 63) + '\n') + (('-' * 150) + '\n')
                 + 'Expected Result:\n'
-                f'  - {expected_result}\n\n'
+                f'{formatted_expected_result}\n\n'
                 f'Originating error on line {caller_line} in <{caller_module}>\n'
                 + (('-' * 150) + '\n') * 2
             )
@@ -128,9 +140,9 @@ def error_formatter(error_args: dict, caller_module: str, caller_line: int) -> N
                 f'{main_message}\n'
                 + (('-' * 150) + '\n') + (('-' * 65) + 'Additional Information' + ('-' * 63) + '\n') + (('-' * 150) + '\n')
                 + 'Expected Result:\n'
-                f'  - {expected_result}\n\n'
+                f'{formatted_expected_result}\n\n'
                 'Returned Result:\n'
-                f'  - {returned_result}\n\n'
+                f'{formatted_returned_result}\n\n'
                 f'Originating error on line {caller_line} in <{caller_module}>\n'
                 + (('-' * 150) + '\n') * 2
             )
@@ -146,11 +158,11 @@ def error_formatter(error_args: dict, caller_module: str, caller_line: int) -> N
                 f'{main_message}\n'
                 + (('-' * 150) + '\n') + (('-' * 65) + 'Additional Information' + ('-' * 63) + '\n') + (('-' * 150) + '\n')
                 + 'Expected Result:\n'
-                f'  - {expected_result}\n\n'
+                f'{formatted_expected_result}\n\n'
                 'Returned Result:\n'
-                f'  - {returned_result}\n\n'
+                f'{formatted_returned_result}\n\n'
                 'Suggested Resolution:\n'
-                f'   - {suggested_resolution}\n\n'
+                f'{formatted_suggested_resolution}\n\n'
                 f'Originating error on line {caller_line} in <{caller_module}>\n'
                 + (('-' * 150) + '\n') * 2
             )
@@ -162,21 +174,19 @@ def error_formatter(error_args: dict, caller_module: str, caller_line: int) -> N
             and suggested_resolution
             and original_error
         ):
-            # Converts the error into a formatted string with tab spacing.
-            original_error = str('\n            ' + '\n            '.join(map(str, str(original_error).splitlines())))
             error_message = (
                 f'{main_message}\n'
                 + (('-' * 150) + '\n') + (('-' * 65) + 'Additional Information' + ('-' * 63) + '\n') + (('-' * 150) + '\n')
                 + 'Expected Result:\n'
-                f'  - {expected_result}\n\n'
+                f'{formatted_expected_result}\n\n'
                 'Returned Result:\n'
-                f'  - {returned_result}\n\n'
+                f'{formatted_returned_result}\n\n'
                 'Original Exception:\n\n'
                 + '            ' + (('~' * 150) + '\n            ') + (('~' * 63) + 'Start Original Exception' + ('~' * 63) + '\n            ') + (('~' * 150) + '\n            \n')
-                + f'{original_error}\n\n'
+                + f'{formatted_original_error}\n\n'
                 + '            ' + (('~' * 150) + '\n            ') + (('~' * 65) + 'End Original Exception' + ('~' * 63) + '\n            ') + (('~' * 150) + '\n            \n')
                 + 'Suggested Resolution:\n'
-                f'   - {suggested_resolution}\n\n'
+                f'{formatted_suggested_resolution}\n\n'
                 f'Originating error on line {caller_line} in <{caller_module}>\n'
                 + (('-' * 150) + '\n') * 2
             )
@@ -188,14 +198,12 @@ def error_formatter(error_args: dict, caller_module: str, caller_line: int) -> N
             and not suggested_resolution
             and original_error
         ):
-            # Converts the error into a formatted string with tab spacing.
-            original_error = str('\n            ' + '\n            '.join(map(str, str(original_error).splitlines())))
             error_message = (
                 f'{main_message}\n'
                 + (('-' * 150) + '\n') + (('-' * 65) + 'Additional Information' + ('-' * 63) + '\n') + (('-' * 150) + '\n')
                 + 'Original Exception:\n\n'
                 + '            ' + (('~' * 150) + '\n            ') + (('~' * 63) + 'Start Original Exception' + ('~' * 63) + '\n            ') + (('~' * 150) + '\n            \n')
-                + f'{original_error}\n\n'
+                + f'{formatted_original_error}\n\n'
                 + '            ' + (('~' * 150) + '\n            ') + (('~' * 65) + 'End Original Exception' + ('~' * 63) + '\n            ') + (('~' * 150) + '\n            \n')
                 + f'Originating error on line {caller_line} in <{caller_module}>\n'
                 + (('-' * 150) + '\n') * 2
@@ -212,7 +220,7 @@ def error_formatter(error_args: dict, caller_module: str, caller_line: int) -> N
                 f'{main_message}\n'
                 + (('-' * 150) + '\n') + (('-' * 65) + 'Additional Information' + ('-' * 63) + '\n') + (('-' * 150) + '\n')
                 + 'Suggested Resolution:\n'
-                f'   - {suggested_resolution}\n\n'
+                f'{formatted_suggested_resolution}\n\n'
                 f'Originating error on line {caller_line} in <{caller_module}>\n'
                 + (('-' * 150) + '\n') * 2
             )
@@ -236,15 +244,15 @@ def error_formatter(error_args: dict, caller_module: str, caller_line: int) -> N
                 f'{main_message}\n'
                 + (('-' * 150) + '\n') + (('-' * 65) + 'Additional Information' + ('-' * 63) + '\n') + (('-' * 150) + '\n')
                 + 'Expected Result:\n'
-                f'  - {expected_result}\n\n'
+                f'{formatted_expected_result}\n\n'
                 'Returned Result:\n'
-                f'  - {returned_result}\n\n'
+                f'{formatted_returned_result}\n\n'
                 'Original Exception:\n\n'
                 + '            ' + (('~' * 150) + '\n            ') + (('~' * 63) + 'Start Original Exception' + ('~' * 63) + '\n            ') + (('~' * 150) + '\n            \n')
-                + f'{original_error}\n\n'
+                + f'{formatted_original_error}\n\n'
                 + '            ' + (('~' * 150) + '\n            ') + (('~' * 65) + 'End Original Exception' + ('~' * 63) + '\n            ') + (('~' * 150) + '\n            \n')
                 + 'Suggested Resolution:\n'
-                f'   - {suggested_resolution}\n\n'
+                f'{formatted_suggested_resolution}\n\n'
                 f'Originating error on line {caller_line} in <{caller_module}>\n'
                 + (('-' * 150) + '\n') * 2
             )
@@ -261,7 +269,7 @@ def error_formatter(error_args: dict, caller_module: str, caller_line: int) -> N
                 + 'Returned Result:\n'
                 '  - Original Exception listed below:\n\n'
                 + '            ' + (('~' * 150) + '\n            ') + (('~' * 63) + 'Start Original Exception' + ('~' * 63) + '\n            ') + (('~' * 150) + '\n            \n')
-                + f'{original_error}\n\n'
+                + f'{formatted_original_error}\n\n'
                 + '            ' + (('~' * 150) + '\n            ') + (('~' * 65) + 'End Original Exception' + ('~' * 63) + '\n            ') + (('~' * 150) + '\n            \n\n')
                 + f'Originating error on line {error.__traceback__.tb_lineno} in <{__name__}>\n'
                 + (('-' * 150) + '\n') * 2
