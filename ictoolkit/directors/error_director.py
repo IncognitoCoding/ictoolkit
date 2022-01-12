@@ -3,7 +3,7 @@ This module creates formatted error output for clean consistency across all modu
 """
 
 # Own modules
-from ictoolkit.directors.validation_director import value_type_validation
+from ictoolkit.directors.validation_director import value_type_validation, key_validation
 from ictoolkit.helpers.py_helper import get_line_number
 
 __author__ = 'IncognitoCoding'
@@ -61,6 +61,15 @@ def error_formatter(error_args: dict, caller_module: str, caller_line: int) -> N
                 'original_error': error,
             }
             error_formatter(error_args, __name__, error.__traceback__.tb_lineno)
+
+    """
+    try:
+        key_validation(error_args, ['main_message', 'error_type', 'expected_result',
+                                    'returned_result', 'suggested_resolution',
+                                    'original_error'], __name__, get_line_number())
+    except Exception as error:
+        raise error
+    """
 
     # Gets all error_args.
     try:
@@ -228,18 +237,17 @@ def error_formatter(error_args: dict, caller_module: str, caller_line: int) -> N
         else:
             # Sets custom output for values that are None.
             if not expected_result:
-                expected_result = 'None provided'
+                formatted_expected_result = '  - None provided'
             if not returned_result:
-                returned_result = 'None provided'
+                formatted_returned_result = '  - None provided'
             if not original_error:
-                original_error = 'None provided'
+                formatted_original_error = '            - None provided'
             if not suggested_resolution:
-                suggested_resolution = 'None provided'
+                formatted_suggested_resolution = '  - None provided'
 
             # Catch all other variations. Includes all possible formatted error options with values set to "None provided" if the value is None.
             # Most common variations are already setup. If another variation is required it can be added without causing any issues to calling modules.
             # Converts the error into a formatted string with tab spacing.
-            original_error = str('\n            ' + '\n            '.join(map(str, str(original_error).splitlines())))
             error_message = (
                 f'{main_message}\n'
                 + (('-' * 150) + '\n') + (('-' * 65) + 'Additional Information' + ('-' * 63) + '\n') + (('-' * 150) + '\n')
@@ -269,7 +277,7 @@ def error_formatter(error_args: dict, caller_module: str, caller_line: int) -> N
                 + 'Returned Result:\n'
                 '  - Original Exception listed below:\n\n'
                 + '            ' + (('~' * 150) + '\n            ') + (('~' * 63) + 'Start Original Exception' + ('~' * 63) + '\n            ') + (('~' * 150) + '\n            \n')
-                + f'{formatted_original_error}\n\n'
+                + f'            {error}\n\n'
                 + '            ' + (('~' * 150) + '\n            ') + (('~' * 65) + 'End Original Exception' + ('~' * 63) + '\n            ') + (('~' * 150) + '\n            \n\n')
                 + f'Originating error on line {error.__traceback__.tb_lineno} in <{__name__}>\n'
                 + (('-' * 150) + '\n') * 2
