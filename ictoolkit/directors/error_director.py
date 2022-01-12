@@ -3,7 +3,7 @@ This module creates formatted error output for clean consistency across all modu
 """
 
 # Own modules
-from ictoolkit.directors.validation_director import value_type_validation, key_validation
+from ictoolkit.directors.validation_director import value_type_validation, KeyCheck
 from ictoolkit.helpers.py_helper import get_line_number
 
 __author__ = 'IncognitoCoding'
@@ -62,14 +62,17 @@ def error_formatter(error_args: dict, caller_module: str, caller_line: int) -> N
             }
             error_formatter(error_args, __name__, error.__traceback__.tb_lineno)
 
-    """
     try:
-        key_validation(error_args, ['main_message', 'error_type', 'expected_result',
-                                    'returned_result', 'suggested_resolution',
-                                    'original_error'], __name__, get_line_number())
+        # Creates a sample dictionary key to use as a contains match for the incoming error formatter keys.
+        required_dict_key = {'main_message': None, 'error_type': None, 'expected_result': None,
+                             'returned_result': None, 'suggested_resolution': None,
+                             'original_error': None}
+        # Pulls the keys from the importing error dictionary.
+        importing_error_keys = list(error_args.keys())
+        key_check = KeyCheck(required_dict_key, __name__, get_line_number())
+        key_check.contains_keys(importing_error_keys)
     except Exception as error:
         raise error
-    """
 
     # Gets all error_args.
     try:
