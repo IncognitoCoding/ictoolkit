@@ -5,6 +5,7 @@ This module creates formatted error output for clean consistency across all modu
 # Own modules
 from ictoolkit.directors.validation_director import value_type_validation, KeyCheck
 from ictoolkit.helpers.py_helper import get_line_number
+import warnings
 
 __author__ = 'IncognitoCoding'
 __copyright__ = 'Copyright 2022, error_director'
@@ -45,6 +46,10 @@ def error_formatter(error_args: dict, caller_module: str, caller_line: int) -> N
         caller_module (str): The name of the caller module. Use '__name__'.
         caller_line (int): The calling function line. Use 'ictoolkit.helpers.py_helper' to pull the line.
     """
+
+    warnings.warn('Version 2.5 of ictoolkit deprecation. This module has been replaced with the exception_constructor module. '
+                  'Please switch to using the exception_constructor module with exception classes.', DeprecationWarning)
+
     # Checks function launch variables and logs passing parameters.
     try:
         # Validates required types.

@@ -18,6 +18,21 @@ __maintainer__ = 'IncognitoCoding'
 __status__ = 'Production'
 
 
+class InvalidKeyError(Exception):
+    """
+    Exception raised for an invalid dictionary key.
+
+    Built in KeyErrors do not format cleanly.
+
+    Attributes:
+        error_message: The invalid key reason.
+    """
+    error_message: str
+
+    def __ini__(self, error_message: str) -> None:
+        self.error_message = error_message
+
+
 class TypeValidationError(Exception):
     """
     Exception raised for a a value type error.
@@ -29,11 +44,13 @@ class TypeValidationError(Exception):
         if 'Originating error on line' in str(error):
             raise error
         else:
+            if type(error).__name__ == str('KeyError'):
+                # KeyError output does not process the escape sequence cleanly. This fixes the output and removes the string double quotes.
+                original_error = str('\n            ' + '\n            '.join(map(str, str(str(error).replace(r'\n', '\n')[1:-1]).splitlines())))
+            else:
+                # Converts the error into a formatted string with tab spacing.
+                original_error = str('\n            ' + '\n            '.join(map(str, str(error).splitlines())))
 
-            # KeyError output does not process the escape sequence cleanly. This fixes the output and removes the string double quotes.
-            cleaned_error = str(error).replace(r'\n', '\n')[1:-1]
-            # Converts the error into a formatted string with tab spacing.
-            original_error = str('\n            ' + '\n            '.join(map(str, str(error).splitlines())))
             error_message = (
                 f'A general exception occurred during the value type validation.\n'
                 + (('-' * 150) + '\n') + (('-' * 65) + 'Additional Information' + ('-' * 63) + '\n') + (('-' * 150) + '\n')
@@ -209,16 +226,18 @@ class KeyCheck():
                     expected_key = self._required_keys
                     returned_key = dict_keys
 
-                # Formats teh output based on the check option.
+                # Formats the output based on the check option.
                 if self._all_key_check:
+                    main_message = f'The dictionary key (\'{no_matching_key}\') does not exist in the expected required key(s).\n'
                     expected_result = f'  - Required Key(s) = {expected_key}'
                     returned_result = f'  - Failed Key(s) = {returned_key}'
                 else:
+                    main_message = f'The dictionary key (\'{no_matching_key}\') does not match any expected match option key(s).\n'
                     expected_result = f'  - Match Option Key(s) = {expected_key}'
                     returned_result = f'  - Failed Key(s) = {returned_key}'
 
                 error_message = (
-                    f'The dictionary key (\'{no_matching_key}\') does not exist in the sent data.\n'
+                    f'{main_message}'
                     + (('-' * 150) + '\n') + (('-' * 65) + 'Additional Information' + ('-' * 63) + '\n') + (('-' * 150) + '\n')
                     + 'Expected Result:\n'
                     f'{expected_result}\n\n'
@@ -227,26 +246,25 @@ class KeyCheck():
                     f'Originating error on line {self._caller_line} in <{self._caller_module}>\n'
                     + (('-' * 150) + '\n') * 2
                 )
-                raise KeyError(error_message)
+                raise InvalidKeyError(error_message)
         except Exception as error:
-            if type(error).__name__ == str('KeyError'):
-                # KeyError output does not process the escape sequence cleanly. This fixes the output and removes the string double quotes.
-                original_error = str('\n            ' + '\n            '.join(map(str, str(str(error).replace(r'\n', '\n')[1:-1]).splitlines())))
+            # Converts the error into a formatted string with tab spacing.
+            original_error = str('\n            ' + '\n            '.join(map(str, str(error).splitlines())))
+            if 'Originating error on line' in str(error):
+                raise error
             else:
-                # Converts the error into a formatted string with tab spacing.
-                original_error = str('\n            ' + '\n            '.join(map(str, str(error).splitlines())))
-            error_message = (
-                f'A general exception occurred during the value key validation.\n'
-                + (('-' * 150) + '\n') + (('-' * 65) + 'Additional Information' + ('-' * 63) + '\n') + (('-' * 150) + '\n')
-                + 'Returned Result:\n'
-                '  - Original Exception listed below:\n\n'
-                + '            ' + (('~' * 150) + '\n            ') + (('~' * 63) + 'Start Original Exception' + ('~' * 63) + '\n            ') + (('~' * 150) + '\n            \n')
-                + f'{original_error}\n\n'
-                + '            ' + (('~' * 150) + '\n            ') + (('~' * 65) + 'End Original Exception' + ('~' * 63) + '\n            ') + (('~' * 150) + '\n            \n\n')
-                + f'Originating error on line {error.__traceback__.tb_lineno} in <{__name__}>\n'
-                + (('-' * 150) + '\n') * 2
-            )
-            raise Exception(error_message)
+                error_message = (
+                    f'A general exception occurred during the value key validation.\n'
+                    + (('-' * 150) + '\n') + (('-' * 65) + 'Additional Information' + ('-' * 63) + '\n') + (('-' * 150) + '\n')
+                    + 'Returned Result:\n'
+                    '  - Original Exception listed below:\n\n'
+                    + '            ' + (('~' * 150) + '\n            ') + (('~' * 63) + 'Start Original Exception' + ('~' * 63) + '\n            ') + (('~' * 150) + '\n            \n')
+                    + f'{original_error}\n\n'
+                    + '            ' + (('~' * 150) + '\n            ') + (('~' * 65) + 'End Original Exception' + ('~' * 63) + '\n            ') + (('~' * 150) + '\n            \n\n')
+                    + f'Originating error on line {error.__traceback__.tb_lineno} in <{__name__}>\n'
+                    + (('-' * 150) + '\n') * 2
+                )
+                raise Exception(error_message)
 
 
 def value_type_validation(value: any, required_type: Union[type, list], caller_module: str, caller_line: int) -> None:
