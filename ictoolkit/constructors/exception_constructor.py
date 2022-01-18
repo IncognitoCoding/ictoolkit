@@ -17,7 +17,7 @@ __author__ = 'IncognitoCoding'
 __copyright__ = 'Copyright 2022, exception_constructor'
 __credits__ = ['IncognitoCoding']
 __license__ = 'GPL'
-__version__ = '1.0'
+__version__ = '1.1'
 __maintainer__ = 'IncognitoCoding'
 __status__ = 'Production'
 
@@ -26,7 +26,7 @@ class ErrorFormatFailure(Exception):
     """
     Exception raised for an issue formatting the exception message.
 
-    Attributes:
+    Args:
         exception_message: The invalid key reason.
     """
     __module__ = 'builtins'
@@ -41,7 +41,7 @@ class InputFailure(Exception):
     """
     Exception raised for an input exception message.
 
-    Attributes:
+    Args:
         exception_message: The incorrect input reason.
     """
     __module__ = 'builtins'
@@ -57,7 +57,7 @@ class ProcessedMessageArgs:
     """
     Processed exception info to format the exception message.
 
-    Attributes:
+    Args:
         main_message (str): The main exception message.\\
         expected_result (Union[str, list], Optional): The expected result.\\
         \tstr vs list:
@@ -93,15 +93,17 @@ class ExceptionArgs:
         caller_module (str): Exception caller module.
         caller_line (int): Exception caller line.
         caller_name (str): Exception function or class name.
-        traceback (bool): Display traceback details.
+        traceback (bool): Display traceback details. Defaults to True.
+        all_tracing (bool): True will display all traceback calls. False will show most recent. Defaults to True.
     """
-    __slots__ = "exception_type", "caller_module", "caller_line", "caller_name", "traceback"
+    __slots__ = "exception_type", "caller_module", "caller_line", "caller_name", "traceback", "all_tracing"
 
     exception_type: Exception
     caller_module: str
     caller_line: int
     caller_name: str
     traceback: bool
+    all_tracing: bool
 
 
 @dataclass
@@ -120,8 +122,14 @@ class HookArgs:
 
 
 class ExceptionProcessor:
+    """
+    Processes the exception message arguments and makes the middleman calls.
 
-    def __init__(self, message_args: Union[ProcessedMessageArgs, Exception], exception_args: ExceptionArgs) -> None:
+    Args:
+        message_args (ProcessedMessageArgs): Exception message args.
+        exception_args (ExceptionArgs): Exception args to construct the formatted exception message.
+    """
+    def __init__(self, message_args: ProcessedMessageArgs, exception_args: ExceptionArgs) -> None:
 
         try:
             self._processed_message_args = ConvertMessageArgs(message_args, exception_args).set_message_args()
@@ -129,18 +137,26 @@ class ExceptionProcessor:
             self._formatted_exception = _exception_formatter(self._processed_message_args, exception_args)
             self._exception_args = exception_args
         except InputFailure as exec:
+            # Updates the selected exception_type to the internal exception error.
+            exception_args = dataclasses.replace(exception_args, exception_type=InputFailure)
+            exception_args = dataclasses.replace(exception_args, traceback=True)
+            exception_args = dataclasses.replace(exception_args, all_tracing=True)
             # Sets formatted exception to the internal exception error.
             self._formatted_exception = exec
-            # Updates the selected exception_type to the internal exception error.
-            self._exception_args = dataclasses.replace(exception_args, exception_type=InputFailure)
+            self._exception_args = exception_args
+            SetLocalExceptionHook(HookArgs(formatted_exception=exec, exception_args=self._exception_args))
         except ErrorFormatFailure as exec:
+            # Updates the selected exception_type to the internal exception error.
+            exception_args = dataclasses.replace(exception_args, exception_type=ErrorFormatFailure)
+            exception_args = dataclasses.replace(exception_args, traceback=True)
+            exception_args = dataclasses.replace(exception_args, all_tracing=True)
             # Sets formatted exception to the internal exception error.
             self._formatted_exception = exec
-            # Updates the selected exception_type to the internal exception error.
-            self._exception_args = dataclasses.replace(exception_args, exception_type=ErrorFormatFailure)
-
-        FormattedExceptionHook(HookArgs(formatted_exception=self._formatted_exception,
-                               exception_args=self._exception_args))
+            self._exception_args = exception_args
+            SetLocalExceptionHook(HookArgs(formatted_exception=exec, exception_args=self._exception_args))
+        else:
+            SetExceptionHook(HookArgs(formatted_exception=self._formatted_exception,
+                                      exception_args=self._exception_args))
 
     def __str__(self) -> str:
         """
@@ -154,36 +170,38 @@ class ConvertMessageArgs(ExceptionProcessor):
     """
     Validates the correct message_args keys are sent and converts the dictionary entries to a dataclass.
 
-    Attributes:
+    Args:
         message_args (dict): Exception message args.
+        exception_args (ExceptionArgs): Exception args to construct the formatted exception message.
     """
     def __init__(self, message_args: dict, exception_args: ExceptionArgs) -> None:
-        self.message_args = message_args
-        self.caller_module = exception_args.caller_module
-        self.caller_line = exception_args.caller_line
+        self._message_args = message_args
+        self._caller_module = exception_args.caller_module
+        self._caller_line = exception_args.caller_line
+        self._traceback = exception_args.traceback
+        self._all_tracing = exception_args.all_tracing
 
     def set_message_args(self) -> ProcessedMessageArgs:
-
-        if not isinstance(self.message_args, dict):
+        if not isinstance(self._message_args, dict):
             raise InputFailure('Dictionary format is the required input to format an exception message. '
                                'Single line messages should use the built-in Python exceptions.')
-
+        if not isinstance(self._traceback, bool) or not isinstance(self._all_tracing, bool):
+            raise InputFailure('Bool format is the required input to set the traceback options.')                  
         try:
             # Creates a sample dictionary key to use as a contains match for the incoming exception formatter keys.
             match_dict_key = {'main_message': None, 'expected_result': None, 'returned_result': None,
                               'suggested_resolution': None, 'original_exception': None}
             # Pulls the keys from the importing exception dictionary.
-            importing_exception_keys = list(self.message_args.keys())
-            key_check = KeyCheck(match_dict_key, 'exception_constructor', self.caller_line)
+            importing_exception_keys = list(self._message_args.keys())
+            key_check = KeyCheck(match_dict_key, 'exception_constructor', self._caller_line)
             key_check.contains_keys(importing_exception_keys)
 
-            main_message = self.message_args.get('main_message')
-            expected_result = self.message_args.get('expected_result')
-            returned_result = self.message_args.get('returned_result')
-            suggested_resolution = self.message_args.get('suggested_resolution')
-            original_exception = self.message_args.get('original_exception')
+            main_message = self._message_args.get('main_message')
+            expected_result = self._message_args.get('expected_result')
+            returned_result = self._message_args.get('returned_result')
+            suggested_resolution = self._message_args.get('suggested_resolution')
+            original_exception = self._message_args.get('original_exception')
         except Exception as exec:
-            LocalExceptionHook(exec)
             raise InputFailure(exec)
         else:
             return ProcessedMessageArgs(
@@ -195,7 +213,7 @@ class ConvertMessageArgs(ExceptionProcessor):
             )
 
 
-class LocalExceptionHook(ExceptionProcessor):
+class SetLocalExceptionHook(ExceptionProcessor):
     """
     Local exception hook to sets the most recent failure last call in
     the traceback output or no traceback output.
@@ -203,22 +221,31 @@ class LocalExceptionHook(ExceptionProcessor):
     Args:
         message (str): The local module exception message.
     """
-    def __init__(self, message: str) -> None:
-        self._message = message
+    def __init__(self, hook_args: HookArgs) -> None:
+        self._formatted_exception = hook_args.formatted_exception
+        self.exception_type = hook_args.exception_args.exception_type
+        self._traceback = hook_args.exception_args.traceback
+        self._all_tracing = hook_args.exception_args.all_tracing
 
-        # Except hook will use custom exceptions and a formatted message, so the kind and message variables will not be used but must exist.
+        # Except hook will use custom exceptions and a formatted message,
+        # so the kind and message variables will not be used but must exist.
         def except_hook(kind, message, traceback) -> sys.excepthook:
             # Returns the selected custom exception class and the formatted exception message.
             # Includes traceback.
-            sys.__excepthook__(kind, kind(self._message), traceback)
+            sys.__excepthook__(self.exception_type, self.exception_type(self._formatted_exception), traceback)
 
         sys.excepthook = except_hook
 
 
-class FormattedExceptionHook(ExceptionProcessor):
+class SetExceptionHook(ExceptionProcessor):
     """
-    Formatted message exception hook to set the most recent failure
-    last call in the traceback output or no traceback output.
+    Sets the message exception hook to set the most recent failure\\
+    last call in the traceback output, or, full exception with traceback,\\
+    or no traceback.
+
+    No other raised exception tracebacks display when traceback is enabled.
+
+    Note: traceback and all_tracing must be default True for each Exception class.
 
     Args:
         hook_args (HookArgs): The formatted excpetion message and exception args.
@@ -227,8 +254,10 @@ class FormattedExceptionHook(ExceptionProcessor):
         self._formatted_exception = hook_args.formatted_exception
         self.exception_type = hook_args.exception_args.exception_type
         self._traceback = hook_args.exception_args.traceback
+        self._all_tracing = hook_args.exception_args.all_tracing
 
-        # Except hook will use custom exceptions and a formatted message, so the kind and message variables will not be used but must exist.
+        # Except hook will use custom exceptions and a formatted message,
+        # so the kind and message variables will not be used but must exist.
         def except_hook(kind, message, traceback) -> sys.excepthook:
             if self._traceback:
                 # Returns the selected custom exception class and the formatted exception message.
@@ -239,7 +268,14 @@ class FormattedExceptionHook(ExceptionProcessor):
                 # No traceback.
                 print(f'{self.exception_type.__name__}:', self._formatted_exception)
 
-        sys.excepthook = except_hook
+        # Checks if all tracing output is disabled or if traceback is disabled with the
+        # default all_tracing flag set to True. Calling sys.excepthook adjusts the way the
+        # exception is displayed.
+        if (
+            (self._all_tracing is False)
+            or (self._traceback is False and self._all_tracing is True)
+        ):
+            sys.excepthook = except_hook
 
 
 # ########################################################
@@ -254,13 +290,14 @@ class FKBaseException(Exception):
     __slots__ = 'message_args'
     __module__ = 'builtins'
 
-    def __init__(self, message_args: dict, traceback: Optional[bool] = False) -> None:
+    def __init__(self, message_args: dict, traceback: Optional[bool] = True, all_tracing: Optional[bool] = True) -> None:
         """
         Formatted 'Base Exception' with additional exception message options.
 
-        Attributes:
+        Args:
             message_args (Union[dict, str]): Dictionary will create a formatted exception message.
-            traceback (bool, Optional): Displays most recent traceback output. Defaults to False.
+            traceback (bool, Optional): Displays most recent traceback output. Defaults to True.
+            all_tracing (bool, Optional): True displays all traceback. False will show most recent. Defaults to True.
 
             Keys:\\
                 main_message (str): The main exception message.\\
@@ -279,7 +316,8 @@ class FKBaseException(Exception):
                                                                          caller_module=Path(inspect.currentframe().f_back.f_code.co_filename).stem,
                                                                          caller_line=inspect.currentframe().f_back.f_lineno,
                                                                          caller_name=inspect.currentframe().f_back.f_code.co_name,
-                                                                         traceback=traceback))
+                                                                         traceback=traceback,
+                                                                         all_tracing=all_tracing))
 
             # Sets the Exception output used for printing the exception message.
             Exception.__init__(self, self._formatted_exception)
@@ -292,13 +330,14 @@ class FException(Exception):
     __slots__ = 'message_args'
     __module__ = 'builtins'
 
-    def __init__(self, message_args: dict, traceback: Optional[bool] = False) -> None:
+    def __init__(self, message_args: dict, traceback: Optional[bool] = True, all_tracing: Optional[bool] = True) -> None:
         """
         Formatted 'Exception' with additional exception message options.
 
-        Attributes:
+        Args:
             message_args (Union[dict, str]): Dictionary will create a formatted exception message.
-            traceback (bool, Optional): Displays most recent traceback output. Defaults to False.
+            traceback (bool, Optional): Displays most recent traceback output. Defaults to True.
+            all_tracing (bool, Optional): True displays all traceback. False will show most recent. Defaults to True.
 
             Keys:\\
                 main_message (str): The main exception message.\\
@@ -317,7 +356,8 @@ class FException(Exception):
                                                                          caller_module=Path(inspect.currentframe().f_back.f_code.co_filename).stem,
                                                                          caller_line=inspect.currentframe().f_back.f_lineno,
                                                                          caller_name=inspect.currentframe().f_back.f_code.co_name,
-                                                                         traceback=traceback))
+                                                                         traceback=traceback,
+                                                                         all_tracing=all_tracing))
 
             # Sets the Exception output used for printing the exception message.
             Exception.__init__(self, self._formatted_exception)
@@ -330,13 +370,14 @@ class FArithmeticError(Exception):
     __slots__ = 'message_args'
     __module__ = 'builtins'
 
-    def __init__(self, message_args: dict, traceback: Optional[bool] = False) -> None:
+    def __init__(self, message_args: dict, traceback: Optional[bool] = True, all_tracing: Optional[bool] = True) -> None:
         """
         Formatted 'Arithmetic Error' with additional exception message options.
 
-        Attributes:
+        Args:
             message_args (Union[dict, str]): Dictionary will create a formatted exception message.
-            traceback (bool, Optional): Displays most recent traceback output. Defaults to False.
+            traceback (bool, Optional): Displays most recent traceback output. Defaults to True.
+            all_tracing (bool, Optional): True displays all traceback. False will show most recent. Defaults to True.
 
             Keys:\\
                 main_message (str): The main exception message.\\
@@ -355,7 +396,8 @@ class FArithmeticError(Exception):
                                                                          caller_module=Path(inspect.currentframe().f_back.f_code.co_filename).stem,
                                                                          caller_line=inspect.currentframe().f_back.f_lineno,
                                                                          caller_name=inspect.currentframe().f_back.f_code.co_name,
-                                                                         traceback=traceback))
+                                                                         traceback=traceback,
+                                                                         all_tracing=all_tracing))
 
             # Sets the Exception output used for printing the exception message.
             Exception.__init__(self, self._formatted_exception)
@@ -368,13 +410,14 @@ class FBufferError(Exception):
     __slots__ = 'message_args'
     __module__ = 'builtins'
 
-    def __init__(self, message_args: dict, traceback: Optional[bool] = False) -> None:
+    def __init__(self, message_args: dict, traceback: Optional[bool] = True, all_tracing: Optional[bool] = True) -> None:
         """
         Formatted 'Buffer Error' with additional exception message options.
 
-        Attributes:
+        Args:
             message_args (Union[dict, str]): Dictionary will create a formatted exception message.
-            traceback (bool, Optional): Displays most recent traceback output. Defaults to False.
+            traceback (bool, Optional): Displays most recent traceback output. Defaults to True.
+            all_tracing (bool, Optional): True displays all traceback. False will show most recent. Defaults to True.
 
             Keys:\\
                 main_message (str): The main exception message.\\
@@ -393,7 +436,8 @@ class FBufferError(Exception):
                                                                          caller_module=Path(inspect.currentframe().f_back.f_code.co_filename).stem,
                                                                          caller_line=inspect.currentframe().f_back.f_lineno,
                                                                          caller_name=inspect.currentframe().f_back.f_code.co_name,
-                                                                         traceback=traceback))
+                                                                         traceback=traceback,
+                                                                         all_tracing=all_tracing))
 
             # Sets the Exception output used for printing the exception message.
             Exception.__init__(self, self._formatted_exception)
@@ -406,13 +450,14 @@ class FLookupError(Exception):
     __slots__ = 'message_args'
     __module__ = 'builtins'
 
-    def __init__(self, message_args: dict, traceback: Optional[bool] = False) -> None:
+    def __init__(self, message_args: dict, traceback: Optional[bool] = True, all_tracing: Optional[bool] = True) -> None:
         """
         Formatted 'Lookup Error' with additional exception message options.
 
-        Attributes:
+        Args:
             message_args (Union[dict, str]): Dictionary will create a formatted exception message.
-            traceback (bool, Optional): Displays most recent traceback output. Defaults to False.
+            traceback (bool, Optional): Displays most recent traceback output. Defaults to True.
+            all_tracing (bool, Optional): True displays all traceback. False will show most recent. Defaults to True.
 
             Keys:\\
                 main_message (str): The main exception message.\\
@@ -431,7 +476,8 @@ class FLookupError(Exception):
                                                                          caller_module=Path(inspect.currentframe().f_back.f_code.co_filename).stem,
                                                                          caller_line=inspect.currentframe().f_back.f_lineno,
                                                                          caller_name=inspect.currentframe().f_back.f_code.co_name,
-                                                                         traceback=traceback))
+                                                                         traceback=traceback,
+                                                                         all_tracing=all_tracing))
 
             # Sets the Exception output used for printing the exception message.
             Exception.__init__(self, self._formatted_exception)
@@ -449,13 +495,14 @@ class FAssertionError(Exception):
     __slots__ = 'message_args'
     __module__ = 'builtins'
 
-    def __init__(self, message_args: dict, traceback: Optional[bool] = False) -> None:
+    def __init__(self, message_args: dict, traceback: Optional[bool] = True, all_tracing: Optional[bool] = True) -> None:
         """
         Formatted 'Assertion Error' with additional exception message options.
 
-        Attributes:
+        Args:
             message_args (Union[dict, str]): Dictionary will create a formatted exception message.
-            traceback (bool, Optional): Displays most recent traceback output. Defaults to False.
+            traceback (bool, Optional): Displays most recent traceback output. Defaults to True.
+            all_tracing (bool, Optional): True displays all traceback. False will show most recent. Defaults to True.
 
             Keys:\\
                 main_message (str): The main exception message.\\
@@ -474,7 +521,8 @@ class FAssertionError(Exception):
                                                                          caller_module=Path(inspect.currentframe().f_back.f_code.co_filename).stem,
                                                                          caller_line=inspect.currentframe().f_back.f_lineno,
                                                                          caller_name=inspect.currentframe().f_back.f_code.co_name,
-                                                                         traceback=traceback))
+                                                                         traceback=traceback,
+                                                                         all_tracing=all_tracing))
 
             # Sets the Exception output used for printing the exception message.
             Exception.__init__(self, self._formatted_exception)
@@ -487,13 +535,14 @@ class FAttributeError(Exception):
     __slots__ = 'message_args'
     __module__ = 'builtins'
 
-    def __init__(self, message_args: dict, traceback: Optional[bool] = False) -> None:
+    def __init__(self, message_args: dict, traceback: Optional[bool] = True, all_tracing: Optional[bool] = True) -> None:
         """
         Formatted 'Attribute Error' with additional exception message options.
 
-        Attributes:
+        Args:
             message_args (Union[dict, str]): Dictionary will create a formatted exception message.
-            traceback (bool, Optional): Displays most recent traceback output. Defaults to False.
+            traceback (bool, Optional): Displays most recent traceback output. Defaults to True.
+            all_tracing (bool, Optional): True displays all traceback. False will show most recent. Defaults to True.
 
             Keys:\\
                 main_message (str): The main exception message.\\
@@ -512,7 +561,8 @@ class FAttributeError(Exception):
                                                                          caller_module=Path(inspect.currentframe().f_back.f_code.co_filename).stem,
                                                                          caller_line=inspect.currentframe().f_back.f_lineno,
                                                                          caller_name=inspect.currentframe().f_back.f_code.co_name,
-                                                                         traceback=traceback))
+                                                                         traceback=traceback,
+                                                                         all_tracing=all_tracing))
 
             # Sets the Exception output used for printing the exception message.
             Exception.__init__(self, self._formatted_exception)
@@ -525,13 +575,14 @@ class FEOFError(Exception):
     __slots__ = 'message_args'
     __module__ = 'builtins'
 
-    def __init__(self, message_args: dict, traceback: Optional[bool] = False) -> None:
+    def __init__(self, message_args: dict, traceback: Optional[bool] = True, all_tracing: Optional[bool] = True) -> None:
         """
         Formatted 'EOF Error' with additional exception message options.
 
-        Attributes:
+        Args:
             message_args (Union[dict, str]): Dictionary will create a formatted exception message.
-            traceback (bool, Optional): Displays most recent traceback output. Defaults to False.
+            traceback (bool, Optional): Displays most recent traceback output. Defaults to True.
+            all_tracing (bool, Optional): True displays all traceback. False will show most recent. Defaults to True.
 
             Keys:\\
                 main_message (str): The main exception message.\\
@@ -550,7 +601,8 @@ class FEOFError(Exception):
                                                                          caller_module=Path(inspect.currentframe().f_back.f_code.co_filename).stem,
                                                                          caller_line=inspect.currentframe().f_back.f_lineno,
                                                                          caller_name=inspect.currentframe().f_back.f_code.co_name,
-                                                                         traceback=traceback))
+                                                                         traceback=traceback,
+                                                                         all_tracing=all_tracing))
 
             # Sets the Exception output used for printing the exception message.
             Exception.__init__(self, self._formatted_exception)
@@ -563,13 +615,14 @@ class FFloatingPointError(Exception):
     __slots__ = 'message_args'
     __module__ = 'builtins'
 
-    def __init__(self, message_args: dict, traceback: Optional[bool] = False) -> None:
+    def __init__(self, message_args: dict, traceback: Optional[bool] = True, all_tracing: Optional[bool] = True) -> None:
         """
         Formatted 'FloatingPoint Error' with additional exception message options.
 
-        Attributes:
+        Args:
             message_args (Union[dict, str]): Dictionary will create a formatted exception message.
-            traceback (bool, Optional): Displays most recent traceback output. Defaults to False.
+            traceback (bool, Optional): Displays most recent traceback output. Defaults to True.
+            all_tracing (bool, Optional): True displays all traceback. False will show most recent. Defaults to True.
 
             Keys:\\
                 main_message (str): The main exception message.\\
@@ -588,7 +641,8 @@ class FFloatingPointError(Exception):
                                                                          caller_module=Path(inspect.currentframe().f_back.f_code.co_filename).stem,
                                                                          caller_line=inspect.currentframe().f_back.f_lineno,
                                                                          caller_name=inspect.currentframe().f_back.f_code.co_name,
-                                                                         traceback=traceback))
+                                                                         traceback=traceback,
+                                                                         all_tracing=all_tracing))
 
             # Sets the Exception output used for printing the exception message.
             Exception.__init__(self, self._formatted_exception)
@@ -601,13 +655,14 @@ class FGeneratorExit(Exception):
     __slots__ = 'message_args'
     __module__ = 'builtins'
 
-    def __init__(self, message_args: dict, traceback: Optional[bool] = False) -> None:
+    def __init__(self, message_args: dict, traceback: Optional[bool] = True, all_tracing: Optional[bool] = True) -> None:
         """
         Formatted 'Generator Exit' with additional exception message options.
 
-        Attributes:
+        Args:
             message_args (Union[dict, str]): Dictionary will create a formatted exception message.
-            traceback (bool, Optional): Displays most recent traceback output. Defaults to False.
+            traceback (bool, Optional): Displays most recent traceback output. Defaults to True.
+            all_tracing (bool, Optional): True displays all traceback. False will show most recent. Defaults to True.
 
             Keys:\\
                 main_message (str): The main exception message.\\
@@ -626,7 +681,8 @@ class FGeneratorExit(Exception):
                                                                          caller_module=Path(inspect.currentframe().f_back.f_code.co_filename).stem,
                                                                          caller_line=inspect.currentframe().f_back.f_lineno,
                                                                          caller_name=inspect.currentframe().f_back.f_code.co_name,
-                                                                         traceback=traceback))
+                                                                         traceback=traceback,
+                                                                         all_tracing=all_tracing))
 
             # Sets the Exception output used for printing the exception message.
             Exception.__init__(self, self._formatted_exception)
@@ -639,13 +695,14 @@ class FImportError(Exception):
     __slots__ = 'message_args'
     __module__ = 'builtins'
 
-    def __init__(self, message_args: dict, traceback: Optional[bool] = False) -> None:
+    def __init__(self, message_args: dict, traceback: Optional[bool] = True, all_tracing: Optional[bool] = True) -> None:
         """
         Formatted 'Import Error' with additional exception message options.
 
-        Attributes:
+        Args:
             message_args (Union[dict, str]): Dictionary will create a formatted exception message.
-            traceback (bool, Optional): Displays most recent traceback output. Defaults to False.
+            traceback (bool, Optional): Displays most recent traceback output. Defaults to True.
+            all_tracing (bool, Optional): True displays all traceback. False will show most recent. Defaults to True.
 
             Keys:\\
                 main_message (str): The main exception message.\\
@@ -664,7 +721,8 @@ class FImportError(Exception):
                                                                          caller_module=Path(inspect.currentframe().f_back.f_code.co_filename).stem,
                                                                          caller_line=inspect.currentframe().f_back.f_lineno,
                                                                          caller_name=inspect.currentframe().f_back.f_code.co_name,
-                                                                         traceback=traceback))
+                                                                         traceback=traceback,
+                                                                         all_tracing=all_tracing))
 
             # Sets the Exception output used for printing the exception message.
             Exception.__init__(self, self._formatted_exception)
@@ -677,13 +735,14 @@ class FModuleNotFoundError(Exception):
     __slots__ = 'message_args'
     __module__ = 'builtins'
 
-    def __init__(self, message_args: dict, traceback: Optional[bool] = False) -> None:
+    def __init__(self, message_args: dict, traceback: Optional[bool] = True, all_tracing: Optional[bool] = True) -> None:
         """
         Formatted 'ModuleNotFound Error' with additional exception message options.
 
-        Attributes:
+        Args:
             message_args (Union[dict, str]): Dictionary will create a formatted exception message.
-            traceback (bool, Optional): Displays most recent traceback output. Defaults to False.
+            traceback (bool, Optional): Displays most recent traceback output. Defaults to True.
+            all_tracing (bool, Optional): True displays all traceback. False will show most recent. Defaults to True.
 
             Keys:\\
                 main_message (str): The main exception message.\\
@@ -702,7 +761,8 @@ class FModuleNotFoundError(Exception):
                                                                          caller_module=Path(inspect.currentframe().f_back.f_code.co_filename).stem,
                                                                          caller_line=inspect.currentframe().f_back.f_lineno,
                                                                          caller_name=inspect.currentframe().f_back.f_code.co_name,
-                                                                         traceback=traceback))
+                                                                         traceback=traceback,
+                                                                         all_tracing=all_tracing))
 
             # Sets the Exception output used for printing the exception message.
             Exception.__init__(self, self._formatted_exception)
@@ -715,13 +775,14 @@ class FIndexError(Exception):
     __slots__ = 'message_args'
     __module__ = 'builtins'
 
-    def __init__(self, message_args: dict, traceback: Optional[bool] = False) -> None:
+    def __init__(self, message_args: dict, traceback: Optional[bool] = True, all_tracing: Optional[bool] = True) -> None:
         """
         Formatted 'Index Error' with additional exception message options.
 
-        Attributes:
+        Args:
             message_args (Union[dict, str]): Dictionary will create a formatted exception message.
-            traceback (bool, Optional): Displays most recent traceback output. Defaults to False.
+            traceback (bool, Optional): Displays most recent traceback output. Defaults to True.
+            all_tracing (bool, Optional): True displays all traceback. False will show most recent. Defaults to True.
 
             Keys:\\
                 main_message (str): The main exception message.\\
@@ -740,7 +801,8 @@ class FIndexError(Exception):
                                                                          caller_module=Path(inspect.currentframe().f_back.f_code.co_filename).stem,
                                                                          caller_line=inspect.currentframe().f_back.f_lineno,
                                                                          caller_name=inspect.currentframe().f_back.f_code.co_name,
-                                                                         traceback=traceback))
+                                                                         traceback=traceback,
+                                                                         all_tracing=all_tracing))
 
             # Sets the Exception output used for printing the exception message.
             Exception.__init__(self, self._formatted_exception)
@@ -753,13 +815,14 @@ class FKeyError(Exception):
     __slots__ = 'message_args'
     __module__ = 'builtins'
 
-    def __init__(self, message_args: dict, traceback: Optional[bool] = False) -> None:
+    def __init__(self, message_args: dict, traceback: Optional[bool] = True, all_tracing: Optional[bool] = True) -> None:
         """
         Formatted 'Key Error' with additional exception message options.
 
-        Attributes:
+        Args:
             message_args (Union[dict, str]): Dictionary will create a formatted exception message.
-            traceback (bool, Optional): Displays most recent traceback output. Defaults to False.
+            traceback (bool, Optional): Displays most recent traceback output. Defaults to True.
+            all_tracing (bool, Optional): True displays all traceback. False will show most recent. Defaults to True.
 
             Keys:\\
                 main_message (str): The main exception message.\\
@@ -778,7 +841,8 @@ class FKeyError(Exception):
                                                                          caller_module=Path(inspect.currentframe().f_back.f_code.co_filename).stem,
                                                                          caller_line=inspect.currentframe().f_back.f_lineno,
                                                                          caller_name=inspect.currentframe().f_back.f_code.co_name,
-                                                                         traceback=traceback))
+                                                                         traceback=traceback,
+                                                                         all_tracing=all_tracing))
 
             # Sets the Exception output used for printing the exception message.
             Exception.__init__(self, self._formatted_exception)
@@ -791,13 +855,14 @@ class FKeyboardInterrupt(Exception):
     __slots__ = 'message_args'
     __module__ = 'builtins'
 
-    def __init__(self, message_args: dict, traceback: Optional[bool] = False) -> None:
+    def __init__(self, message_args: dict, traceback: Optional[bool] = True, all_tracing: Optional[bool] = True) -> None:
         """
         Formatted 'Keyboard Interrupt' with additional exception message options.
 
-        Attributes:
+        Args:
             message_args (Union[dict, str]): Dictionary will create a formatted exception message.
-            traceback (bool, Optional): Displays most recent traceback output. Defaults to False.
+            traceback (bool, Optional): Displays most recent traceback output. Defaults to True.
+            all_tracing (bool, Optional): True displays all traceback. False will show most recent. Defaults to True.
 
             Keys:\\
                 main_message (str): The main exception message.\\
@@ -816,7 +881,8 @@ class FKeyboardInterrupt(Exception):
                                                                          caller_module=Path(inspect.currentframe().f_back.f_code.co_filename).stem,
                                                                          caller_line=inspect.currentframe().f_back.f_lineno,
                                                                          caller_name=inspect.currentframe().f_back.f_code.co_name,
-                                                                         traceback=traceback))
+                                                                         traceback=traceback,
+                                                                         all_tracing=all_tracing))
 
             # Sets the Exception output used for printing the exception message.
             Exception.__init__(self, self._formatted_exception)
@@ -829,13 +895,14 @@ class FMemoryError(Exception):
     __slots__ = 'message_args'
     __module__ = 'builtins'
 
-    def __init__(self, message_args: dict, traceback: Optional[bool] = False) -> None:
+    def __init__(self, message_args: dict, traceback: Optional[bool] = True, all_tracing: Optional[bool] = True) -> None:
         """
         Formatted 'Memory Error' with additional exception message options.
 
-        Attributes:
+        Args:
             message_args (Union[dict, str]): Dictionary will create a formatted exception message.
-            traceback (bool, Optional): Displays most recent traceback output. Defaults to False.
+            traceback (bool, Optional): Displays most recent traceback output. Defaults to True.
+            all_tracing (bool, Optional): True displays all traceback. False will show most recent. Defaults to True.
 
             Keys:\\
                 main_message (str): The main exception message.\\
@@ -854,7 +921,8 @@ class FMemoryError(Exception):
                                                                          caller_module=Path(inspect.currentframe().f_back.f_code.co_filename).stem,
                                                                          caller_line=inspect.currentframe().f_back.f_lineno,
                                                                          caller_name=inspect.currentframe().f_back.f_code.co_name,
-                                                                         traceback=traceback))
+                                                                         traceback=traceback,
+                                                                         all_tracing=all_tracing))
 
             # Sets the Exception output used for printing the exception message.
             Exception.__init__(self, self._formatted_exception)
@@ -867,13 +935,14 @@ class FNameError(Exception):
     __slots__ = 'message_args'
     __module__ = 'builtins'
 
-    def __init__(self, message_args: dict, traceback: Optional[bool] = False) -> None:
+    def __init__(self, message_args: dict, traceback: Optional[bool] = True, all_tracing: Optional[bool] = True) -> None:
         """
         Formatted 'Name Error' with additional exception message options.
 
-        Attributes:
+        Args:
             message_args (Union[dict, str]): Dictionary will create a formatted exception message.
-            traceback (bool, Optional): Displays most recent traceback output. Defaults to False.
+            traceback (bool, Optional): Displays most recent traceback output. Defaults to True.
+            all_tracing (bool, Optional): True displays all traceback. False will show most recent. Defaults to True.
 
             Keys:\\
                 main_message (str): The main exception message.\\
@@ -892,7 +961,8 @@ class FNameError(Exception):
                                                                          caller_module=Path(inspect.currentframe().f_back.f_code.co_filename).stem,
                                                                          caller_line=inspect.currentframe().f_back.f_lineno,
                                                                          caller_name=inspect.currentframe().f_back.f_code.co_name,
-                                                                         traceback=traceback))
+                                                                         traceback=traceback,
+                                                                         all_tracing=all_tracing))
 
             # Sets the Exception output used for printing the exception message.
             Exception.__init__(self, self._formatted_exception)
@@ -905,13 +975,14 @@ class FNotImplementedError(Exception):
     __slots__ = 'message_args'
     __module__ = 'builtins'
 
-    def __init__(self, message_args: dict, traceback: Optional[bool] = False) -> None:
+    def __init__(self, message_args: dict, traceback: Optional[bool] = True, all_tracing: Optional[bool] = True) -> None:
         """
         Formatted ''NotImplemented Error' with additional exception message options.
 
-        Attributes:
+        Args:
             message_args (Union[dict, str]): Dictionary will create a formatted exception message.
-            traceback (bool, Optional): Displays most recent traceback output. Defaults to False.
+            traceback (bool, Optional): Displays most recent traceback output. Defaults to True.
+            all_tracing (bool, Optional): True displays all traceback. False will show most recent. Defaults to True.
 
             Keys:\\
                 main_message (str): The main exception message.\\
@@ -930,7 +1001,8 @@ class FNotImplementedError(Exception):
                                                                          caller_module=Path(inspect.currentframe().f_back.f_code.co_filename).stem,
                                                                          caller_line=inspect.currentframe().f_back.f_lineno,
                                                                          caller_name=inspect.currentframe().f_back.f_code.co_name,
-                                                                         traceback=traceback))
+                                                                         traceback=traceback,
+                                                                         all_tracing=all_tracing))
 
             # Sets the Exception output used for printing the exception message.
             Exception.__init__(self, self._formatted_exception)
@@ -943,13 +1015,14 @@ class FOSError(Exception):
     __slots__ = 'message_args'
     __module__ = 'builtins'
 
-    def __init__(self, message_args: dict, traceback: Optional[bool] = False) -> None:
+    def __init__(self, message_args: dict, traceback: Optional[bool] = True, all_tracing: Optional[bool] = True) -> None:
         """
         Formatted 'OS Error' with additional exception message options.
 
-        Attributes:
+        Args:
             message_args (Union[dict, str]): Dictionary will create a formatted exception message.
-            traceback (bool, Optional): Displays most recent traceback output. Defaults to False.
+            traceback (bool, Optional): Displays most recent traceback output. Defaults to True.
+            all_tracing (bool, Optional): True displays all traceback. False will show most recent. Defaults to True.
 
             Keys:\\
                 main_message (str): The main exception message.\\
@@ -968,7 +1041,8 @@ class FOSError(Exception):
                                                                          caller_module=Path(inspect.currentframe().f_back.f_code.co_filename).stem,
                                                                          caller_line=inspect.currentframe().f_back.f_lineno,
                                                                          caller_name=inspect.currentframe().f_back.f_code.co_name,
-                                                                         traceback=traceback))
+                                                                         traceback=traceback,
+                                                                         all_tracing=all_tracing))
 
             # Sets the Exception output used for printing the exception message.
             Exception.__init__(self, self._formatted_exception)
@@ -981,13 +1055,14 @@ class FOverflowError(Exception):
     __slots__ = 'message_args'
     __module__ = 'builtins'
 
-    def __init__(self, message_args: dict, traceback: Optional[bool] = False) -> None:
+    def __init__(self, message_args: dict, traceback: Optional[bool] = True, all_tracing: Optional[bool] = True) -> None:
         """
         Formatted 'Overflow Error' with additional exception message options.
 
-        Attributes:
+        Args:
             message_args (Union[dict, str]): Dictionary will create a formatted exception message.
-            traceback (bool, Optional): Displays most recent traceback output. Defaults to False.
+            traceback (bool, Optional): Displays most recent traceback output. Defaults to True.
+            all_tracing (bool, Optional): True displays all traceback. False will show most recent. Defaults to True.
 
             Keys:\\
                 main_message (str): The main exception message.\\
@@ -1006,7 +1081,8 @@ class FOverflowError(Exception):
                                                                          caller_module=Path(inspect.currentframe().f_back.f_code.co_filename).stem,
                                                                          caller_line=inspect.currentframe().f_back.f_lineno,
                                                                          caller_name=inspect.currentframe().f_back.f_code.co_name,
-                                                                         traceback=traceback))
+                                                                         traceback=traceback,
+                                                                         all_tracing=all_tracing))
 
             # Sets the Exception output used for printing the exception message.
             Exception.__init__(self, self._formatted_exception)
@@ -1019,13 +1095,14 @@ class FRecursionError(Exception):
     __slots__ = 'message_args'
     __module__ = 'builtins'
 
-    def __init__(self, message_args: dict, traceback: Optional[bool] = False) -> None:
+    def __init__(self, message_args: dict, traceback: Optional[bool] = True, all_tracing: Optional[bool] = True) -> None:
         """
         Formatted 'Recursion Error' with additional exception message options.
 
-        Attributes:
+        Args:
             message_args (Union[dict, str]): Dictionary will create a formatted exception message.
-            traceback (bool, Optional): Displays most recent traceback output. Defaults to False.
+            traceback (bool, Optional): Displays most recent traceback output. Defaults to True.
+            all_tracing (bool, Optional): True displays all traceback. False will show most recent. Defaults to True.
 
             Keys:\\
                 main_message (str): The main exception message.\\
@@ -1044,7 +1121,8 @@ class FRecursionError(Exception):
                                                                          caller_module=Path(inspect.currentframe().f_back.f_code.co_filename).stem,
                                                                          caller_line=inspect.currentframe().f_back.f_lineno,
                                                                          caller_name=inspect.currentframe().f_back.f_code.co_name,
-                                                                         traceback=traceback))
+                                                                         traceback=traceback,
+                                                                         all_tracing=all_tracing))
 
             # Sets the Exception output used for printing the exception message.
             Exception.__init__(self, self._formatted_exception)
@@ -1057,13 +1135,14 @@ class FReferenceError(Exception):
     __slots__ = 'message_args'
     __module__ = 'builtins'
 
-    def __init__(self, message_args: dict, traceback: Optional[bool] = False) -> None:
+    def __init__(self, message_args: dict, traceback: Optional[bool] = True, all_tracing: Optional[bool] = True) -> None:
         """
         Formatted 'Reference Error' with additional exception message options.
 
-        Attributes:
+        Args:
             message_args (Union[dict, str]): Dictionary will create a formatted exception message.
-            traceback (bool, Optional): Displays most recent traceback output. Defaults to False.
+            traceback (bool, Optional): Displays most recent traceback output. Defaults to True.
+            all_tracing (bool, Optional): True displays all traceback. False will show most recent. Defaults to True.
 
             Keys:\\
                 main_message (str): The main exception message.\\
@@ -1082,7 +1161,8 @@ class FReferenceError(Exception):
                                                                          caller_module=Path(inspect.currentframe().f_back.f_code.co_filename).stem,
                                                                          caller_line=inspect.currentframe().f_back.f_lineno,
                                                                          caller_name=inspect.currentframe().f_back.f_code.co_name,
-                                                                         traceback=traceback))
+                                                                         traceback=traceback,
+                                                                         all_tracing=all_tracing))
 
             # Sets the Exception output used for printing the exception message.
             Exception.__init__(self, self._formatted_exception)
@@ -1095,13 +1175,14 @@ class FRuntimeError(Exception):
     __slots__ = 'message_args'
     __module__ = 'builtins'
 
-    def __init__(self, message_args: dict, traceback: Optional[bool] = False) -> None:
+    def __init__(self, message_args: dict, traceback: Optional[bool] = True, all_tracing: Optional[bool] = True) -> None:
         """
         Formatted 'Runtime Error' with additional exception message options.
 
-        Attributes:
+        Args:
             message_args (Union[dict, str]): Dictionary will create a formatted exception message.
-            traceback (bool, Optional): Displays most recent traceback output. Defaults to False.
+            traceback (bool, Optional): Displays most recent traceback output. Defaults to True.
+            all_tracing (bool, Optional): True displays all traceback. False will show most recent. Defaults to True.
 
             Keys:\\
                 main_message (str): The main exception message.\\
@@ -1120,7 +1201,8 @@ class FRuntimeError(Exception):
                                                                          caller_module=Path(inspect.currentframe().f_back.f_code.co_filename).stem,
                                                                          caller_line=inspect.currentframe().f_back.f_lineno,
                                                                          caller_name=inspect.currentframe().f_back.f_code.co_name,
-                                                                         traceback=traceback))
+                                                                         traceback=traceback,
+                                                                         all_tracing=all_tracing))
 
             # Sets the Exception output used for printing the exception message.
             Exception.__init__(self, self._formatted_exception)
@@ -1133,13 +1215,14 @@ class FStopIteration(Exception):
     __slots__ = 'message_args'
     __module__ = 'builtins'
 
-    def __init__(self, message_args: dict, traceback: Optional[bool] = False) -> None:
+    def __init__(self, message_args: dict, traceback: Optional[bool] = True, all_tracing: Optional[bool] = True) -> None:
         """
         Formatted 'Stop Iteration' with additional exception message options.
 
-        Attributes:
+        Args:
             message_args (Union[dict, str]): Dictionary will create a formatted exception message.
-            traceback (bool, Optional): Displays most recent traceback output. Defaults to False.
+            traceback (bool, Optional): Displays most recent traceback output. Defaults to True.
+            all_tracing (bool, Optional): True displays all traceback. False will show most recent. Defaults to True.
 
             Keys:\\
                 main_message (str): The main exception message.\\
@@ -1158,7 +1241,8 @@ class FStopIteration(Exception):
                                                                          caller_module=Path(inspect.currentframe().f_back.f_code.co_filename).stem,
                                                                          caller_line=inspect.currentframe().f_back.f_lineno,
                                                                          caller_name=inspect.currentframe().f_back.f_code.co_name,
-                                                                         traceback=traceback))
+                                                                         traceback=traceback,
+                                                                         all_tracing=all_tracing))
 
             # Sets the Exception output used for printing the exception message.
             Exception.__init__(self, self._formatted_exception)
@@ -1171,13 +1255,14 @@ class FStopAsyncIteration(Exception):
     __slots__ = 'message_args'
     __module__ = 'builtins'
 
-    def __init__(self, message_args: dict, traceback: Optional[bool] = False) -> None:
+    def __init__(self, message_args: dict, traceback: Optional[bool] = True, all_tracing: Optional[bool] = True) -> None:
         """
         Formatted 'StopAsync Iteration' with additional exception message options.
 
-        Attributes:
+        Args:
             message_args (Union[dict, str]): Dictionary will create a formatted exception message.
-            traceback (bool, Optional): Displays most recent traceback output. Defaults to False.
+            traceback (bool, Optional): Displays most recent traceback output. Defaults to True.
+            all_tracing (bool, Optional): True displays all traceback. False will show most recent. Defaults to True.
 
             Keys:\\
                 main_message (str): The main exception message.\\
@@ -1196,7 +1281,8 @@ class FStopAsyncIteration(Exception):
                                                                          caller_module=Path(inspect.currentframe().f_back.f_code.co_filename).stem,
                                                                          caller_line=inspect.currentframe().f_back.f_lineno,
                                                                          caller_name=inspect.currentframe().f_back.f_code.co_name,
-                                                                         traceback=traceback))
+                                                                         traceback=traceback,
+                                                                         all_tracing=all_tracing))
 
             # Sets the Exception output used for printing the exception message.
             Exception.__init__(self, self._formatted_exception)
@@ -1209,13 +1295,14 @@ class FSyntaxError(Exception):
     __slots__ = 'message_args'
     __module__ = 'builtins'
 
-    def __init__(self, message_args: dict, traceback: Optional[bool] = False) -> None:
+    def __init__(self, message_args: dict, traceback: Optional[bool] = True, all_tracing: Optional[bool] = True) -> None:
         """
         Formatted 'Syntax Error' with additional exception message options.
 
-        Attributes:
+        Args:
             message_args (Union[dict, str]): Dictionary will create a formatted exception message.
-            traceback (bool, Optional): Displays most recent traceback output. Defaults to False.
+            traceback (bool, Optional): Displays most recent traceback output. Defaults to True.
+            all_tracing (bool, Optional): True displays all traceback. False will show most recent. Defaults to True.
 
             Keys:\\
                 main_message (str): The main exception message.\\
@@ -1234,7 +1321,8 @@ class FSyntaxError(Exception):
                                                                          caller_module=Path(inspect.currentframe().f_back.f_code.co_filename).stem,
                                                                          caller_line=inspect.currentframe().f_back.f_lineno,
                                                                          caller_name=inspect.currentframe().f_back.f_code.co_name,
-                                                                         traceback=traceback))
+                                                                         traceback=traceback,
+                                                                         all_tracing=all_tracing))
 
             # Sets the Exception output used for printing the exception message.
             Exception.__init__(self, self._formatted_exception)
@@ -1247,13 +1335,14 @@ class FIndentationError(Exception):
     __slots__ = 'message_args'
     __module__ = 'builtins'
 
-    def __init__(self, message_args: dict, traceback: Optional[bool] = False) -> None:
+    def __init__(self, message_args: dict, traceback: Optional[bool] = True, all_tracing: Optional[bool] = True) -> None:
         """
         Formatted 'Indentation Error' with additional exception message options.
 
-        Attributes:
+        Args:
             message_args (Union[dict, str]): Dictionary will create a formatted exception message.
-            traceback (bool, Optional): Displays most recent traceback output. Defaults to False.
+            traceback (bool, Optional): Displays most recent traceback output. Defaults to True.
+            all_tracing (bool, Optional): True displays all traceback. False will show most recent. Defaults to True.
 
             Keys:\\
                 main_message (str): The main exception message.\\
@@ -1272,7 +1361,8 @@ class FIndentationError(Exception):
                                                                          caller_module=Path(inspect.currentframe().f_back.f_code.co_filename).stem,
                                                                          caller_line=inspect.currentframe().f_back.f_lineno,
                                                                          caller_name=inspect.currentframe().f_back.f_code.co_name,
-                                                                         traceback=traceback))
+                                                                         traceback=traceback,
+                                                                         all_tracing=all_tracing))
 
             # Sets the Exception output used for printing the exception message.
             Exception.__init__(self, self._formatted_exception)
@@ -1285,13 +1375,14 @@ class FTabError(Exception):
     __slots__ = 'message_args'
     __module__ = 'builtins'
 
-    def __init__(self, message_args: dict, traceback: Optional[bool] = False) -> None:
+    def __init__(self, message_args: dict, traceback: Optional[bool] = True, all_tracing: Optional[bool] = True) -> None:
         """
         Formatted 'Tab Error' with additional exception message options.
 
-        Attributes:
+        Args:
             message_args (Union[dict, str]): Dictionary will create a formatted exception message.
-            traceback (bool, Optional): Displays most recent traceback output. Defaults to False.
+            traceback (bool, Optional): Displays most recent traceback output. Defaults to True.
+            all_tracing (bool, Optional): True displays all traceback. False will show most recent. Defaults to True.
 
             Keys:\\
                 main_message (str): The main exception message.\\
@@ -1310,7 +1401,8 @@ class FTabError(Exception):
                                                                          caller_module=Path(inspect.currentframe().f_back.f_code.co_filename).stem,
                                                                          caller_line=inspect.currentframe().f_back.f_lineno,
                                                                          caller_name=inspect.currentframe().f_back.f_code.co_name,
-                                                                         traceback=traceback))
+                                                                         traceback=traceback,
+                                                                         all_tracing=all_tracing))
 
             # Sets the Exception output used for printing the exception message.
             Exception.__init__(self, self._formatted_exception)
@@ -1323,13 +1415,14 @@ class FSystemError(Exception):
     __slots__ = 'message_args'
     __module__ = 'builtins'
 
-    def __init__(self, message_args: dict, traceback: Optional[bool] = False) -> None:
+    def __init__(self, message_args: dict, traceback: Optional[bool] = True, all_tracing: Optional[bool] = True) -> None:
         """
         Formatted 'System Error' with additional exception message options.
 
-        Attributes:
+        Args:
             message_args (Union[dict, str]): Dictionary will create a formatted exception message.
-            traceback (bool, Optional): Displays most recent traceback output. Defaults to False.
+            traceback (bool, Optional): Displays most recent traceback output. Defaults to True.
+            all_tracing (bool, Optional): True displays all traceback. False will show most recent. Defaults to True.
 
             Keys:\\
                 main_message (str): The main exception message.\\
@@ -1348,7 +1441,8 @@ class FSystemError(Exception):
                                                                          caller_module=Path(inspect.currentframe().f_back.f_code.co_filename).stem,
                                                                          caller_line=inspect.currentframe().f_back.f_lineno,
                                                                          caller_name=inspect.currentframe().f_back.f_code.co_name,
-                                                                         traceback=traceback))
+                                                                         traceback=traceback,
+                                                                         all_tracing=all_tracing))
 
             # Sets the Exception output used for printing the exception message.
             Exception.__init__(self, self._formatted_exception)
@@ -1361,13 +1455,14 @@ class FSystemExit(Exception):
     __slots__ = 'message_args'
     __module__ = 'builtins'
 
-    def __init__(self, message_args: dict, traceback: Optional[bool] = False) -> None:
+    def __init__(self, message_args: dict, traceback: Optional[bool] = True, all_tracing: Optional[bool] = True) -> None:
         """
         Formatted 'System Exit' with additional exception message options.
 
-        Attributes:
+        Args:
             message_args (Union[dict, str]): Dictionary will create a formatted exception message.
-            traceback (bool, Optional): Displays most recent traceback output. Defaults to False.
+            traceback (bool, Optional): Displays most recent traceback output. Defaults to True.
+            all_tracing (bool, Optional): True displays all traceback. False will show most recent. Defaults to True.
 
             Keys:\\
                 main_message (str): The main exception message.\\
@@ -1386,7 +1481,8 @@ class FSystemExit(Exception):
                                                                          caller_module=Path(inspect.currentframe().f_back.f_code.co_filename).stem,
                                                                          caller_line=inspect.currentframe().f_back.f_lineno,
                                                                          caller_name=inspect.currentframe().f_back.f_code.co_name,
-                                                                         traceback=traceback))
+                                                                         traceback=traceback,
+                                                                         all_tracing=all_tracing))
 
             # Sets the Exception output used for printing the exception message.
             Exception.__init__(self, self._formatted_exception)
@@ -1399,13 +1495,14 @@ class FTypeError(Exception):
     __slots__ = 'message_args'
     __module__ = 'builtins'
 
-    def __init__(self, message_args: dict, traceback: Optional[bool] = False) -> None:
+    def __init__(self, message_args: dict, traceback: Optional[bool] = True, all_tracing: Optional[bool] = True) -> None:
         """
         Formatted 'Type Error' with additional exception message options.
 
-        Attributes:
+        Args:
             message_args (Union[dict, str]): Dictionary will create a formatted exception message.
-            traceback (bool, Optional): Displays most recent traceback output. Defaults to False.
+            traceback (bool, Optional): Displays most recent traceback output. Defaults to True.
+            all_tracing (bool, Optional): True displays all traceback. False will show most recent. Defaults to True.
 
             Keys:\\
                 main_message (str): The main exception message.\\
@@ -1424,7 +1521,8 @@ class FTypeError(Exception):
                                                                          caller_module=Path(inspect.currentframe().f_back.f_code.co_filename).stem,
                                                                          caller_line=inspect.currentframe().f_back.f_lineno,
                                                                          caller_name=inspect.currentframe().f_back.f_code.co_name,
-                                                                         traceback=traceback))
+                                                                         traceback=traceback,
+                                                                         all_tracing=all_tracing))
 
             # Sets the Exception output used for printing the exception message.
             Exception.__init__(self, self._formatted_exception)
@@ -1437,13 +1535,14 @@ class FUnboundLocalError(Exception):
     __slots__ = 'message_args'
     __module__ = 'builtins'
 
-    def __init__(self, message_args: dict, traceback: Optional[bool] = False) -> None:
+    def __init__(self, message_args: dict, traceback: Optional[bool] = True, all_tracing: Optional[bool] = True) -> None:
         """
         Formatted 'Unbound Local Error' with additional exception message options.
 
-        Attributes:
+        Args:
             message_args (Union[dict, str]): Dictionary will create a formatted exception message.
-            traceback (bool, Optional): Displays most recent traceback output. Defaults to False.
+            traceback (bool, Optional): Displays most recent traceback output. Defaults to True.
+            all_tracing (bool, Optional): True displays all traceback. False will show most recent. Defaults to True.
 
             Keys:\\
                 main_message (str): The main exception message.\\
@@ -1462,7 +1561,8 @@ class FUnboundLocalError(Exception):
                                                                          caller_module=Path(inspect.currentframe().f_back.f_code.co_filename).stem,
                                                                          caller_line=inspect.currentframe().f_back.f_lineno,
                                                                          caller_name=inspect.currentframe().f_back.f_code.co_name,
-                                                                         traceback=traceback))
+                                                                         traceback=traceback,
+                                                                         all_tracing=all_tracing))
 
             # Sets the Exception output used for printing the exception message.
             Exception.__init__(self, self._formatted_exception)
@@ -1475,13 +1575,14 @@ class FUnicodeError(Exception):
     __slots__ = 'message_args'
     __module__ = 'builtins'
 
-    def __init__(self, message_args: dict, traceback: Optional[bool] = False) -> None:
+    def __init__(self, message_args: dict, traceback: Optional[bool] = True, all_tracing: Optional[bool] = True) -> None:
         """
         Formatted 'Unicode Error' with additional exception message options.
 
-        Attributes:
+        Args:
             message_args (Union[dict, str]): Dictionary will create a formatted exception message.
-            traceback (bool, Optional): Displays most recent traceback output. Defaults to False.
+            traceback (bool, Optional): Displays most recent traceback output. Defaults to True.
+            all_tracing (bool, Optional): True displays all traceback. False will show most recent. Defaults to True.
 
             Keys:\\
                 main_message (str): The main exception message.\\
@@ -1500,7 +1601,8 @@ class FUnicodeError(Exception):
                                                                          caller_module=Path(inspect.currentframe().f_back.f_code.co_filename).stem,
                                                                          caller_line=inspect.currentframe().f_back.f_lineno,
                                                                          caller_name=inspect.currentframe().f_back.f_code.co_name,
-                                                                         traceback=traceback))
+                                                                         traceback=traceback,
+                                                                         all_tracing=all_tracing))
 
             # Sets the Exception output used for printing the exception message.
             Exception.__init__(self, self._formatted_exception)
@@ -1513,13 +1615,14 @@ class FUnicodeEncodeError(Exception):
     __slots__ = 'message_args'
     __module__ = 'builtins'
 
-    def __init__(self, message_args: dict, traceback: Optional[bool] = False) -> None:
+    def __init__(self, message_args: dict, traceback: Optional[bool] = True, all_tracing: Optional[bool] = True) -> None:
         """
         Formatted 'Unicode Encode Error' with additional exception message options.
 
-        Attributes:
+        Args:
             message_args (Union[dict, str]): Dictionary will create a formatted exception message.
-            traceback (bool, Optional): Displays most recent traceback output. Defaults to False.
+            traceback (bool, Optional): Displays most recent traceback output. Defaults to True.
+            all_tracing (bool, Optional): True displays all traceback. False will show most recent. Defaults to True.
 
             Keys:\\
                 main_message (str): The main exception message.\\
@@ -1538,7 +1641,8 @@ class FUnicodeEncodeError(Exception):
                                                                          caller_module=Path(inspect.currentframe().f_back.f_code.co_filename).stem,
                                                                          caller_line=inspect.currentframe().f_back.f_lineno,
                                                                          caller_name=inspect.currentframe().f_back.f_code.co_name,
-                                                                         traceback=traceback))
+                                                                         traceback=traceback,
+                                                                         all_tracing=all_tracing))
 
             # Sets the Exception output used for printing the exception message.
             Exception.__init__(self, self._formatted_exception)
@@ -1551,13 +1655,14 @@ class FUnicodeDecodeError(Exception):
     __slots__ = 'message_args'
     __module__ = 'builtins'
 
-    def __init__(self, message_args: dict, traceback: Optional[bool] = False) -> None:
+    def __init__(self, message_args: dict, traceback: Optional[bool] = True, all_tracing: Optional[bool] = True) -> None:
         """
         Formatted 'Unicode Decode Error' with additional exception message options.
 
-        Attributes:
+        Args:
             message_args (Union[dict, str]): Dictionary will create a formatted exception message.
-            traceback (bool, Optional): Displays most recent traceback output. Defaults to False.
+            traceback (bool, Optional): Displays most recent traceback output. Defaults to True.
+            all_tracing (bool, Optional): True displays all traceback. False will show most recent. Defaults to True.
 
             Keys:\\
                 main_message (str): The main exception message.\\
@@ -1576,7 +1681,8 @@ class FUnicodeDecodeError(Exception):
                                                                          caller_module=Path(inspect.currentframe().f_back.f_code.co_filename).stem,
                                                                          caller_line=inspect.currentframe().f_back.f_lineno,
                                                                          caller_name=inspect.currentframe().f_back.f_code.co_name,
-                                                                         traceback=traceback))
+                                                                         traceback=traceback,
+                                                                         all_tracing=all_tracing))
 
             # Sets the Exception output used for printing the exception message.
             Exception.__init__(self, self._formatted_exception)
@@ -1589,13 +1695,14 @@ class FUnicodeTranslateError(Exception):
     __slots__ = 'message_args'
     __module__ = 'builtins'
 
-    def __init__(self, message_args: dict, traceback: Optional[bool] = False) -> None:
+    def __init__(self, message_args: dict, traceback: Optional[bool] = True, all_tracing: Optional[bool] = True) -> None:
         """
         Formatted 'Unicode Translate Error' with additional exception message options.
 
-        Attributes:
+        Args:
             message_args (Union[dict, str]): Dictionary will create a formatted exception message.
-            traceback (bool, Optional): Displays most recent traceback output. Defaults to False.
+            traceback (bool, Optional): Displays most recent traceback output. Defaults to True.
+            all_tracing (bool, Optional): True displays all traceback. False will show most recent. Defaults to True.
 
             Keys:\\
                 main_message (str): The main exception message.\\
@@ -1614,7 +1721,8 @@ class FUnicodeTranslateError(Exception):
                                                                          caller_module=Path(inspect.currentframe().f_back.f_code.co_filename).stem,
                                                                          caller_line=inspect.currentframe().f_back.f_lineno,
                                                                          caller_name=inspect.currentframe().f_back.f_code.co_name,
-                                                                         traceback=traceback))
+                                                                         traceback=traceback,
+                                                                         all_tracing=all_tracing))
 
             # Sets the Exception output used for printing the exception message.
             Exception.__init__(self, self._formatted_exception)
@@ -1627,13 +1735,14 @@ class FValueError(Exception):
     __slots__ = 'message_args'
     __module__ = 'builtins'
 
-    def __init__(self, message_args: dict, traceback: Optional[bool] = False) -> None:
+    def __init__(self, message_args: dict, traceback: Optional[bool] = True, all_tracing: Optional[bool] = True) -> None:
         """
         Formatted 'Value Error' with additional exception message options.
 
-        Attributes:
+        Args:
             message_args (Union[dict, str]): Dictionary will create a formatted exception message.
-            traceback (bool, Optional): Displays most recent traceback output. Defaults to False.
+            traceback (bool, Optional): Displays most recent traceback output. Defaults to True.
+            all_tracing (bool, Optional): True displays all traceback. False will show most recent. Defaults to True.
 
             Keys:\\
                 main_message (str): The main exception message.\\
@@ -1652,7 +1761,8 @@ class FValueError(Exception):
                                                                          caller_module=Path(inspect.currentframe().f_back.f_code.co_filename).stem,
                                                                          caller_line=inspect.currentframe().f_back.f_lineno,
                                                                          caller_name=inspect.currentframe().f_back.f_code.co_name,
-                                                                         traceback=traceback))
+                                                                         traceback=traceback,
+                                                                         all_tracing=all_tracing))
 
             # Sets the Exception output used for printing the exception message.
             Exception.__init__(self, self._formatted_exception)
@@ -1665,13 +1775,14 @@ class FZeroDivisionError(Exception):
     __slots__ = 'message_args'
     __module__ = 'builtins'
 
-    def __init__(self, message_args: dict, traceback: Optional[bool] = False) -> None:
+    def __init__(self, message_args: dict, traceback: Optional[bool] = True, all_tracing: Optional[bool] = True) -> None:
         """
         Formatted 'Zero Division Error' with additional exception message options.
 
-        Attributes:
+        Args:
             message_args (Union[dict, str]): Dictionary will create a formatted exception message.
-            traceback (bool, Optional): Displays most recent traceback output. Defaults to False.
+            traceback (bool, Optional): Displays most recent traceback output. Defaults to True.
+            all_tracing (bool, Optional): True displays all traceback. False will show most recent. Defaults to True.
 
             Keys:\\
                 main_message (str): The main exception message.\\
@@ -1690,7 +1801,8 @@ class FZeroDivisionError(Exception):
                                                                          caller_module=Path(inspect.currentframe().f_back.f_code.co_filename).stem,
                                                                          caller_line=inspect.currentframe().f_back.f_lineno,
                                                                          caller_name=inspect.currentframe().f_back.f_code.co_name,
-                                                                         traceback=traceback))
+                                                                         traceback=traceback,
+                                                                         all_tracing=all_tracing))
 
             # Sets the Exception output used for printing the exception message.
             Exception.__init__(self, self._formatted_exception)
@@ -1703,13 +1815,14 @@ class FEnvironmentError(Exception):
     __slots__ = 'message_args'
     __module__ = 'builtins'
 
-    def __init__(self, message_args: dict, traceback: Optional[bool] = False) -> None:
+    def __init__(self, message_args: dict, traceback: Optional[bool] = True, all_tracing: Optional[bool] = True) -> None:
         """
         Formatted 'Environment Error' with additional exception message options.
 
-        Attributes:
+        Args:
             message_args (Union[dict, str]): Dictionary will create a formatted exception message.
-            traceback (bool, Optional): Displays most recent traceback output. Defaults to False.
+            traceback (bool, Optional): Displays most recent traceback output. Defaults to True.
+            all_tracing (bool, Optional): True displays all traceback. False will show most recent. Defaults to True.
 
             Keys:\\
                 main_message (str): The main exception message.\\
@@ -1728,7 +1841,8 @@ class FEnvironmentError(Exception):
                                                                          caller_module=Path(inspect.currentframe().f_back.f_code.co_filename).stem,
                                                                          caller_line=inspect.currentframe().f_back.f_lineno,
                                                                          caller_name=inspect.currentframe().f_back.f_code.co_name,
-                                                                         traceback=traceback))
+                                                                         traceback=traceback,
+                                                                         all_tracing=all_tracing))
 
             # Sets the Exception output used for printing the exception message.
             Exception.__init__(self, self._formatted_exception)
@@ -1741,13 +1855,14 @@ class FIOError(Exception):
     __slots__ = 'message_args'
     __module__ = 'builtins'
 
-    def __init__(self, message_args: dict, traceback: Optional[bool] = False) -> None:
+    def __init__(self, message_args: dict, traceback: Optional[bool] = True, all_tracing: Optional[bool] = True) -> None:
         """
         Formatted 'IO Error' with additional exception message options.
 
-        Attributes:
+        Args:
             message_args (Union[dict, str]): Dictionary will create a formatted exception message.
-            traceback (bool, Optional): Displays most recent traceback output. Defaults to False.
+            traceback (bool, Optional): Displays most recent traceback output. Defaults to True.
+            all_tracing (bool, Optional): True displays all traceback. False will show most recent. Defaults to True.
 
             Keys:\\
                 main_message (str): The main exception message.\\
@@ -1766,7 +1881,8 @@ class FIOError(Exception):
                                                                          caller_module=Path(inspect.currentframe().f_back.f_code.co_filename).stem,
                                                                          caller_line=inspect.currentframe().f_back.f_lineno,
                                                                          caller_name=inspect.currentframe().f_back.f_code.co_name,
-                                                                         traceback=traceback))
+                                                                         traceback=traceback,
+                                                                         all_tracing=all_tracing))
 
             # Sets the Exception output used for printing the exception message.
             Exception.__init__(self, self._formatted_exception)
@@ -1779,13 +1895,14 @@ class FWindowsError(Exception):
     __slots__ = 'message_args'
     __module__ = 'builtins'
 
-    def __init__(self, message_args: dict, traceback: Optional[bool] = False) -> None:
+    def __init__(self, message_args: dict, traceback: Optional[bool] = True, all_tracing: Optional[bool] = True) -> None:
         """
         Formatted 'Windows Error' with additional exception message options.
 
-        Attributes:
+        Args:
             message_args (Union[dict, str]): Dictionary will create a formatted exception message.
-            traceback (bool, Optional): Displays most recent traceback output. Defaults to False.
+            traceback (bool, Optional): Displays most recent traceback output. Defaults to True.
+            all_tracing (bool, Optional): True displays all traceback. False will show most recent. Defaults to True.
 
             Keys:\\
                 main_message (str): The main exception message.\\
@@ -1804,7 +1921,8 @@ class FWindowsError(Exception):
                                                                          caller_module=Path(inspect.currentframe().f_back.f_code.co_filename).stem,
                                                                          caller_line=inspect.currentframe().f_back.f_lineno,
                                                                          caller_name=inspect.currentframe().f_back.f_code.co_name,
-                                                                         traceback=traceback))
+                                                                         traceback=traceback,
+                                                                         all_tracing=all_tracing))
 
             # Sets the Exception output used for printing the exception message.
             Exception.__init__(self, self._formatted_exception)
@@ -1822,13 +1940,14 @@ class FBlockingIOError(Exception):
     __slots__ = 'message_args'
     __module__ = 'builtins'
 
-    def __init__(self, message_args: dict, traceback: Optional[bool] = False) -> None:
+    def __init__(self, message_args: dict, traceback: Optional[bool] = True, all_tracing: Optional[bool] = True) -> None:
         """
         Formatted 'BlockingIO Error' with additional exception message options.
 
-        Attributes:
+        Args:
             message_args (Union[dict, str]): Dictionary will create a formatted exception message.
-            traceback (bool, Optional): Displays most recent traceback output. Defaults to False.
+            traceback (bool, Optional): Displays most recent traceback output. Defaults to True.
+            all_tracing (bool, Optional): True displays all traceback. False will show most recent. Defaults to True.
 
             Keys:\\
                 main_message (str): The main exception message.\\
@@ -1847,7 +1966,8 @@ class FBlockingIOError(Exception):
                                                                          caller_module=Path(inspect.currentframe().f_back.f_code.co_filename).stem,
                                                                          caller_line=inspect.currentframe().f_back.f_lineno,
                                                                          caller_name=inspect.currentframe().f_back.f_code.co_name,
-                                                                         traceback=traceback))
+                                                                         traceback=traceback,
+                                                                         all_tracing=all_tracing))
 
             # Sets the Exception output used for printing the exception message.
             Exception.__init__(self, self._formatted_exception)
@@ -1860,13 +1980,14 @@ class FChildProcessError(Exception):
     __slots__ = 'message_args'
     __module__ = 'builtins'
 
-    def __init__(self, message_args: dict, traceback: Optional[bool] = False) -> None:
+    def __init__(self, message_args: dict, traceback: Optional[bool] = True, all_tracing: Optional[bool] = True) -> None:
         """
         Formatted 'Child Process Error' with additional exception message options.
 
-        Attributes:
+        Args:
             message_args (Union[dict, str]): Dictionary will create a formatted exception message.
-            traceback (bool, Optional): Displays most recent traceback output. Defaults to False.
+            traceback (bool, Optional): Displays most recent traceback output. Defaults to True.
+            all_tracing (bool, Optional): True displays all traceback. False will show most recent. Defaults to True.
 
             Keys:\\
                 main_message (str): The main exception message.\\
@@ -1885,7 +2006,8 @@ class FChildProcessError(Exception):
                                                                          caller_module=Path(inspect.currentframe().f_back.f_code.co_filename).stem,
                                                                          caller_line=inspect.currentframe().f_back.f_lineno,
                                                                          caller_name=inspect.currentframe().f_back.f_code.co_name,
-                                                                         traceback=traceback))
+                                                                         traceback=traceback,
+                                                                         all_tracing=all_tracing))
 
             # Sets the Exception output used for printing the exception message.
             Exception.__init__(self, self._formatted_exception)
@@ -1898,13 +2020,14 @@ class FConnectionError(Exception):
     __slots__ = 'message_args'
     __module__ = 'builtins'
 
-    def __init__(self, message_args: dict, traceback: Optional[bool] = False) -> None:
+    def __init__(self, message_args: dict, traceback: Optional[bool] = True, all_tracing: Optional[bool] = True) -> None:
         """
         Formatted 'Connection Error' with additional exception message options.
 
-        Attributes:
+        Args:
             message_args (Union[dict, str]): Dictionary will create a formatted exception message.
-            traceback (bool, Optional): Displays most recent traceback output. Defaults to False.
+            traceback (bool, Optional): Displays most recent traceback output. Defaults to True.
+            all_tracing (bool, Optional): True displays all traceback. False will show most recent. Defaults to True.
 
             Keys:\\
                 main_message (str): The main exception message.\\
@@ -1923,7 +2046,8 @@ class FConnectionError(Exception):
                                                                          caller_module=Path(inspect.currentframe().f_back.f_code.co_filename).stem,
                                                                          caller_line=inspect.currentframe().f_back.f_lineno,
                                                                          caller_name=inspect.currentframe().f_back.f_code.co_name,
-                                                                         traceback=traceback))
+                                                                         traceback=traceback,
+                                                                         all_tracing=all_tracing))
 
             # Sets the Exception output used for printing the exception message.
             Exception.__init__(self, self._formatted_exception)
@@ -1936,13 +2060,14 @@ class FBrokenPipeError(Exception):
     __slots__ = 'message_args'
     __module__ = 'builtins'
 
-    def __init__(self, message_args: dict, traceback: Optional[bool] = False) -> None:
+    def __init__(self, message_args: dict, traceback: Optional[bool] = True, all_tracing: Optional[bool] = True) -> None:
         """
         Formatted 'Broken Pipe Error' with additional exception message options.
 
-        Attributes:
+        Args:
             message_args (Union[dict, str]): Dictionary will create a formatted exception message.
-            traceback (bool, Optional): Displays most recent traceback output. Defaults to False.
+            traceback (bool, Optional): Displays most recent traceback output. Defaults to True.
+            all_tracing (bool, Optional): True displays all traceback. False will show most recent. Defaults to True.
 
             Keys:\\
                 main_message (str): The main exception message.\\
@@ -1961,7 +2086,8 @@ class FBrokenPipeError(Exception):
                                                                          caller_module=Path(inspect.currentframe().f_back.f_code.co_filename).stem,
                                                                          caller_line=inspect.currentframe().f_back.f_lineno,
                                                                          caller_name=inspect.currentframe().f_back.f_code.co_name,
-                                                                         traceback=traceback))
+                                                                         traceback=traceback,
+                                                                         all_tracing=all_tracing))
 
             # Sets the Exception output used for printing the exception message.
             Exception.__init__(self, self._formatted_exception)
@@ -1974,13 +2100,14 @@ class FConnectionAbortedError(Exception):
     __slots__ = 'message_args'
     __module__ = 'builtins'
 
-    def __init__(self, message_args: dict, traceback: Optional[bool] = False) -> None:
+    def __init__(self, message_args: dict, traceback: Optional[bool] = True, all_tracing: Optional[bool] = True) -> None:
         """
         Formatted 'Connection Aborted Error' with additional exception message options.
 
-        Attributes:
+        Args:
             message_args (Union[dict, str]): Dictionary will create a formatted exception message.
-            traceback (bool, Optional): Displays most recent traceback output. Defaults to False.
+            traceback (bool, Optional): Displays most recent traceback output. Defaults to True.
+            all_tracing (bool, Optional): True displays all traceback. False will show most recent. Defaults to True.
 
             Keys:\\
                 main_message (str): The main exception message.\\
@@ -1999,7 +2126,8 @@ class FConnectionAbortedError(Exception):
                                                                          caller_module=Path(inspect.currentframe().f_back.f_code.co_filename).stem,
                                                                          caller_line=inspect.currentframe().f_back.f_lineno,
                                                                          caller_name=inspect.currentframe().f_back.f_code.co_name,
-                                                                         traceback=traceback))
+                                                                         traceback=traceback,
+                                                                         all_tracing=all_tracing))
 
             # Sets the Exception output used for printing the exception message.
             Exception.__init__(self, self._formatted_exception)
@@ -2012,13 +2140,14 @@ class FConnectionRefusedError(Exception):
     __slots__ = 'message_args'
     __module__ = 'builtins'
 
-    def __init__(self, message_args: dict, traceback: Optional[bool] = False) -> None:
+    def __init__(self, message_args: dict, traceback: Optional[bool] = True, all_tracing: Optional[bool] = True) -> None:
         """
         Formatted 'Connection Refused Error' with additional exception message options.
 
-        Attributes:
+        Args:
             message_args (Union[dict, str]): Dictionary will create a formatted exception message.
-            traceback (bool, Optional): Displays most recent traceback output. Defaults to False.
+            traceback (bool, Optional): Displays most recent traceback output. Defaults to True.
+            all_tracing (bool, Optional): True displays all traceback. False will show most recent. Defaults to True.
 
             Keys:\\
                 main_message (str): The main exception message.\\
@@ -2037,7 +2166,8 @@ class FConnectionRefusedError(Exception):
                                                                          caller_module=Path(inspect.currentframe().f_back.f_code.co_filename).stem,
                                                                          caller_line=inspect.currentframe().f_back.f_lineno,
                                                                          caller_name=inspect.currentframe().f_back.f_code.co_name,
-                                                                         traceback=traceback))
+                                                                         traceback=traceback,
+                                                                         all_tracing=all_tracing))
 
             # Sets the Exception output used for printing the exception message.
             Exception.__init__(self, self._formatted_exception)
@@ -2050,13 +2180,14 @@ class FConnectionResetError(Exception):
     __slots__ = 'message_args'
     __module__ = 'builtins'
 
-    def __init__(self, message_args: dict, traceback: Optional[bool] = False) -> None:
+    def __init__(self, message_args: dict, traceback: Optional[bool] = True, all_tracing: Optional[bool] = True) -> None:
         """
         Formatted 'Connection Reset Error' with additional exception message options.
 
-        Attributes:
+        Args:
             message_args (Union[dict, str]): Dictionary will create a formatted exception message.
-            traceback (bool, Optional): Displays most recent traceback output. Defaults to False.
+            traceback (bool, Optional): Displays most recent traceback output. Defaults to True.
+            all_tracing (bool, Optional): True displays all traceback. False will show most recent. Defaults to True.
 
             Keys:\\
                 main_message (str): The main exception message.\\
@@ -2075,7 +2206,8 @@ class FConnectionResetError(Exception):
                                                                          caller_module=Path(inspect.currentframe().f_back.f_code.co_filename).stem,
                                                                          caller_line=inspect.currentframe().f_back.f_lineno,
                                                                          caller_name=inspect.currentframe().f_back.f_code.co_name,
-                                                                         traceback=traceback))
+                                                                         traceback=traceback,
+                                                                         all_tracing=all_tracing))
 
             # Sets the Exception output used for printing the exception message.
             Exception.__init__(self, self._formatted_exception)
@@ -2088,13 +2220,14 @@ class FFileExistsError(Exception):
     __slots__ = 'message_args'
     __module__ = 'builtins'
 
-    def __init__(self, message_args: dict, traceback: Optional[bool] = False) -> None:
+    def __init__(self, message_args: dict, traceback: Optional[bool] = True, all_tracing: Optional[bool] = True) -> None:
         """
         Formatted 'File Exists Error' with additional exception message options.
 
-        Attributes:
+        Args:
             message_args (Union[dict, str]): Dictionary will create a formatted exception message.
-            traceback (bool, Optional): Displays most recent traceback output. Defaults to False.
+            traceback (bool, Optional): Displays most recent traceback output. Defaults to True.
+            all_tracing (bool, Optional): True displays all traceback. False will show most recent. Defaults to True.
 
             Keys:\\
                 main_message (str): The main exception message.\\
@@ -2113,7 +2246,8 @@ class FFileExistsError(Exception):
                                                                          caller_module=Path(inspect.currentframe().f_back.f_code.co_filename).stem,
                                                                          caller_line=inspect.currentframe().f_back.f_lineno,
                                                                          caller_name=inspect.currentframe().f_back.f_code.co_name,
-                                                                         traceback=traceback))
+                                                                         traceback=traceback,
+                                                                         all_tracing=all_tracing))
 
             # Sets the Exception output used for printing the exception message.
             Exception.__init__(self, self._formatted_exception)
@@ -2126,13 +2260,14 @@ class FFileNotFoundError(Exception):
     __slots__ = 'message_args'
     __module__ = 'builtins'
 
-    def __init__(self, message_args: dict, traceback: Optional[bool] = False) -> None:
+    def __init__(self, message_args: dict, traceback: Optional[bool] = True, all_tracing: Optional[bool] = True) -> None:
         """
         Formatted 'FileNotFound Error' with additional exception message options.
 
-        Attributes:
+        Args:
             message_args (Union[dict, str]): Dictionary will create a formatted exception message.
-            traceback (bool, Optional): Displays most recent traceback output. Defaults to False.
+            traceback (bool, Optional): Displays most recent traceback output. Defaults to True.
+            all_tracing (bool, Optional): True displays all traceback. False will show most recent. Defaults to True.
 
             Keys:\\
                 main_message (str): The main exception message.\\
@@ -2151,7 +2286,8 @@ class FFileNotFoundError(Exception):
                                                                          caller_module=Path(inspect.currentframe().f_back.f_code.co_filename).stem,
                                                                          caller_line=inspect.currentframe().f_back.f_lineno,
                                                                          caller_name=inspect.currentframe().f_back.f_code.co_name,
-                                                                         traceback=traceback))
+                                                                         traceback=traceback,
+                                                                         all_tracing=all_tracing))
 
             # Sets the Exception output used for printing the exception message.
             Exception.__init__(self, self._formatted_exception)
@@ -2164,13 +2300,14 @@ class FInterruptedError(Exception):
     __slots__ = 'message_args'
     __module__ = 'builtins'
 
-    def __init__(self, message_args: dict, traceback: Optional[bool] = False) -> None:
+    def __init__(self, message_args: dict, traceback: Optional[bool] = True, all_tracing: Optional[bool] = True) -> None:
         """
         Formatted 'Interrupted Error' with additional exception message options.
 
-        Attributes:
+        Args:
             message_args (Union[dict, str]): Dictionary will create a formatted exception message.
-            traceback (bool, Optional): Displays most recent traceback output. Defaults to False.
+            traceback (bool, Optional): Displays most recent traceback output. Defaults to True.
+            all_tracing (bool, Optional): True displays all traceback. False will show most recent. Defaults to True.
 
             Keys:\\
                 main_message (str): The main exception message.\\
@@ -2189,7 +2326,8 @@ class FInterruptedError(Exception):
                                                                          caller_module=Path(inspect.currentframe().f_back.f_code.co_filename).stem,
                                                                          caller_line=inspect.currentframe().f_back.f_lineno,
                                                                          caller_name=inspect.currentframe().f_back.f_code.co_name,
-                                                                         traceback=traceback))
+                                                                         traceback=traceback,
+                                                                         all_tracing=all_tracing))
 
             # Sets the Exception output used for printing the exception message.
             Exception.__init__(self, self._formatted_exception)
@@ -2202,13 +2340,14 @@ class FIsADirectoryError(Exception):
     __slots__ = 'message_args'
     __module__ = 'builtins'
 
-    def __init__(self, message_args: dict, traceback: Optional[bool] = False) -> None:
+    def __init__(self, message_args: dict, traceback: Optional[bool] = True, all_tracing: Optional[bool] = True) -> None:
         """
         Formatted 'IsADirectory Error' with additional exception message options.
 
-        Attributes:
+        Args:
             message_args (Union[dict, str]): Dictionary will create a formatted exception message.
-            traceback (bool, Optional): Displays most recent traceback output. Defaults to False.
+            traceback (bool, Optional): Displays most recent traceback output. Defaults to True.
+            all_tracing (bool, Optional): True displays all traceback. False will show most recent. Defaults to True.
 
             Keys:\\
                 main_message (str): The main exception message.\\
@@ -2227,7 +2366,8 @@ class FIsADirectoryError(Exception):
                                                                          caller_module=Path(inspect.currentframe().f_back.f_code.co_filename).stem,
                                                                          caller_line=inspect.currentframe().f_back.f_lineno,
                                                                          caller_name=inspect.currentframe().f_back.f_code.co_name,
-                                                                         traceback=traceback))
+                                                                         traceback=traceback,
+                                                                         all_tracing=all_tracing))
 
             # Sets the Exception output used for printing the exception message.
             Exception.__init__(self, self._formatted_exception)
@@ -2240,13 +2380,14 @@ class FNotADirectoryError(Exception):
     __slots__ = 'message_args'
     __module__ = 'builtins'
 
-    def __init__(self, message_args: dict, traceback: Optional[bool] = False) -> None:
+    def __init__(self, message_args: dict, traceback: Optional[bool] = True, all_tracing: Optional[bool] = True) -> None:
         """
         Formatted 'NotADirectory Error' with additional exception message options.
 
-        Attributes:
+        Args:
             message_args (Union[dict, str]): Dictionary will create a formatted exception message.
-            traceback (bool, Optional): Displays most recent traceback output. Defaults to False.
+            traceback (bool, Optional): Displays most recent traceback output. Defaults to True.
+            all_tracing (bool, Optional): True displays all traceback. False will show most recent. Defaults to True.
 
             Keys:\\
                 main_message (str): The main exception message.\\
@@ -2265,7 +2406,8 @@ class FNotADirectoryError(Exception):
                                                                          caller_module=Path(inspect.currentframe().f_back.f_code.co_filename).stem,
                                                                          caller_line=inspect.currentframe().f_back.f_lineno,
                                                                          caller_name=inspect.currentframe().f_back.f_code.co_name,
-                                                                         traceback=traceback))
+                                                                         traceback=traceback,
+                                                                         all_tracing=all_tracing))
 
             # Sets the Exception output used for printing the exception message.
             Exception.__init__(self, self._formatted_exception)
@@ -2278,13 +2420,14 @@ class FPermissionError(Exception):
     __slots__ = 'message_args'
     __module__ = 'builtins'
 
-    def __init__(self, message_args: dict, traceback: Optional[bool] = False) -> None:
+    def __init__(self, message_args: dict, traceback: Optional[bool] = True, all_tracing: Optional[bool] = True) -> None:
         """
         Formatted 'Permission Error' with additional exception message options.
 
-        Attributes:
+        Args:
             message_args (Union[dict, str]): Dictionary will create a formatted exception message.
-            traceback (bool, Optional): Displays most recent traceback output. Defaults to False.
+            traceback (bool, Optional): Displays most recent traceback output. Defaults to True.
+            all_tracing (bool, Optional): True displays all traceback. False will show most recent. Defaults to True.
 
             Keys:\\
                 main_message (str): The main exception message.\\
@@ -2303,7 +2446,8 @@ class FPermissionError(Exception):
                                                                          caller_module=Path(inspect.currentframe().f_back.f_code.co_filename).stem,
                                                                          caller_line=inspect.currentframe().f_back.f_lineno,
                                                                          caller_name=inspect.currentframe().f_back.f_code.co_name,
-                                                                         traceback=traceback))
+                                                                         traceback=traceback,
+                                                                         all_tracing=all_tracing))
 
             # Sets the Exception output used for printing the exception message.
             Exception.__init__(self, self._formatted_exception)
@@ -2316,13 +2460,14 @@ class FProcessLookupError(Exception):
     __slots__ = 'message_args'
     __module__ = 'builtins'
 
-    def __init__(self, message_args: dict, traceback: Optional[bool] = False) -> None:
+    def __init__(self, message_args: dict, traceback: Optional[bool] = True, all_tracing: Optional[bool] = True) -> None:
         """
         Formatted 'Process Lookup Error' with additional exception message options.
 
-        Attributes:
+        Args:
             message_args (Union[dict, str]): Dictionary will create a formatted exception message.
-            traceback (bool, Optional): Displays most recent traceback output. Defaults to False.
+            traceback (bool, Optional): Displays most recent traceback output. Defaults to True.
+            all_tracing (bool, Optional): True displays all traceback. False will show most recent. Defaults to True.
 
             Keys:\\
                 main_message (str): The main exception message.\\
@@ -2341,7 +2486,8 @@ class FProcessLookupError(Exception):
                                                                          caller_module=Path(inspect.currentframe().f_back.f_code.co_filename).stem,
                                                                          caller_line=inspect.currentframe().f_back.f_lineno,
                                                                          caller_name=inspect.currentframe().f_back.f_code.co_name,
-                                                                         traceback=traceback))
+                                                                         traceback=traceback,
+                                                                         all_tracing=all_tracing))
 
             # Sets the Exception output used for printing the exception message.
             Exception.__init__(self, self._formatted_exception)
@@ -2354,13 +2500,14 @@ class FTimeoutError(Exception):
     __slots__ = 'message_args'
     __module__ = 'builtins'
 
-    def __init__(self, message_args: dict, traceback: Optional[bool] = False) -> None:
+    def __init__(self, message_args: dict, traceback: Optional[bool] = True, all_tracing: Optional[bool] = True) -> None:
         """
         Formatted 'Timeout Error' with additional exception message options.
 
-        Attributes:
+        Args:
             message_args (Union[dict, str]): Dictionary will create a formatted exception message.
-            traceback (bool, Optional): Displays most recent traceback output. Defaults to False.
+            traceback (bool, Optional): Displays most recent traceback output. Defaults to True.
+            all_tracing (bool, Optional): True displays all traceback. False will show most recent. Defaults to True.
 
             Keys:\\
                 main_message (str): The main exception message.\\
@@ -2379,7 +2526,8 @@ class FTimeoutError(Exception):
                                                                          caller_module=Path(inspect.currentframe().f_back.f_code.co_filename).stem,
                                                                          caller_line=inspect.currentframe().f_back.f_lineno,
                                                                          caller_name=inspect.currentframe().f_back.f_code.co_name,
-                                                                         traceback=traceback))
+                                                                         traceback=traceback,
+                                                                         all_tracing=all_tracing))
 
             # Sets the Exception output used for printing the exception message.
             Exception.__init__(self, self._formatted_exception)
@@ -2397,13 +2545,14 @@ class FWarning(Exception):
     __slots__ = 'message_args'
     __module__ = 'builtins'
 
-    def __init__(self, message_args: dict, traceback: Optional[bool] = False) -> None:
+    def __init__(self, message_args: dict, traceback: Optional[bool] = True, all_tracing: Optional[bool] = True) -> None:
         """
         Formatted 'Warning' with additional exception message options.
 
-        Attributes:
+        Args:
             message_args (Union[dict, str]): Dictionary will create a formatted exception message.
-            traceback (bool, Optional): Displays most recent traceback output. Defaults to False.
+            traceback (bool, Optional): Displays most recent traceback output. Defaults to True.
+            all_tracing (bool, Optional): True displays all traceback. False will show most recent. Defaults to True.
 
             Keys:\\
                 main_message (str): The main exception message.\\
@@ -2422,7 +2571,8 @@ class FWarning(Exception):
                                                                          caller_module=Path(inspect.currentframe().f_back.f_code.co_filename).stem,
                                                                          caller_line=inspect.currentframe().f_back.f_lineno,
                                                                          caller_name=inspect.currentframe().f_back.f_code.co_name,
-                                                                         traceback=traceback))
+                                                                         traceback=traceback,
+                                                                         all_tracing=all_tracing))
 
             # Sets the Exception output used for printing the exception message.
             Exception.__init__(self, self._formatted_exception)
@@ -2435,13 +2585,14 @@ class FUserWarning(Exception):
     __slots__ = 'message_args'
     __module__ = 'builtins'
 
-    def __init__(self, message_args: dict, traceback: Optional[bool] = False) -> None:
+    def __init__(self, message_args: dict, traceback: Optional[bool] = True, all_tracing: Optional[bool] = True) -> None:
         """
         Formatted 'User Warning' with additional exception message options.
 
-        Attributes:
+        Args:
             message_args (Union[dict, str]): Dictionary will create a formatted exception message.
-            traceback (bool, Optional): Displays most recent traceback output. Defaults to False.
+            traceback (bool, Optional): Displays most recent traceback output. Defaults to True.
+            all_tracing (bool, Optional): True displays all traceback. False will show most recent. Defaults to True.
 
             Keys:\\
                 main_message (str): The main exception message.\\
@@ -2460,7 +2611,8 @@ class FUserWarning(Exception):
                                                                          caller_module=Path(inspect.currentframe().f_back.f_code.co_filename).stem,
                                                                          caller_line=inspect.currentframe().f_back.f_lineno,
                                                                          caller_name=inspect.currentframe().f_back.f_code.co_name,
-                                                                         traceback=traceback))
+                                                                         traceback=traceback,
+                                                                         all_tracing=all_tracing))
 
             # Sets the Exception output used for printing the exception message.
             Exception.__init__(self, self._formatted_exception)
@@ -2473,13 +2625,14 @@ class FDeprecationWarning(Exception):
     __slots__ = 'message_args'
     __module__ = 'builtins'
 
-    def __init__(self, message_args: dict, traceback: Optional[bool] = False) -> None:
+    def __init__(self, message_args: dict, traceback: Optional[bool] = True, all_tracing: Optional[bool] = True) -> None:
         """
         Formatted 'Deprecation Warning' with additional exception message options.
 
-        Attributes:
+        Args:
             message_args (Union[dict, str]): Dictionary will create a formatted exception message.
-            traceback (bool, Optional): Displays most recent traceback output. Defaults to False.
+            traceback (bool, Optional): Displays most recent traceback output. Defaults to True.
+            all_tracing (bool, Optional): True displays all traceback. False will show most recent. Defaults to True.
 
             Keys:\\
                 main_message (str): The main exception message.\\
@@ -2498,7 +2651,8 @@ class FDeprecationWarning(Exception):
                                                                          caller_module=Path(inspect.currentframe().f_back.f_code.co_filename).stem,
                                                                          caller_line=inspect.currentframe().f_back.f_lineno,
                                                                          caller_name=inspect.currentframe().f_back.f_code.co_name,
-                                                                         traceback=traceback))
+                                                                         traceback=traceback,
+                                                                         all_tracing=all_tracing))
 
             # Sets the Exception output used for printing the exception message.
             Exception.__init__(self, self._formatted_exception)
@@ -2511,13 +2665,14 @@ class FPendingDeprecationWarning(Exception):
     __slots__ = 'message_args'
     __module__ = 'builtins'
 
-    def __init__(self, message_args: dict, traceback: Optional[bool] = False) -> None:
+    def __init__(self, message_args: dict, traceback: Optional[bool] = True, all_tracing: Optional[bool] = True) -> None:
         """
         Formatted 'Pending Deprecation Warning' with additional exception message options.
 
-        Attributes:
+        Args:
             message_args (Union[dict, str]): Dictionary will create a formatted exception message.
-            traceback (bool, Optional): Displays most recent traceback output. Defaults to False.
+            traceback (bool, Optional): Displays most recent traceback output. Defaults to True.
+            all_tracing (bool, Optional): True displays all traceback. False will show most recent. Defaults to True.
 
             Keys:\\
                 main_message (str): The main exception message.\\
@@ -2536,7 +2691,8 @@ class FPendingDeprecationWarning(Exception):
                                                                          caller_module=Path(inspect.currentframe().f_back.f_code.co_filename).stem,
                                                                          caller_line=inspect.currentframe().f_back.f_lineno,
                                                                          caller_name=inspect.currentframe().f_back.f_code.co_name,
-                                                                         traceback=traceback))
+                                                                         traceback=traceback,
+                                                                         all_tracing=all_tracing))
 
             # Sets the Exception output used for printing the exception message.
             Exception.__init__(self, self._formatted_exception)
@@ -2549,13 +2705,14 @@ class FSyntaxWarning(Exception):
     __slots__ = 'message_args'
     __module__ = 'builtins'
 
-    def __init__(self, message_args: dict, traceback: Optional[bool] = False) -> None:
+    def __init__(self, message_args: dict, traceback: Optional[bool] = True, all_tracing: Optional[bool] = True) -> None:
         """
         Formatted 'Syntax Warning' with additional exception message options.
 
-        Attributes:
+        Args:
             message_args (Union[dict, str]): Dictionary will create a formatted exception message.
-            traceback (bool, Optional): Displays most recent traceback output. Defaults to False.
+            traceback (bool, Optional): Displays most recent traceback output. Defaults to True.
+            all_tracing (bool, Optional): True displays all traceback. False will show most recent. Defaults to True.
 
             Keys:\\
                 main_message (str): The main exception message.\\
@@ -2574,7 +2731,8 @@ class FSyntaxWarning(Exception):
                                                                          caller_module=Path(inspect.currentframe().f_back.f_code.co_filename).stem,
                                                                          caller_line=inspect.currentframe().f_back.f_lineno,
                                                                          caller_name=inspect.currentframe().f_back.f_code.co_name,
-                                                                         traceback=traceback))
+                                                                         traceback=traceback,
+                                                                         all_tracing=all_tracing))
 
             # Sets the Exception output used for printing the exception message.
             Exception.__init__(self, self._formatted_exception)
@@ -2587,13 +2745,14 @@ class FRuntimeWarning(Exception):
     __slots__ = 'message_args'
     __module__ = 'builtins'
 
-    def __init__(self, message_args: dict, traceback: Optional[bool] = False) -> None:
+    def __init__(self, message_args: dict, traceback: Optional[bool] = True, all_tracing: Optional[bool] = True) -> None:
         """
         Formatted 'Runtime Warning' with additional exception message options.
 
-        Attributes:
+        Args:
             message_args (Union[dict, str]): Dictionary will create a formatted exception message.
-            traceback (bool, Optional): Displays most recent traceback output. Defaults to False.
+            traceback (bool, Optional): Displays most recent traceback output. Defaults to True.
+            all_tracing (bool, Optional): True displays all traceback. False will show most recent. Defaults to True.
 
             Keys:\\
                 main_message (str): The main exception message.\\
@@ -2612,7 +2771,8 @@ class FRuntimeWarning(Exception):
                                                                          caller_module=Path(inspect.currentframe().f_back.f_code.co_filename).stem,
                                                                          caller_line=inspect.currentframe().f_back.f_lineno,
                                                                          caller_name=inspect.currentframe().f_back.f_code.co_name,
-                                                                         traceback=traceback))
+                                                                         traceback=traceback,
+                                                                         all_tracing=all_tracing))
 
             # Sets the Exception output used for printing the exception message.
             Exception.__init__(self, self._formatted_exception)
@@ -2625,13 +2785,14 @@ class FFutureWarning(Exception):
     __slots__ = 'message_args'
     __module__ = 'builtins'
 
-    def __init__(self, message_args: dict, traceback: Optional[bool] = False) -> None:
+    def __init__(self, message_args: dict, traceback: Optional[bool] = True, all_tracing: Optional[bool] = True) -> None:
         """
         Formatted 'Future Warning' with additional exception message options.
 
-        Attributes:
+        Args:
             message_args (Union[dict, str]): Dictionary will create a formatted exception message.
-            traceback (bool, Optional): Displays most recent traceback output. Defaults to False.
+            traceback (bool, Optional): Displays most recent traceback output. Defaults to True.
+            all_tracing (bool, Optional): True displays all traceback. False will show most recent. Defaults to True.
 
             Keys:\\
                 main_message (str): The main exception message.\\
@@ -2650,7 +2811,8 @@ class FFutureWarning(Exception):
                                                                          caller_module=Path(inspect.currentframe().f_back.f_code.co_filename).stem,
                                                                          caller_line=inspect.currentframe().f_back.f_lineno,
                                                                          caller_name=inspect.currentframe().f_back.f_code.co_name,
-                                                                         traceback=traceback))
+                                                                         traceback=traceback,
+                                                                         all_tracing=all_tracing))
 
             # Sets the Exception output used for printing the exception message.
             Exception.__init__(self, self._formatted_exception)
@@ -2663,13 +2825,14 @@ class FImportWarning(Exception):
     __slots__ = 'message_args'
     __module__ = 'builtins'
 
-    def __init__(self, message_args: dict, traceback: Optional[bool] = False) -> None:
+    def __init__(self, message_args: dict, traceback: Optional[bool] = True, all_tracing: Optional[bool] = True) -> None:
         """
         Formatted 'Import Warning' with additional exception message options.
 
-        Attributes:
+        Args:
             message_args (Union[dict, str]): Dictionary will create a formatted exception message.
-            traceback (bool, Optional): Displays most recent traceback output. Defaults to False.
+            traceback (bool, Optional): Displays most recent traceback output. Defaults to True.
+            all_tracing (bool, Optional): True displays all traceback. False will show most recent. Defaults to True.
 
             Keys:\\
                 main_message (str): The main exception message.\\
@@ -2688,7 +2851,8 @@ class FImportWarning(Exception):
                                                                          caller_module=Path(inspect.currentframe().f_back.f_code.co_filename).stem,
                                                                          caller_line=inspect.currentframe().f_back.f_lineno,
                                                                          caller_name=inspect.currentframe().f_back.f_code.co_name,
-                                                                         traceback=traceback))
+                                                                         traceback=traceback,
+                                                                         all_tracing=all_tracing))
 
             # Sets the Exception output used for printing the exception message.
             Exception.__init__(self, self._formatted_exception)
@@ -2701,13 +2865,14 @@ class FUnicodeWarning(Exception):
     __slots__ = 'message_args'
     __module__ = 'builtins'
 
-    def __init__(self, message_args: dict, traceback: Optional[bool] = False) -> None:
+    def __init__(self, message_args: dict, traceback: Optional[bool] = True, all_tracing: Optional[bool] = True) -> None:
         """
         Formatted 'Unicode Warning' with additional exception message options.
 
-        Attributes:
+        Args:
             message_args (Union[dict, str]): Dictionary will create a formatted exception message.
-            traceback (bool, Optional): Displays most recent traceback output. Defaults to False.
+            traceback (bool, Optional): Displays most recent traceback output. Defaults to True.
+            all_tracing (bool, Optional): True displays all traceback. False will show most recent. Defaults to True.
 
             Keys:\\
                 main_message (str): The main exception message.\\
@@ -2726,7 +2891,8 @@ class FUnicodeWarning(Exception):
                                                                          caller_module=Path(inspect.currentframe().f_back.f_code.co_filename).stem,
                                                                          caller_line=inspect.currentframe().f_back.f_lineno,
                                                                          caller_name=inspect.currentframe().f_back.f_code.co_name,
-                                                                         traceback=traceback))
+                                                                         traceback=traceback,
+                                                                         all_tracing=all_tracing))
 
             # Sets the Exception output used for printing the exception message.
             Exception.__init__(self, self._formatted_exception)
@@ -2739,13 +2905,14 @@ class FEncodingWarning(Exception):
     __slots__ = 'message_args'
     __module__ = 'builtins'
 
-    def __init__(self, message_args: dict, traceback: Optional[bool] = False) -> None:
+    def __init__(self, message_args: dict, traceback: Optional[bool] = True, all_tracing: Optional[bool] = True) -> None:
         """
         Formatted 'Encoding Warning' with additional exception message options.
 
-        Attributes:
+        Args:
             message_args (Union[dict, str]): Dictionary will create a formatted exception message.
-            traceback (bool, Optional): Displays most recent traceback output. Defaults to False.
+            traceback (bool, Optional): Displays most recent traceback output. Defaults to True.
+            all_tracing (bool, Optional): True displays all traceback. False will show most recent. Defaults to True.
 
             Keys:\\
                 main_message (str): The main exception message.\\
@@ -2764,7 +2931,8 @@ class FEncodingWarning(Exception):
                                                                          caller_module=Path(inspect.currentframe().f_back.f_code.co_filename).stem,
                                                                          caller_line=inspect.currentframe().f_back.f_lineno,
                                                                          caller_name=inspect.currentframe().f_back.f_code.co_name,
-                                                                         traceback=traceback))
+                                                                         traceback=traceback,
+                                                                         all_tracing=all_tracing))
 
             # Sets the Exception output used for printing the exception message.
             Exception.__init__(self, self._formatted_exception)
@@ -2777,13 +2945,14 @@ class FBytesWarning(Exception):
     __slots__ = 'message_args'
     __module__ = 'builtins'
 
-    def __init__(self, message_args: dict, traceback: Optional[bool] = False) -> None:
+    def __init__(self, message_args: dict, traceback: Optional[bool] = True, all_tracing: Optional[bool] = True) -> None:
         """
         Formatted 'Bytes Warning' with additional exception message options.
 
-        Attributes:
+        Args:
             message_args (Union[dict, str]): Dictionary will create a formatted exception message.
-            traceback (bool, Optional): Displays most recent traceback output. Defaults to False.
+            traceback (bool, Optional): Displays most recent traceback output. Defaults to True.
+            all_tracing (bool, Optional): True displays all traceback. False will show most recent. Defaults to True.
 
             Keys:\\
                 main_message (str): The main exception message.\\
@@ -2802,7 +2971,8 @@ class FBytesWarning(Exception):
                                                                          caller_module=Path(inspect.currentframe().f_back.f_code.co_filename).stem,
                                                                          caller_line=inspect.currentframe().f_back.f_lineno,
                                                                          caller_name=inspect.currentframe().f_back.f_code.co_name,
-                                                                         traceback=traceback))
+                                                                         traceback=traceback,
+                                                                         all_tracing=all_tracing))
 
             # Sets the Exception output used for printing the exception message.
             Exception.__init__(self, self._formatted_exception)
@@ -2815,13 +2985,14 @@ class FResourceWarning(Exception):
     __slots__ = 'message_args'
     __module__ = 'builtins'
 
-    def __init__(self, message_args: dict, traceback: Optional[bool] = False) -> None:
+    def __init__(self, message_args: dict, traceback: Optional[bool] = True, all_tracing: Optional[bool] = True) -> None:
         """
         Formatted 'Resource Warning' with additional exception message options.
 
-        Attributes:
+        Args:
             message_args (Union[dict, str]): Dictionary will create a formatted exception message.
-            traceback (bool, Optional): Displays most recent traceback output. Defaults to False.
+            traceback (bool, Optional): Displays most recent traceback output. Defaults to True.
+            all_tracing (bool, Optional): True displays all traceback. False will show most recent. Defaults to True.
 
             Keys:\\
                 main_message (str): The main exception message.\\
@@ -2840,7 +3011,8 @@ class FResourceWarning(Exception):
                                                                          caller_module=Path(inspect.currentframe().f_back.f_code.co_filename).stem,
                                                                          caller_line=inspect.currentframe().f_back.f_lineno,
                                                                          caller_name=inspect.currentframe().f_back.f_code.co_name,
-                                                                         traceback=traceback))
+                                                                         traceback=traceback,
+                                                                         all_tracing=all_tracing))
 
             # Sets the Exception output used for printing the exception message.
             Exception.__init__(self, self._formatted_exception)
@@ -2861,13 +3033,14 @@ class FCustomException(Exception):
     __slots__ = 'message_args'
     __module__ = 'builtins'
 
-    def __init__(self, message_args: dict, traceback: Optional[bool] = False) -> None:
+    def __init__(self, message_args: dict, traceback: Optional[bool] = True, all_tracing: Optional[bool] = True) -> None:
         """
         Formatted 'Custom Exception' with additional exception message options.
 
-        Attributes:
+        Args:
             message_args (Union[dict, str]): Dictionary will create a formatted exception message.
-            traceback (bool, Optional): Displays most recent traceback output. Defaults to False.
+            traceback (bool, Optional): Displays most recent traceback output. Defaults to True.
+            all_tracing (bool, Optional): True displays all traceback. False will show most recent. Defaults to True.
 
             Keys:\\
                 main_message (str): The main exception message.\\
@@ -2902,7 +3075,6 @@ class FCustomException(Exception):
                 key_check = KeyCheck(match_dict_key, 'exception_constructor', get_line_number())
                 key_check.contains_keys(importing_exception_keys)
             except Exception as exec:
-                LocalExceptionHook(exec)
                 raise InputFailure(exec)
 
             custom_type = message_args.get('custom_type')
@@ -2913,7 +3085,8 @@ class FCustomException(Exception):
                                                                          caller_module=Path(inspect.currentframe().f_back.f_code.co_filename).stem,
                                                                          caller_line=inspect.currentframe().f_back.f_lineno,
                                                                          caller_name=inspect.currentframe().f_back.f_code.co_name,
-                                                                         traceback=traceback))
+                                                                         traceback=traceback,
+                                                                         all_tracing=all_tracing))
 
             Exception.__init__(self, self._formatted_exception)
 
@@ -2930,13 +3103,14 @@ class FGeneralError(Exception):
     __slots__ = 'message_args'
     __module__ = 'builtins'
 
-    def __init__(self, message_args: dict, traceback: Optional[bool] = False) -> None:
+    def __init__(self, message_args: dict, traceback: Optional[bool] = True, all_tracing: Optional[bool] = True) -> None:
         """
         Formatted 'General Error' with additional exception message options.
 
-        Attributes:
+        Args:
             message_args (Union[dict, str]): Dictionary will create a formatted exception message.
-            traceback (bool, Optional): Displays most recent traceback output. Defaults to False.
+            traceback (bool, Optional): Displays most recent traceback output. Defaults to True.
+            all_tracing (bool, Optional): True displays all traceback. False will show most recent. Defaults to True.
 
             Keys:\\
                 main_message (str): The main exception message.\\
@@ -2955,7 +3129,8 @@ class FGeneralError(Exception):
                                                                          caller_module=Path(inspect.currentframe().f_back.f_code.co_filename).stem,
                                                                          caller_line=inspect.currentframe().f_back.f_lineno,
                                                                          caller_name=inspect.currentframe().f_back.f_code.co_name,
-                                                                         traceback=traceback))
+                                                                         traceback=traceback,
+                                                                         all_tracing=all_tracing))
 
             # Sets the Exception output used for printing the exception message.
             Exception.__init__(self, self._formatted_exception)
@@ -2969,7 +3144,7 @@ def _exception_formatter(processed_message_args: ProcessedMessageArgs, exception
 
     The user can override the exception type from the general custom exception module classes above.
 
-    Attributes:
+    Args:
         processed_message_args (ProcessedMessageArgs): Message args to populate the formatted exception message.
         exception_args (ExceptionArgs): Exception args to populate the formatted exception message.
     """
