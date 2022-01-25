@@ -1,5 +1,3 @@
-#!interpreter
-
 """
 This module is designed to assist with file-related actions.
 """
@@ -9,21 +7,58 @@ import sys
 import logging
 import pathlib
 from pathlib import Path
-from typing import Optional, Union
+from typing import Union
+import warnings
 
-# Own modules
+# Libraries
+from fchecker import type_check, file_check
 from ictoolkit.directors.data_structure_director import remove_duplicate_dict_values_in_list
 from ictoolkit.directors.validation_director import value_type_validation
 from ictoolkit.directors.error_director import error_formatter
 from ictoolkit.helpers.py_helper import get_function_name, get_line_number
 
+# Exceptions
+from fexception import FGeneralError, FTypeError, FCustomException, FFileNotFoundError
+
 __author__ = 'IncognitoCoding'
 __copyright__ = 'Copyright 2022, file_director'
 __credits__ = ['IncognitoCoding']
 __license__ = 'GPL'
-__version__ = '2.0'
+__version__ = '2.1'
 __maintainer__ = 'IncognitoCoding'
 __status__ = 'Production'
+
+
+class FileWriteFailure(Exception):
+    """
+    Exception raised for file write failures.
+
+    Args:
+        exc_message:\\
+        \t\\- The failure reason.
+    """
+    __module__ = 'builtins'
+
+    exc_message: str
+
+    def __init__(self, exc_message: str) -> None:
+        self.exc_message = exc_message
+
+
+class FileSearchFailure(Exception):
+    """
+    Exception raised for file search failures.
+
+    Args:
+        exc_message:\\
+        \t\\- The failure reason.
+    """
+    __module__ = 'builtins'
+
+    exc_message: str
+
+    def __init__(self, exc_message: str) -> None:
+        self.exc_message = exc_message
 
 
 def write_file(file_path: str, write_value: str) -> None:
@@ -31,17 +66,22 @@ def write_file(file_path: str, write_value: str) -> None:
     Writes a value to the file.
 
     Args:
-        file_path (str): The file path being written into.
-        write_value (str): The value being written into the file.
+        file_path (str):
+        \t\\- The file path being written into.
+        write_value (str):
+        \t\\- The value being written into the file.
 
     Raises:
-        TypeError: The value '{file_path}' is not in str format.
-        TypeError: The value '{write_value}' is not in str format.
-        Exception: Forwarding caught {type(error).__name__} at line {error.__traceback__.tb_lineno} in <{__name__}>
-        Exception: A general exception occurred during the value type validation.
-        Exception: Forwarding caught {type(error).__name__} at line {error.__traceback__.tb_lineno} in <{__name__}>
-        Exception: A general failure occurred while writing the file.
-        ValueError: Writing file value '{write_value}' to file '{file_path}' did not complete.
+        FTypeError (fexception):
+        \t\\- The value '{file_path}' is not in <class 'str'> format.
+        FTypeError (fexception):
+        \t\\- The value '{write_value}' is not in <class 'str'> format.
+        FileWriteFailure:
+        \t\\- The file failed to write.
+        FFileNotFoundError (fexception):
+        \t\\- The file does not exist in the validating file path ({file_path}).
+        FileWriteFailure:
+        \t\\- Writing file value ({write_value}) to file ({file_path}) did not complete.
     """
     logger = logging.getLogger(__name__)
     logger.debug(f'=' * 20 + get_function_name() + '=' * 20)
@@ -50,28 +90,17 @@ def write_file(file_path: str, write_value: str) -> None:
     logger_flowchart = logging.getLogger('flowchart')
     logger_flowchart.debug(f'Flowchart --> Function: {get_function_name()}')
 
-    # Checks function launch variables and logs passing parameters.
     try:
-        # Validates required types.
-        value_type_validation(file_path, str, __name__, get_line_number())
-        value_type_validation(write_value, str, __name__, get_line_number())
+        type_check(file_path, str)
+        type_check(write_value, str)
+    except FTypeError:
+        raise
 
-        logger.debug(
-            'Passing parameters:\n'
-            f'  - file_path (str):\n        - {file_path}\n'
-            f'  - write_value (str):\n        - {write_value}\n'
-        )
-    except Exception as error:
-        if 'Originating error on line' in str(error):
-            logger.debug(f'Forwarding caught {type(error).__name__} at line {error.__traceback__.tb_lineno} in <{__name__}>')
-            raise error
-        else:
-            error_args = {
-                'main_message': 'A general exception occurred during the value type validation.',
-                'error_type': Exception,
-                'original_error': error,
-            }
-            error_formatter(error_args, __name__, error.__traceback__.tb_lineno)
+    logger.debug(
+        'Passing parameters:\n'
+        f'  - file_path (str):\n        - {file_path}\n'
+        f'  - write_value (str):\n        - {write_value}\n'
+    )
 
     try:
         logger.debug(f'Begining to write the value to the file. write_value = {write_value}')
@@ -79,30 +108,29 @@ def write_file(file_path: str, write_value: str) -> None:
         # Using "with" to take care of open and closing.
         with open(file_path, 'a+') as f:
             f.writelines(write_value + "\n")
-    except Exception as error:
-        if 'Originating error on line' in str(error):
-            logger.debug(f'Forwarding caught {type(error).__name__} at line {error.__traceback__.tb_lineno} in <{__name__}>')
-            raise error
-        else:
-            error_args = {
-                'main_message': 'A general failure occurred while writing the file.',
-                'error_type': Exception,
-                'original_error': error,
-            }
-            error_formatter(error_args, __name__, error.__traceback__.tb_lineno)
+    except Exception as exc:
+        exc_args = {
+            'main_message': 'The file failed to write.',
+            'custom_type': FileWriteFailure,
+            'original_exception': exc,
+        }
+        raise FileWriteFailure(FCustomException(exc_args))
     else:
-        # Checking if the file entry written to the file.
-        # Calling Example: search_file(<log file>, <search string>, <configured logger>)
-        return_search = search_file(file_path, write_value)
+        try:
+            # Checking if the file entry written to the file.
+            # Calling Example: search_file(<log file>, <search string>, <configured logger>)
+            return_search = search_file(file_path, write_value)
+        except FFileNotFoundError:
+            raise
+
         # Validates file entry wrote.
         if return_search is None:
-            error_args = {
-                'main_message': f'Writing file value \'{write_value}\' to file \'{file_path}\' did not complete.',
-                'error_type': ValueError,
-                'expected_result': 2,
-                'returned_result': ' No return search value was returned.',
+            exc_args = {
+                'main_message': f'Writing file value ({write_value}) to file ({file_path}) did not complete.',
+                'custom_type': FileWriteFailure,
+                'returned_result': ' No return search value were returned.',
             }
-            error_formatter(error_args, __name__, get_line_number())
+            raise FileWriteFailure(FCustomException(exc_args))
 
 
 def file_exist_check(file_path: str, file_description: str) -> None:
@@ -122,6 +150,9 @@ def file_exist_check(file_path: str, file_description: str) -> None:
         Exception: Forwarding caught {type(error).__name__} at line {error.__traceback__.tb_lineno} in <{__name__}>
         Exception: A general failure occurred while checking if the file exists.
     """
+    warnings.warn('Version 2.5 of ictoolkit deprecation. This module has been replaced with the fchecker module. '
+                  'Please switch to using the fchecker module (pip install fchecker).', DeprecationWarning)
+
     logger = logging.getLogger(__name__)
     logger.debug(f'=' * 20 + get_function_name() + '=' * 20)
     # Custom flowchart tracking. This is ideal for large projects that move a lot.
@@ -180,28 +211,42 @@ def file_exist_check(file_path: str, file_description: str) -> None:
 
 def search_file(file_path: str, searching_value: Union[str, list]) -> Union[list, None]:
     """
-    Searches the file for a value. The search can look for multiple values when the searching value arguments are passed as a list. A single-string search is supported as well.
+    Searches the file for a value.
+
+    The search can look for multiple values when the searching value arguments are passed as a list.
+
+    A single-string search is supported as well.
 
     Args:
-        file_path (str): the file path being checked
-        searching_value (str or list): search value that is looked for within the file. The entry can be a single string or a list to search
+        file_path (str):
+        \t\\- the file path being checked
+        searching_value (Union[str, list]):
+        \t\\- Search value that is looked for within the file.\\
+        \t\\- The entry can be a single string or a list to search.
 
     Raises:
-        TypeError: The value '{file_path}' is not in str format.
-        TypeError: The value '{searching_value}' is not in str or list format.
-        Exception: Forwarding caught {type(error).__name__} at line {error.__traceback__.tb_lineno} in <{__name__}>
-        Exception: A general exception occurred during the value type validation.
-        ValueError: A failure occurred while searching the file. The file path does not include a file with an extension.
-        Exception: Forwarding caught {type(error).__name__} at line {error.__traceback__.tb_lineno} in <{__name__}>
-        Exception: A general failure occurred while while searching the file.
+        FTypeError (fexception):
+        \t\\- The value '{file_path}' is not in <class 'str'> format.
+        FTypeError (fexception):
+        \t\\- The value '{searching_value}' is not in [<class 'str'>, <class 'list'>] format.
+        FFileNotFoundError (fexception):
+        \t\\- The file does not exist in the validating file path ({file_path}).
+        FileSearchFailure:
+        \t\\- A failure occurred while searching the file. The file path does not include a file with an extension.
+        FGeneralError (fexception):
+        \t\\- A general failure occurred while while searching the file.
 
     Returns:
-        list: a dictionary in a list
-        \tExample: [{'search_entry': '|Error|', 'found_entry': 'the entry found'}, {'search_entry': '|Warning|', 'found_entry': 'the entry found'}]
+        list:
+        \t\\- A dictionary in a list.
 
-        Usage Keys:
-            - search_entry
-            - found_entry
+    Return Examples:
+    \t\\- [{'search_entry': '|Error|', 'found_entry': 'the entry found'},
+    \t   {'search_entry': '|Warning|', 'found_entry': 'the entry found'}]
+
+    Return Usage Keys:
+    \t\\- search_entry\\
+    \t\\- found_entry
     """
     logger = logging.getLogger(__name__)
     logger.debug(f'=' * 20 + get_function_name() + '=' * 20)
@@ -210,46 +255,40 @@ def search_file(file_path: str, searching_value: Union[str, list]) -> Union[list
     logger_flowchart = logging.getLogger('flowchart')
     logger_flowchart.debug(f'Flowchart --> Function: {get_function_name()}')
 
-    # Checks function launch variables and logs passing parameters.
     try:
-        # Validates required types.
-        value_type_validation(file_path, str, __name__, get_line_number())
-        value_type_validation(searching_value, [str, list], __name__, get_line_number())
+        type_check(file_path, str)
+        type_check(searching_value, [str, list])
+    except FTypeError:
+        raise
 
-        if isinstance(searching_value, list):
-            formatted_searching_value = '  - searching_value (list):' + str('\n        - ' + '\n        - '.join(map(str, searching_value)))
-        elif isinstance(searching_value, str):
-            formatted_searching_value = f'  - searching_value (str):\n        - {searching_value}'
+    try:
+        file_check(file_path)
+    except FFileNotFoundError:
+        raise
 
-        logger.debug(
-            'Passing parameters:\n'
-            f'  - file_path (str):\n        - {file_path}\n'
-            f'{formatted_searching_value}\n'
-        )
-    except Exception as error:
-        if 'Originating error on line' in str(error):
-            logger.debug(f'Forwarding caught {type(error).__name__} at line {error.__traceback__.tb_lineno} in <{__name__}>')
-            raise error
-        else:
-            error_args = {
-                'main_message': 'A general exception occurred during the value type validation.',
-                'error_type': Exception,
-                'original_error': error,
-            }
-            error_formatter(error_args, __name__, error.__traceback__.tb_lineno)
+    if isinstance(searching_value, list):
+        formatted_searching_value = ('  - searching_value (list):'
+                                     + str('\n        - ' + '\n        - '.join(map(str, searching_value))))
+    elif isinstance(searching_value, str):
+        formatted_searching_value = f'  - searching_value (str):\n        - {searching_value}'
+    logger.debug(
+        'Passing parameters:\n'
+        f'  - file_path (str):\n        - {file_path}\n'
+        f'{formatted_searching_value}\n'
+    )
 
     logger.debug(f'Begining to search the file \"{file_path}\" for a value \"{searching_value}\"')
 
     # Checks that the passing file_path contains a file extension.
     if '.' not in file_path:
-        error_args = {
+        exc_args = {
             'main_message': 'A failure occurred while searching the file. The file path does not include a file with an extension.',
-            'error_type': ValueError,
+            'custom_type': FileSearchFailure,
             'expected_result': 'A file with an extension (ex: myfile.txt)',
             'returned_result': file_path,
             'suggested_resolution': 'Please verify you have sent a full file path and not a directory.',
         }
-        error_formatter(error_args, __name__, get_line_number())
+        raise FileSearchFailure(FCustomException(exc_args))
 
     try:
         # Stores the search entry and found info.
@@ -295,17 +334,12 @@ def search_file(file_path: str, searching_value: Union[str, list]) -> Union[list
                 matched_entries = remove_duplicate_dict_values_in_list(matched_entries, 1)
 
                 logger.debug(f'The adjusted match list with removed duplicates is listed below: {matched_entries}')
-    except Exception as error:
-        if 'Originating error on line' in str(error):
-            logger.debug(f'Forwarding caught {type(error).__name__} at line {error.__traceback__.tb_lineno} in <{__name__}>')
-            raise error
-        else:
-            error_args = {
-                'main_message': 'A general failure occurred while while searching the file.',
-                'error_type': Exception,
-                'original_error': error,
-            }
-            error_formatter(error_args, __name__, error.__traceback__.tb_lineno)
+    except Exception as exc:
+        exc_args = {
+            'main_message': 'A general failure occurred while while searching the file.',
+            'original_exception': exc,
+        }
+        raise FGeneralError(exc_args)
     else:
         # Checking if the list has discovered log entry values.
         if matched_entries:
@@ -321,28 +355,46 @@ def search_file(file_path: str, searching_value: Union[str, list]) -> Union[list
 
 def search_multiple_files(file_paths: list, searching_value: Union[str, list]) -> Union[list, None]:
     """
-    Searches multiple files for a value. Requires the file_path to be sent as a list. The search can look for multiple values when the searching value arguments are passed as a list.
+    Searches multiple files for a value.
+
+    The search can look for multiple values when the searching value arguments are passed as a list.
+
     A single-string search is supported as well.
 
     Args:
-        file_paths (list): a list of file path being checked
-        searching_value (str or list): search value that is looked for within the file. The entry can be a single string or a list to search
+        file_paths (list):
+        \t\\- A list of file path being checked.
+        searching_value (Union[str, list]):
+        \t\\- search value that is looked for within the file.\\
+        \t\\- The entry can be a single string or a list to search
 
     Raises:
-        TypeError: The value '{file_paths}' is not in list format.
-        TypeError: The value '{searching_value}' is not in str or list format.
-        Exception: Forwarding caught {type(error).__name__} at line {error.__traceback__.tb_lineno} in <{__name__}>
-        Exception: A general exception occurred during the value type validation.
-        ValueError: A failure occurred while searching the file. The file path does not include a file with an extension.
-        Exception: Forwarding caught {type(error).__name__} at line {error.__traceback__.tb_lineno} in <{__name__}>
-        Exception: A general failure occurred while while searching the file
+        FTypeError (fexception):
+        \t\\- The value '{file_paths}' is not in <class 'list'> format.
+        FTypeError (fexception):
+        \t\\- The value '{searching_value}' is not in [<class 'str'>, <class 'list'>] format.
+        FFileNotFoundError (fexception):
+        \t\\- The file does not exist in the validating file path ({file_path}).
+        FileSearchFailure (fexception):
+        \t\\- A failure occurred while searching the file. The file path does not include a file with an extension.
+        FGeneralError (fexception):
+        \t\\- A general failure occurred while while searching the file.
 
     Returns:
-        list: A list of discovered search values. Each discovered value is per element. No discovered values will return None.
-        \tExample: [{'search_entry': '|Error|', 'found_entry': 'the entry found'}, {'search_entry': '|Warning|', 'found_entry': 'the entry found'}]
-        Useage Keys:
-            - search_entry
-            - found_entry
+        Union[list, None]:
+        \t\\- list:\\
+        \t\t\\- A list of discovered search values.
+        \t\t\\- Each discovered value is per element.
+        \t\\- None:\\
+        \t\t\\- No discovered values will return None.
+
+    Return Examples:
+    \t\\- [{'search_entry': '|Error|', 'found_entry': 'the entry found'},
+    \t   {'search_entry': '|Warning|', 'found_entry': 'the entry found'}]
+
+    Return Usage Keys:
+    \t\\- search_entry\\
+    \t\\- found_entry
     """
     logger = logging.getLogger(__name__)
     logger.debug(f'=' * 20 + get_function_name() + '=' * 20)
@@ -351,34 +403,23 @@ def search_multiple_files(file_paths: list, searching_value: Union[str, list]) -
     logger_flowchart = logging.getLogger('flowchart')
     logger_flowchart.debug(f'Flowchart --> Function: {get_function_name()}')
 
-    # Checks function launch variables and logs passing parameters.
     try:
-        # Validates required types.
-        value_type_validation(file_paths, list, __name__, get_line_number())
-        value_type_validation(searching_value, [str, list], __name__, get_line_number())
+        type_check(file_paths, list)
+        type_check(searching_value, [str, list])
+    except FTypeError:
+        raise
 
-        formatted_file_paths = '  - file_paths (list):' + str('\n        - ' + '\n        - '.join(map(str, file_paths)))
-        if isinstance(searching_value, list):
-            formatted_searching_value = '  - searching_value (list):' + str('\n        - ' + '\n        - '.join(map(str, searching_value)))
-        elif isinstance(searching_value, str):
-            formatted_searching_value = f'  - searching_value (str):\n        - {searching_value}'
-
-        logger.debug(
-            'Passing parameters:\n'
-            f'{formatted_file_paths}\n'
-            f'{formatted_searching_value}\n'
-        )
-    except Exception as error:
-        if 'Originating error on line' in str(error):
-            logger.debug(f'Forwarding caught {type(error).__name__} at line {error.__traceback__.tb_lineno} in <{__name__}>')
-            raise error
-        else:
-            error_args = {
-                'main_message': 'A general exception occurred during the value type validation.',
-                'error_type': Exception,
-                'original_error': error,
-            }
-            error_formatter(error_args, __name__, error.__traceback__.tb_lineno)
+    formatted_file_paths = '  - file_paths (list):' + str('\n        - ' + '\n        - '.join(map(str, file_paths)))
+    if isinstance(searching_value, list):
+        formatted_searching_value = ('  - searching_value (list):'
+                                     + str('\n        - ' + '\n        - '.join(map(str, searching_value))))
+    elif isinstance(searching_value, str):
+        formatted_searching_value = f'  - searching_value (str):\n        - {searching_value}'
+    logger.debug(
+        'Passing parameters:\n'
+        f'{formatted_file_paths}\n'
+        f'{formatted_searching_value}\n'
+    )
 
     logger.debug(f'Begining to search the files \"{file_paths}\" for a value \"{searching_value}\"')
 
@@ -395,18 +436,24 @@ def search_multiple_files(file_paths: list, searching_value: Union[str, list]) -
         for index, file_path in enumerate(file_paths):
             # Checks that the passing file_path contains a file extension.
             if '.' not in file_path:
-                error_args = {
+                exc_args = {
                     'main_message': 'A failure occurred while searching the file. The file path does not include a file with an extension.',
-                    'error_type': ValueError,
+                    'custom_type': FileSearchFailure,
                     'expected_result': 'A file with an extension (ex: myfile.txt)',
                     'returned_result': file_path,
                     'suggested_resolution': 'Please verify you have sent a full file path and not a directory.',
                 }
-                error_formatter(error_args, __name__, get_line_number())
+                raise FileSearchFailure(FCustomException(exc_args))
+
             logger.debug(f'Reading in all lines from the file \"{file_path}\"')
             # Sets the basename for cleaner logging output.
             basename_searched_file = os.path.basename(file_path)
             logger.debug(f'Looping through file \"{basename_searched_file}\" {index + 1} of {total_files}')
+
+            try:
+                file_check(file_path)
+            except FFileNotFoundError:
+                raise
 
             # Using "with" to take care of open and closing.
             with open(file_path, 'r') as f:
@@ -454,17 +501,14 @@ def search_multiple_files(file_paths: list, searching_value: Union[str, list]) -
                 # Example Return: [{'search_entry': '|Error|', 'found_entry': 'the entry found2'}]
                 matched_entries = remove_duplicate_dict_values_in_list(matched_entries, 1)
                 logger.debug(f'The adjusted match list with removed duplicates is listed below: {matched_entries}')
-    except Exception as error:
-        if 'Originating error on line' in str(error):
-            logger.debug(f'Forwarding caught {type(error).__name__} at line {error.__traceback__.tb_lineno} in <{__name__}>')
-            raise error
-        else:
-            error_args = {
-                'main_message': 'A general failure occurred while while searching the file.',
-                'error_type': Exception,
-                'original_error': error,
-            }
-            error_formatter(error_args, __name__, error.__traceback__.tb_lineno)
+    except FFileNotFoundError:
+        raise
+    except Exception as exc:
+        exc_args = {
+            'main_message': 'A general failure occurred while while searching the file.',
+            'original_exception': exc,
+        }
+        raise FGeneralError(exc_args)
     else:
         # Checking if the list has discovered log entry values.
         if matched_entries:
@@ -480,22 +524,29 @@ def search_multiple_files(file_paths: list, searching_value: Union[str, list]) -
 
 def convert_relative_to_full_path(relative_path: str) -> str:
     """
-    Determines a full file path to file given a relative file path compatible with PyInstaller(compiler) built-in.
+    Determines a full file path to file given a relative file path compatible\\
+    with PyInstaller(compiler) built-in.
 
     Args:
-        relative_path (string): The unqualified (relative) file path that needs to converted to a qualified full path format
-        \t\- Example: "\\[directory]\\[file].[extension]"
+        relative_path (str):
+        \t\\- The unqualified (relative) file path that needs to converted to\\
+        \t  a qualified full path format
+
+    Calling Example:
+    \t\\- relative_path = "\\[directory]\\[file].[extension]"
 
     Raises:
-        TypeError: The value '{relative_path}' is not in str format.
-        Exception: Forwarding caught {type(error).__name__} at line {error.__traceback__.tb_lineno} in <{__name__}>
-        Exception: A general exception occurred during the value type validation.
-        Exception: Forwarding caught {type(error).__name__} at line {error.__traceback__.tb_lineno} in <{__name__}>
-        Exception: A general exception occurred during the relative to full path conversion.
+        FTypeError (fexception):
+        \t\\- The value '{relative_path}' is not in <class 'str'> format.
+        FGeneralError (fexception):
+        \t\\- A general exception occurred during the relative to full path conversion.
 
     Returns:
-        [string]: Full file path
-        \t\- Example: "C:\\[root directory]\\[directory]\\[file].[extension]"
+        str:
+        \t\\- Full file path.
+
+    Return Example:\\
+    \t\\- "C:\\[root directory]\\[directory]\\[file].[extension]"
     """
     logger = logging.getLogger(__name__)
     logger.debug(f'=' * 20 + get_function_name() + '=' * 20)
@@ -504,26 +555,15 @@ def convert_relative_to_full_path(relative_path: str) -> str:
     logger_flowchart = logging.getLogger('flowchart')
     logger_flowchart.debug(f'Flowchart --> Function: {get_function_name()}')
 
-    # Checks function launch variables and logs passing parameters.
     try:
-        # Validates required types.
-        value_type_validation(relative_path, str, __name__, get_line_number())
+        type_check(relative_path, str)
+    except FTypeError:
+        raise
 
-        logger.debug(
-            'Passing parameters:\n'
-            f'  - relative_path(str):\n        - {relative_path}\n'
-        )
-    except Exception as error:
-        if 'Originating error on line' in str(error):
-            logger.debug(f'Forwarding caught {type(error).__name__} at line {error.__traceback__.tb_lineno} in <{__name__}>')
-            raise error
-        else:
-            error_args = {
-                'main_message': 'A general exception occurred during the value type validation.',
-                'error_type': Exception,
-                'original_error': error,
-            }
-            error_formatter(error_args, __name__, error.__traceback__.tb_lineno)
+    logger.debug(
+        'Passing parameters:\n'
+        f'  - relative_path(str):\n        - {relative_path}\n'
+    )
 
     try:
         if hasattr(sys, '_MEIPASS'):
@@ -534,44 +574,55 @@ def convert_relative_to_full_path(relative_path: str) -> str:
             base_path = os.getcwd()
 
         return f'{base_path}\\{relative_path}'
-    except Exception as error:
-        if 'Originating error on line' in str(error):
-            logger.debug(f'Forwarding caught {type(error).__name__} at line {error.__traceback__.tb_lineno} in <{__name__}>')
-            raise error
-        else:
-            error_args = {
-                'main_message': 'A general exception occurred during the relative to full path conversion.',
-                'error_type': Exception,
-                'original_error': error,
-            }
-            error_formatter(error_args, __name__, error.__traceback__.tb_lineno)
+    except Exception as exc:
+        exc_args = {
+            'main_message': 'A general exception occurred during the relative to full path conversion.',
+            'original_exception': exc,
+        }
+        raise FGeneralError(exc_args)
 
 
-def user_file_selection(prompt: str, criteria: str, root_dir: Optional[str] = None) -> str:
+def user_file_selection(prompt: str, criteria: str, root_dir: str = None) -> str:
     """
-    Provides a simple user interface that numerically lists a set of files found using user submitted criteria.  User is prompted to submit the numeric value of the file that is to be used.
+    Provides a simple user interface that numerically lists a set of files\\
+    found using user submitted criteria.
+
+    User is prompted to submit the numeric value of the file that is to be used.
 
     Args:
-        prompt (str): Literal prompt string to present to user\r
-        \tExample: "Enter the database name to import"\n
-        criteria (str): Filter to apply when searching for files. Expects standard OS search criteria
-        \tExample: "*.db" or "*config*"\n
-        root_dir (str, optional): Manually sets the root directory to search.  Requires an absolute path format. Defaults to None.\r
-        \tExample: "C:\\Directory\\Subdirectory\"\n
+        prompt (str):
+        \t\\- Literal prompt string to present to the user.\\
+        criteria (str):
+        \t\\- Filter to apply when searching for files.\\
+        \t\\- Expects standard OS search criteria\\
+        root_dir (str, optional):
+        \t\\- Manually sets the root directory to search.\\
+        \t\\- Requires an absolute path format.\\
+        \t\\- Defaults to None.
+
+    Calling Examples:
+    \t\\- prompt = "Enter the database name to import"\\
+    \t\\- criteria = "*.db" or "*config*"\\
+    \t\\- root_dir = "C:\\Directory\\Subdirectory\"
 
     Raises:
-        TypeError: The value '{prompt}' is not in str format.
-        TypeError: The value '{criteria}' is not in str format.
-        TypeError: The value '{root_dir}' is not in str format.
-        Exception: Forwarding caught {type(error).__name__} at line {error.__traceback__.tb_lineno} in <{__name__}>
-        Exception: A general exception occurred during the value type validation.
-        FileNotFoundError: No files were found matching the required criteria
-        Exception: Forwarding caught {type(error).__name__} at line {error.__traceback__.tb_lineno} in <{__name__}>
-        Exception: A general failure occurred during the user file selection.
+        FTypeError (fexception):
+        \t\\- The value '{prompt}' is not in <class 'str'> format.
+        FTypeError (fexception):
+        \t\\- The value '{criteria}' is not in <class 'str'> format.
+        FTypeError (fexception):
+        \t\\- The value '{root_dir}' is not in <class 'str'> format.
+        FFileNotFoundError (fexception):
+        \t\\- No files were found matching the required criteria.
+        FGeneralError (fexception):
+        \t\\- A general failure occurred during the user file selection.
 
     Returns:
-        [string]: Returns the path of the file that was selected in the format provided\r
-        \tExample: "test.py" or "c:\\folder\\test.py"
+        str:
+        \t\\- Returns the path of the file that was selected in the format provided
+
+    Return Example:\\
+    \t\\- "test.py" or "c:\\folder\\test.py"
     """
     logger = logging.getLogger(__name__)
     logger.debug(f'=' * 20 + get_function_name() + '=' * 20)
@@ -580,36 +631,24 @@ def user_file_selection(prompt: str, criteria: str, root_dir: Optional[str] = No
     logger_flowchart = logging.getLogger('flowchart')
     logger_flowchart.debug(f'Flowchart --> Function: {get_function_name()}')
 
-    # Checks function launch variables and logs passing parameters.
     try:
-        # Validates required types.
-        value_type_validation(prompt, str, __name__, get_line_number())
-        value_type_validation(criteria, str, __name__, get_line_number())
+        type_check(prompt, str)
+        type_check(criteria, str)
         if root_dir:
-            value_type_validation(root_dir, str, __name__, get_line_number())
+            type_check(root_dir, str)
+    except FTypeError:
+        raise
 
-        if root_dir:
-            formatted_root_dir = f'  - relative_path (str):\n        - {root_dir}'
-        else:
-            formatted_root_dir = f'  - relative_path (str):\n        - None'
-
-        logger.debug(
-            'Passing parameters:\n'
-            f'  - prompt (str):\n        - {prompt}\n'
-            f'  - criteria (str):\n        - {criteria}\n'
-            f'{formatted_root_dir}\n'
-        )
-    except Exception as error:
-        if 'Originating error on line' in str(error):
-            logger.debug(f'Forwarding caught {type(error).__name__} at line {error.__traceback__.tb_lineno} in <{__name__}>')
-            raise error
-        else:
-            error_args = {
-                'main_message': 'A general exception occurred during the value type validation.',
-                'error_type': Exception,
-                'original_error': error,
-            }
-            error_formatter(error_args, __name__, error.__traceback__.tb_lineno)
+    if root_dir:
+        formatted_root_dir = f'  - relative_path (str):\n        - {root_dir}'
+    else:
+        formatted_root_dir = f'  - relative_path (str):\n        - None'
+    logger.debug(
+        'Passing parameters:\n'
+        f'  - prompt (str):\n        - {prompt}\n'
+        f'  - criteria (str):\n        - {criteria}\n'
+        f'{formatted_root_dir}\n'
+    )
 
     try:
         # Initialize an empty list that will contain files found during search
@@ -637,16 +676,14 @@ def user_file_selection(prompt: str, criteria: str, root_dir: Optional[str] = No
             files.append(file)
             print(f'  [{[i for i, x in enumerate(files) if x == file][0]}] {os.path.basename(file)}')
 
-        # If no files were found matching user provided criteria,  raise exception
+        # If no files were found matching user provided criteria, raise exception
         if len(files) == 0:
-            error_args = {
-                'main_message': 'No files were found matching the required criteria',
-                'error_type': FileNotFoundError,
-                'expected_result': 'A matching file',
+            exc_args = {
+                'main_message': 'No files were found matching the required criteria.',
+                'expected_result': 'A matching file.',
                 'returned_result': 0,
-                'suggested_resolution': 'Please verify you have set all required keys and try again.',
             }
-            error_formatter(error_args, __name__, get_line_number())
+            raise FFileNotFoundError(exc_args)
 
         # Loop until valid input is provided by user
         while True:
@@ -670,14 +707,9 @@ def user_file_selection(prompt: str, criteria: str, root_dir: Optional[str] = No
             else:
                 # Valid input provided, return absolute path of file selected
                 return files[selection]
-    except Exception as error:
-        if 'Originating error on line' in str(error):
-            logger.debug(f'Forwarding caught {type(error).__name__} at line {error.__traceback__.tb_lineno} in <{__name__}>')
-            raise error
-        else:
-            error_args = {
-                'main_message': 'A general failure occurred during the user file selection.',
-                'error_type': Exception,
-                'original_error': error,
-            }
-            error_formatter(error_args, __name__, error.__traceback__.tb_lineno)
+    except Exception as exc:
+        exc_args = {
+            'main_message': 'A general failure occurred during the user file selection.',
+            'original_exception': exc,
+        }
+        raise FGeneralError(exc_args)

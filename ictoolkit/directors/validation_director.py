@@ -5,7 +5,7 @@ Some ictoolkit support modules that use the "value_type_validation" can not be i
 """
 # Built-in/Generic Imports
 from typing import Optional, Union, Any
-
+import warnings
 # Own modules
 from ictoolkit.helpers.py_helper import get_function_name, get_line_number
 
@@ -76,9 +76,13 @@ class KeyCheck():
     Args:
         values (dict): A dictionary that needs the keys validated.
         caller_module (str): The name of the caller module. Use '__name__'.
+        caller_name (str): The name of the caller (func or method).
         caller_line (int): The calling function line. Use 'ictoolkit.helpers.py_helper' to pull the line.
     """
-    def __init__(self, values: dict, caller_module: str, caller_line: int) -> None:
+    def __init__(self, values: dict, caller_name: str, caller_module: str, caller_line: int) -> None:
+        warnings.warn('Version 2.5 of ictoolkit deprecation. This module has been replaced with the fchecker module. '
+                      'Please switch to using the fchecker module (pip install fchecker).', DeprecationWarning)
+
         # Checks function launch variables and logs passing parameters.
         try:
             # Validates required types.
@@ -90,6 +94,7 @@ class KeyCheck():
 
         self._values = values
         self._caller_module = caller_module
+        self._caller_name = caller_name
         self._caller_line = caller_line
 
     def contains_keys(self, required_keys: Union[str, list]):
@@ -155,7 +160,11 @@ class KeyCheck():
                         + 'Returned Result:\n'
                         f'  - self._values = {dict_keys}\n'
                         f'  - self._required_keys = {self._required_keys}\n\n'
-                        f'Originating error on line {self._caller_line} in <{self._caller_module}>\n'
+                        + f'Trace Details:\n'
+                        f'  - Exception: AttributeError\n'
+                        f'  - Module: {self._caller_module}\n'
+                        f'  - Name: {self._caller_name}\n'
+                        f'  - Line: {self._caller_line}\n'
                         + (('-' * 150) + '\n') * 2
                     )
                     raise AttributeError(error_message)
@@ -168,7 +177,11 @@ class KeyCheck():
                         + (('-' * 150) + '\n') + (('-' * 65) + 'Additional Information' + ('-' * 63) + '\n') + (('-' * 150) + '\n')
                         + 'Returned Result:\n'
                         f'  - self._required_keys = {self._required_keys}\n\n'
-                        f'Originating error on line {self._caller_line} in <{self._caller_module}>\n'
+                        + f'Trace Details:\n'
+                        f'  - Exception: AttributeError\n'
+                        f'  - Module: {self._caller_module}\n'
+                        f'  - Name: {self._caller_name}\n'
+                        f'  - Line: {self._caller_line}\n'
                         + (('-' * 150) + '\n') * 2
                     )
                     raise AttributeError(error_message)
@@ -243,7 +256,11 @@ class KeyCheck():
                     f'{expected_result}\n\n'
                     'Returned Result:\n'
                     f'{returned_result}\n\n'
-                    f'Originating error on line {self._caller_line} in <{self._caller_module}>\n'
+                    + f'Trace Details:\n'
+                    f'  - Exception: AttributeError\n'
+                    f'  - Module: {self._caller_module}\n'
+                    f'  - Name: {self._caller_name}\n'
+                    f'  - Line: {self._caller_line}\n'
                     + (('-' * 150) + '\n') * 2
                 )
                 raise InvalidKeyError(error_message)
@@ -261,7 +278,11 @@ class KeyCheck():
                     + '            ' + (('~' * 150) + '\n            ') + (('~' * 63) + 'Start Original Exception' + ('~' * 63) + '\n            ') + (('~' * 150) + '\n            \n')
                     + f'{original_error}\n\n'
                     + '            ' + (('~' * 150) + '\n            ') + (('~' * 65) + 'End Original Exception' + ('~' * 63) + '\n            ') + (('~' * 150) + '\n            \n\n')
-                    + f'Originating error on line {error.__traceback__.tb_lineno} in <{__name__}>\n'
+                    + f'Trace Details:\n'
+                    f'  - Exception: AttributeError\n'
+                    f'  - Module: {self._caller_module}\n'
+                    f'  - Name: {self._caller_name}\n'
+                    f'  - Line: {self._caller_line}\n'
                     + (('-' * 150) + '\n') * 2
                 )
                 raise Exception(error_message)
@@ -269,19 +290,27 @@ class KeyCheck():
 
 def value_type_validation(value: any, required_type: Union[type, list], caller_module: str, caller_line: int) -> None:
     """
-    A simple type validation check. This function is designed to be widely used to check any values. No logging will take place within this function.
+    A simple type validation validation check. This function is designed to be widely used to check any values. No logging will take place within this function.
     The error output will have an origination location based on the error section.
 
     Error Output Origination:
-        TypeError: Will originate from the calling function using the passing parameters.
-        AttributeError: Will originate from the calling function using the passing parameters.
-        Exception: Will originate within this function.
+        - TypeError: Will originate from the calling function using the passing parameters.
+        - AttributeError: Will originate from the calling function using the passing parameters.
+        - Exception: Will originate within this function.
 
     Args:
         value (any): Any value needing its type validated.
         required_type (type or list of types): The required type the value should match. Can be a single type or list of types.
         caller_module (str): The name of the caller module. Use '__name__'.
         caller_line (int): The calling function line. Use 'ictoolkit.helpers.py_helper' to pull the line.
+
+    Raises:
+        AttributeError: The value '{value}' sent is not an accepted input.
+        AttributeError: No type or list of types has been entered for type validation.
+        AttributeError: The caller_module '{caller_module}' sent is not an accepted input.
+        AttributeError: The caller_line '{caller_line}' sent is not an accepted input.
+        TypeError: The value '{value}' is not in {required_type} format.
+        Exception: A general error has occurred while validating a value type.
 
     Calling Example:
         value_type_validation('My String', str, __name__, get_line_number())
@@ -290,6 +319,9 @@ def value_type_validation(value: any, required_type: Union[type, list], caller_m
     # ################################################################################################################################
     # Note: This module has to have manually formatted error output because the error_formatter uses this function to validate types.
     # ################################################################################################################################
+
+    warnings.warn('Version 2.5 of ictoolkit deprecation. This module has been replaced with the fchecker module. '
+                  'Please switch to using the fchecker module (pip install fchecker).', DeprecationWarning)
 
     # Verifies a value is sent.
     if (

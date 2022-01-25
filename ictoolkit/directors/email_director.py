@@ -13,20 +13,53 @@ from typing import Optional
 
 # Libraries
 from jinja2 import Environment, PackageLoader, select_autoescape
-
-# Own module
+from fchecker import type_check
 from ictoolkit.directors.encryption_director import encrypt_info
-from ictoolkit.directors.validation_director import value_type_validation
-from ictoolkit.directors.error_director import error_formatter
-from ictoolkit.helpers.py_helper import get_function_name, get_line_number
+from ictoolkit.helpers.py_helper import get_function_name
+
+# Exceptions
+from ictoolkit.directors.encryption_director import EncryptionFailure
+from fexception import FGeneralError, FTypeError, FCustomException
 
 __author__ = 'IncognitoCoding'
 __copyright__ = 'Copyright 2022, email_director'
 __credits__ = ['IncognitoCoding', 'Monoloch']
 __license__ = 'GPL'
-__version__ = '2.0'
+__version__ = '2.1'
 __maintainer__ = 'IncognitoCoding'
 __status__ = 'Production'
+
+
+class CreateTemplateFailure(Exception):
+    """
+    Exception raised for the template creation failure.
+
+    Args:
+        exc_message:\\
+        \t\\- The failure reason.
+    """
+    __module__ = 'builtins'
+
+    exc_message: str
+
+    def __init__(self, exc_message: str) -> None:
+        self.exc_message = exc_message
+
+
+class EmailSendFailure(Exception):
+    """
+    Exception raised for an email send failure.
+
+    Args:
+        exc_message:\\
+        \t\\- The failure reason.
+    """
+    __module__ = 'builtins'
+
+    exc_message: str
+
+    def __init__(self, exc_message: str) -> None:
+        self.exc_message = exc_message
 
 
 def create_template_email(email_template_name: str, email_template_path: str, **template_args: Optional[dict]) -> str:
@@ -34,22 +67,28 @@ def create_template_email(email_template_name: str, email_template_path: str, **
     Uses the jinja2 module to create a template with users passing email template arguments.
 
     Args:
-        email_template_name (str): The name of the template.
-        email_template_path (str): The full path to the templates directory.
-        **template_args(dict, optional): The template arguments are used to populate the HTML template variables. Defaults to None.
+        email_template_name (str):
+        \t\\- The name of the template.
+        email_template_path (str):
+        \t\\- The full path to the templates directory.
+        **template_args(dict, optional):
+        \t\\- The template arguments are used to populate the HTML template variables. Defaults to None.
 
     Raises:
-        TypeError: The value '{email_template_name}' is not in str format.
-        TypeError: The value '{email_template_path}' is not in str format.
-        TypeError: The value '{template_args}' is not in dict format.
-        Exception: Forwarding caught {type(error).__name__} at line {error.__traceback__.tb_lineno} in <{__name__}>
-        Exception: A general exception occurred during the value type validation.
-        ValueError: The email HTML template path does not exist.
-        Exception: Forwarding caught {type(error).__name__} at line {error.__traceback__.tb_lineno} in <{__name__}>
-        Exception: A general exception occurred while rendering the HTML template.
+        FTypeError (fexception):
+        \t\\- The value '{email_template_name}' is not in <class 'str'> format.
+        FTypeError (fexception):
+        \t\\- The value '{email_template_path}' is not in <class 'str'> format.
+        FTypeError (fexception):
+        \t\\- The value '{template_args}' is not in <class 'dict'> format.
+        CreateTemplateFailure:
+        \t\\- The email HTML template path does not exist.
+        FGeneralError (fexception):
+        \t\\- A general exception occurred while rendering the HTML template.
 
     Returns:
-        str: A formatted HTML email template with all the arguments updated.
+        str:
+        \t\\- A formatted HTML email template with all the arguments updated.
     """
     logger = logging.getLogger(__name__)
     logger.debug(f'=' * 20 + get_function_name() + '=' * 20)
@@ -58,48 +97,37 @@ def create_template_email(email_template_name: str, email_template_path: str, **
     logger_flowchart = logging.getLogger('flowchart')
     logger_flowchart.debug(f'Flowchart --> Function: {get_function_name()}')
 
-    # Checks function launch variables and logs passing parameters.
     try:
-        # Validates required types.
-        value_type_validation(email_template_name, str, __name__, get_line_number())
-        value_type_validation(email_template_path, str, __name__, get_line_number())
+        type_check(email_template_name, str)
+        type_check(email_template_path, str)
         if template_args:
-            value_type_validation(template_args, dict, __name__, get_line_number())
+            type_check(template_args, dict)
+    except FTypeError:
+        raise
 
-        # Requires pre-logger formatting because the logger can not use one line if/else or join without excluding sections of the the output.
-        if template_args:
-            formatted_template_args = '  - template_args (dict):\n        - ' + '\n        - '.join(': '.join((key, str(val))) for (key, val) in template_args.items())
-        else:
-            formatted_template_args = '  - template_args (dict):\n        - None'
+    if template_args:
+        formatted_template_args = ('  - template_args (dict):\n        - '
+                                   + '\n        - '.join(': '.join((key, str(val))) for (key, val) in template_args.items()))
+    else:
+        formatted_template_args = '  - template_args (dict):\n        - None'
 
-        logger.debug(
-            'Passing parameters:\n'
-            f'  - email_template_name (str):\n        - {email_template_name}\n'
-            f'  - email_template_path (str):\n        - {email_template_path}\n'
-            f'{formatted_template_args}\n'
-        )
-    except Exception as error:
-        if 'Originating error on line' in str(error):
-            logger.debug(f'Forwarding caught {type(error).__name__} at line {error.__traceback__.tb_lineno} in <{__name__}>')
-            raise error
-        else:
-            error_args = {
-                'main_message': 'A general exception occurred during the value type validation.',
-                'error_type': Exception,
-                'original_error': error,
-            }
-            error_formatter(error_args, __name__, error.__traceback__.tb_lineno)
+    logger.debug(
+        'Passing parameters:\n'
+        f'  - email_template_name (str):\n        - {email_template_name}\n'
+        f'  - email_template_path (str):\n        - {email_template_path}\n'
+        f'{formatted_template_args}\n'
+    )
 
     # Checks if the email_template_path exists.
     if not os.path.exists(email_template_path):
-        error_args = {
+        exc_args = {
             'main_message': 'The email HTML template path does not exist.',
-            'error_type': ValueError,
-            'expected_result': 'a valid email template path',
+            'custom_type': CreateTemplateFailure,
+            'expected_result': 'A valid email template path.',
             'returned_result': email_template_path,
             'suggested_resolution': 'Please verify you have set the correct path and try again.',
         }
-        error_formatter(error_args, __name__, get_line_number())
+        raise CreateTemplateFailure(FCustomException(exc_args))
 
     try:
         # Gets the main program module name.
@@ -117,95 +145,153 @@ def create_template_email(email_template_name: str, email_template_path: str, **
             autoescape=select_autoescape(['html', 'xml'])
         )
         template = env.get_template(email_template_name)
-
-        # Returns
+    except Exception as exc:
+        exc_args = {
+            'main_message': 'A general exception occurred while rendering the HTML template.',
+            'original_exception': exc,
+        }
+        raise FGeneralError(exc_args)
+    else:
         return template.render(**template_args)
-    except Exception as error:
-        if 'Originating error on line' in str(error):
-            logger.debug(f'Forwarding caught {type(error).__name__} at line {error.__traceback__.tb_lineno} in <{__name__}>')
-            raise error
-        else:
-            error_args = {
-                'main_message': 'A general exception occurred while rendering the HTML template.',
-                'error_type': Exception,
-                'original_error': error,
-            }
-            error_formatter(error_args, __name__, error.__traceback__.tb_lineno)
 
 
-def send_email(email_settings: dict, subject: str, body: Optional[str] = None, template_args: Optional[dict] = None) -> None:
+def send_email(email_settings: dict, subject: str, body: str = None, template_args: dict = None) -> None:
     """
-    This function offers many customized options when sending an email. Email can be sent with port 25 or using TLS. Email sections can be sent encrypted or unencrypted.
+    This function offers many customized options when sending an email.
 
-    Emails can be sent using two options (You must use one or the other for an email to send.).
-        - Non-HTML:
-            - These messages are basic non HTML emails. Multiple lines are supported.
-        - HTML:
-            - These messages use HTML templates that can have variables in the HTML template get populated with data. HTML will be preferred if both are configured. Templates and variables
-              require structure from HTMLs://jinja.palletsprojects.com. When using HTML, the jinja module is used in conjunction with some added features and simplified use from this function.
+    Email can be sent with port 25 or using TLS.
 
-    String encryption can be added to any string in an email with the email_settings variables setup and the string section identified as needing to be encrypted.
-    Any string section starting with @START-ENCRYPT@ and ending with @END-ENCRYPT@ will have that code section get encrypted and supported for the body or **template_args parameters.
-    The encrypted message will be in bytes format. Formatting needs in the template or body of the message.
-        - String Encryption Example1: <p>     Decryption Code:@START-ENCRYPT@This is my original string@END-ENCRYPT@</p>
-        - String Encryption Example2: @START-ENCRYPT@This is my original string@END-ENCRYPT@
+    Email sections can be sent encrypted or unencrypted.
 
-    Function parameters require the email settings to be sent in a dictionary format.
-    Encryption Requirements:
-        - The encrypt_info function is required when enabling message encryption.
-        - The decrypt_info function is required when decrypting the message.
-            - This function can be used outside the main program. The decrypt_info can be a small separate program or a website using flask.
-        - To create a random "salt" use this command "print("urandom16 Key:", os.urandom(16))"
+    Emails can be sent using one of two options:
+    \tNon-HTML:
+    \t\t\\- These messages are basic non HTML emails. Multiple lines are supported.
+    \tHTML:
+    \t\t\\- These messages use HTML templates that can have variables in the HTML template get populated with data.\\
+    \t\t\\- HTML will be preferred if both are configured.\\
+    \t\t\\- Templates and variables require structure from HTMLs://jinja.palletsprojects.com.\\
+    \t\t\\- When using HTML, the jinja module is used in conjunction with some added features and simplified use from this function.
+
+    Email Encryption:
+    \t String encryption can be added to any string in an email with the email_settings variables setup and\\
+    \t the string section identified as needing to be encrypted.
+
+    \t Any string section starting with @START-ENCRYPT@ and ending with @END-ENCRYPT@ will have that code section\\
+    \t get encrypted and supported for the body or **template_args parameters.
+
+    \t Encryption Requirements:
+    \t\t\\- The encrypt_info function is required when enabling message encryption.\\
+    \t\t\\- The decrypt_info function is required when decrypting the message.\\
+    \t\t\t\\- This function can be used outside the main program.\\
+    \t\t\t\\- The decrypt_info can be a small separate program or a website using flask.\\
+    \t\t\\- To create a random "salt" use this command "print("urandom16 Key:", os.urandom(16))"\\
+
+    \t Format Example:
+    \t\t\\- The encrypted message will be in bytes format. Formatting needs in the template or body of the message.\\
+    \t\t\t\\- Example1:
+    \t\t\t\t\\- <p>     Decryption Code:@START-ENCRYPT@This is my original string@END-ENCRYPT@</p>\\
+    \t\t\t\\- Example2:
+    \t\t\t\t\\- @START-ENCRYPT@This is my original string@END-ENCRYPT@\\
 
     Args:
-        email_settings (dict): Email settings constructed within a dictionary\n
-        - email_setting Keys/Values:\n
-            - smtp (str): SMTP server.
-            - authentication_required (bool): Enables authentication.
-            - use_tls (str): Enables TLS.
-            - username (str): Username for email authentication.
-            - password (str): Password for email authentication.
-            - from_email (str): From email address.
-            - to_email (str): To email address.
-            - attachment_path (str, optional): Allows sending an email attachment. Defaults to None.
-            - send_email_template (bool, optional): Allows sending an email with an HTML template. Defaults to False.
-            - email_template_name (str, optional): The template name. Defaults to None.
-            - email_template_path (str, optional): The template folder path. This directory will hold all HTML templates. This path is commonly the directory of the main program. Defaults to None.
-            - message_encryption_password (str, optional): Encryption password if encryption is enabled. Set to None if no encryption.
-            - message_encryption_random_salt (bytes, optional): Random salt in bytes format. Set to None if no encryption.\n
-        subject (str): Email subject information
-        body (str, optional): The email body is for raw non-HTML email messages. Adding a message to this body will override any template options and use a basic non-HTML email message. Defaults to None.
-        template_args(dict, optional): The template arguments are used to populate the HTML template variables. Defaults to None.
-            \\- Example (url is the passing parameter):
-                \\- <p><a href="{{ url }}">Decrypt</a></p>
+        email_settings (dict):
+        \t\\- Email settings constructed within a dictionary\\
+        subject (str):
+        \t\\- Email subject information\\
+        body (str, optional):
+        \t\\- The email body is for raw non-HTML email messages.\\
+        \t\\- Adding a message to this body will override any template options and use\\
+        \t   a basic non-HTML email message.\\
+        \t\\- Defaults to None.\\
+        template_args(dict, optional):
+        \t\\- The template arguments are used to populate the HTML template variables.\\
+        \t\\- Defaults to None.\\
+        \t\t\\- Example (url is the passing parameter):\\
+        \t\t\t\\- <p><a href="{{ url }}">Decrypt</a></p>\\
+
+    Arg Keys:
+        email_settings Keys:\\
+        \t\\- smtp (str):\\
+        \t\t\\- SMTP server.\\
+        \t\\- authentication_required (bool):\\
+        \t\t\\- Enables authentication.\\
+        \t\\- use_tls (str):\\
+        \t\t\\- Enables TLS.
+        \t\\- username (str):\\
+        \t\t\\- Username for email authentication.\\
+        \t\\- password (str):\\
+        \t\t\\- Password for email authentication.\\
+        \t\\- from_email (str):\\
+        \t\t\\- From email address.\\
+        \t\\- to_email (str):\\
+        \t\t\\- To email address.\\
+        \t\\- attachment_path (str, optional):\\
+        \t\t\\- Allows sending an email attachment.\\
+        \t\t\\- Defaults to None.\\
+        \t\\- send_email_template (bool, optional):\\
+        \t\t\\- Allows sending an email with an HTML template.\\
+        \t\t\\- Defaults to False.\\
+        \t\\- email_template_name (str, optional):\\
+        \t\t\\- The template name.\\
+        \t\t\\- Defaults to None.\\
+        \t\\- email_template_path (str, optional):\\
+        \t\t\\- The template folder path.\\
+        \t\t\\- This directory will hold all HTML templates.\\
+        \t\t\\- This path is commonly the directory of the main program.\\
+        \t\t\\- Defaults to None.\\
+        \t\\- message_encryption_password (str, optional):\\
+        \t\t\\- Encryption password if encryption is enabled.\\
+        \t\t\\- Set to None if no encryption.\\
+        \t\\- message_encryption_random_salt (bytes, optional):\\
+        \t\t\\- Random salt in bytes format.\\
+        \t\t\\- Set to None if no encryption.
 
     Raises:
-        TypeError: The value '{email_settings}' is not in dict format.
-        TypeError: The value '{subject}' is not in str format.
-        TypeError: The value '{body}' is not in str format.
-        TypeError: The value '{template_args}' is not in dict format.
-        Exception: Forwarding caught {type(error).__name__} at line {error.__traceback__.tb_lineno} in <{__name__}>
-        Exception: A general exception occurred during the value type validation.
-        Exception: An error occurred while sending the email. No body or template was sent.
-        Exception: Forwarding caught {type(error).__name__} at line {error.__traceback__.tb_lineno} in <{__name__}>
-        Exception: A general exception occurred while creating the email message body.
-        ValueError: The attachment path for the email message does not exist.
-        Exception: Forwarding caught {type(error).__name__} at line {error.__traceback__.tb_lineno} in <{__name__}>
-        Exception: A general exception occurred while preparing the email message structure.
-        Exception: Failed to initialize SMTP connection using TLS.
-        ValueError: Failed to send the email message. Connection to SMTP server failed.
-        ValueError: Failed to reach the SMTP server.\\
-            \\- Note: This error should be handled accordingly, or the calling program will exit if the SMTP server is offline.
-        Exception: A general exception occurred while sending the email message.
-        Exception: SMTP authentication is set to required but it is not supported by the server.
-        Exception: The SMTP server rejected the connection.
-        Exception: SMTP server authentication failed.
-        Exception: Incorrect username and/or password or authentication_required is not enabled or Less Secure Apps needs enabled in your gmail settings.
-        Exception: Incorrect username and/or password or the authentication_required setting is not enabled.
-        Exception: A general exception occurred while sending the email.
-        Exception: Forwarding caught {type(error).__name__} at line {error.__traceback__.tb_lineno} in <{__name__}>
-        Exception: Failed to send message. SMTP terminatation error occurred.
-        Exception: A general exception occurred while terminating the SMTP object.
+        FTypeError (fexception):
+        \t\\- The value '{email_settings}' is not in <class 'dict'> format.
+        FTypeError (fexception):
+        \t\\- The value '{subject}' is not in <class 'str'> format.
+        FTypeError (fexception):
+        \t\\- The value '{body}' is not in <class 'str'> format.
+        FTypeError (fexception):
+        \t\\- The value '{template_args}' is not in <class 'dict'> format.
+        EmailSendFailure:
+        \t\\- An error occurred while sending the email.
+        CreateTemplateFailure:
+        \t\\- The email HTML template path does not exist.
+        EncryptionFailure:
+        \t\\- A failure occurred while encrypting the message.
+        FGeneralError (fexception):
+        \t\\- A general exception occurred while creating the email message body.
+        EmailSendFailure:
+        \t\\- The attachment path for the email message does not exist.
+        FGeneralError (fexception):
+        \t\\- A general exception occurred while preparing the email message structure.
+        EmailSendFailure:
+        \t\\- Failed to initialize SMTP connection using TLS.
+        EmailSendFailure:
+        \t\\- Failed to send the email message. Connection to SMTP server failed.
+        EmailSendFailure:
+        \t\\- Failed to reach the SMTP server.
+        FGeneralError (fexception):
+        \t\\- A general exception occurred while sending the email message.
+        EmailSendFailure:
+        \t\\- SMTP authentication is set to required but it is not supported by the server.
+        EmailSendFailure:
+        \t\\- The SMTP server rejected the connection.
+        EmailSendFailure:
+        \t\\- SMTP server authentication failed.
+        EmailSendFailure:
+        \t\\- Incorrect username and/or password or authentication_required is not enabled\\
+        \t  or Less Secure Apps needs enabled in your gmail settings.
+        EmailSendFailure:
+        \t\\- Incorrect username and/or password or the authentication_required setting is not enabled.
+        FGeneralError (fexception):
+        \t\\- A general exception occurred while sending the email.
+        EmailSendFailure:
+        \t\\- Failed to send message. SMTP terminatation error occurred.
+        FGeneralError (fexception):
+        \t\\- A general exception occurred while terminating the SMTP object.
     """
     logger = logging.getLogger(__name__)
     logger.debug(f'=' * 20 + get_function_name() + '=' * 20)
@@ -214,45 +300,35 @@ def send_email(email_settings: dict, subject: str, body: Optional[str] = None, t
     logger_flowchart = logging.getLogger('flowchart')
     logger_flowchart.debug(f'Flowchart --> Function: {get_function_name()}')
 
-    # Checks function launch variables and logs passing parameters.
     try:
-        # Validates required types.
-        value_type_validation(email_settings, dict, __name__, get_line_number())
-        value_type_validation(subject, str, __name__, get_line_number())
+        type_check(email_settings, dict)
+        type_check(subject, str)
         if body:
-            value_type_validation(body, str, __name__, get_line_number())
+            type_check(body, str)
         if template_args:
-            value_type_validation(template_args, dict, __name__, get_line_number())
+            type_check(template_args, dict)
+    except FTypeError:
+        raise
 
-        # Requires pre-logger formatting because the logger can not use one line if/else or join without excluding sections of the the output.
-        formatted_email_settings = '  - email_settings (dict):\n        - ' + '\n        - '.join(': '.join((key, str(val))) for (key, val) in email_settings.items())
-        if body:
-            formatted_body = f'- email_template_name (str):\n        - {body}'
-        else:
-            formatted_body = f'- email_template_name (str):\n        - None'
-        if template_args:
-            formatted_template_args = '  - template_args (dict):\n        - ' + '\n        - '.join(': '.join((key, str(val))) for (key, val) in template_args.items())
-        else:
-            formatted_template_args = '  - template_args (dict):\n        - None'
+    formatted_email_settings = ('  - email_settings (dict):\n        - '
+                                + '\n        - '.join(': '.join((key, str(val))) for (key, val) in email_settings.items()))
+    if body:
+        formatted_body = f'- email_template_name (str):\n        - {body}'
+    else:
+        formatted_body = f'- email_template_name (str):\n        - None'
+    if template_args:
+        formatted_template_args = ('  - template_args (dict):\n        - '
+                                   + '\n        - '.join(': '.join((key, str(val))) for (key, val) in template_args.items()))
+    else:
+        formatted_template_args = '  - template_args (dict):\n        - None'
 
-        logger.debug(
-            'Passing parameters:\n'
-            f'{formatted_email_settings}\n'
-            f'  - subject (str):\n        - {subject}\n'
-            f'{formatted_body}\n'
-            f'{formatted_template_args}\n'
-        )
-    except Exception as error:
-        if 'Originating error on line' in str(error):
-            logger.debug(f'Forwarding caught {type(error).__name__} at line {error.__traceback__.tb_lineno} in <{__name__}>')
-            raise error
-        else:
-            error_args = {
-                'main_message': 'A general exception occurred during the value type validation.',
-                'error_type': Exception,
-                'original_error': error,
-            }
-            error_formatter(error_args, __name__, error.__traceback__.tb_lineno)
+    logger.debug(
+        'Passing parameters:\n'
+        f'{formatted_email_settings}\n'
+        f'  - subject (str):\n        - {subject}\n'
+        f'{formatted_body}\n'
+        f'{formatted_template_args}\n'
+    )
 
     logger.debug(f'Starting to send an email message')
 
@@ -275,13 +351,14 @@ def send_email(email_settings: dict, subject: str, body: Optional[str] = None, t
             logger.debug(f'Sending non-HTML email')
             email_body = body
         else:
-            error_args = {
-                'main_message': 'An error occurred while sending the email. No body or template was sent.',
-                'error_type': ValueError,
+            exc_args = {
+                'main_message': 'An error occurred while sending the email.',
+                'custom_type': EmailSendFailure,
+                'expected_result': 'Body or HTML Template',
+                'returned_result': 'No body or template was sent.',
                 'suggested_resolution': 'Ensure the body or template is being passed to the email_director module functions.',
             }
-            error_formatter(error_args, __name__, get_line_number())
-
+            raise EmailSendFailure(FCustomException(exc_args))
         # Holds the updating email body lines.
         updating_body = []
         # Checks the email for any encryption identifiers.
@@ -313,17 +390,18 @@ def send_email(email_settings: dict, subject: str, body: Optional[str] = None, t
         logger.debug(f'Setting the updated email body')
         # Converts the list back into a string with new lines for each entry.
         updated_body = "\n".join(updating_body)
-    except Exception as error:
-        if 'Originating error on line' in str(error):
-            logger.debug(f'Forwarding caught {type(error).__name__} at line {error.__traceback__.tb_lineno} in <{__name__}>')
-            raise error
-        else:
-            error_args = {
-                'main_message': 'A general exception occurred while creating the email message body.',
-                'error_type': Exception,
-                'original_error': error,
-            }
-            error_formatter(error_args, __name__, error.__traceback__.tb_lineno)
+    except CreateTemplateFailure:
+        raise
+    except EmailSendFailure:
+        raise
+    except EncryptionFailure:
+        raise
+    except Exception as exc:
+        exc_args = {
+            'main_message': 'A general exception occurred while creating the email message body.',
+            'original_exception': exc,
+        }
+        raise FGeneralError(exc_args)
 
     try:
         logger.debug('Preparing the email message structure')
@@ -349,16 +427,15 @@ def send_email(email_settings: dict, subject: str, body: Optional[str] = None, t
         if email_settings.get('attachment_path'):
             # Checks that the attachment file exists.
             attachment_path = os.path.abspath(email_settings.get('attachment_path'))
-            # Checks if the save_log_path exists and if not it will be created.
             if not os.path.exists(attachment_path):
-                error_args = {
+                exc_args = {
                     'main_message': 'The attachment path for the email message does not exist.',
-                    'error_type': ValueError,
-                    'expected_result': 'a valid email attachment path',
+                    'custom_type': EmailSendFailure,
+                    'expected_result': 'A valid email attachment path.',
                     'returned_result': attachment_path,
                     'suggested_resolution': 'Please verify you have set the correct path and try again.',
                 }
-                error_formatter(error_args, __name__, get_line_number())
+                raise EmailSendFailure(FCustomException(exc_args))
             # Gets the mime type to determine the type of message being sent.
             mime_type, _ = mimetypes.guess_type(attachment_path)
             # Gets the MIME type and subtype.
@@ -366,17 +443,14 @@ def send_email(email_settings: dict, subject: str, body: Optional[str] = None, t
             # Attaches the attachment to the message.
             with open(attachment_path, 'rb') as ap:
                 message.add_attachment(ap.read(), maintype=mime_type, subtype=mime_subtype, filename=os.path.basename(attachment_path))
-    except Exception as error:
-        if 'Originating error on line' in str(error):
-            logger.debug(f'Forwarding caught {type(error).__name__} at line {error.__traceback__.tb_lineno} in <{__name__}>')
-            raise error
-        else:
-            error_args = {
-                'main_message': 'A general exception occurred while preparing the email message structure.',
-                'error_type': Exception,
-                'original_error': error,
-            }
-            error_formatter(error_args, __name__, error.__traceback__.tb_lineno)
+    except EmailSendFailure:
+        raise
+    except Exception as exc:
+        exc_args = {
+            'main_message': 'A general exception occurred while preparing the email message structure.',
+            'original_exception': exc,
+        }
+        raise FGeneralError(exc_args)
 
     try:
         logger.debug('Setting up SMTP object')
@@ -389,46 +463,45 @@ def send_email(email_settings: dict, subject: str, body: Optional[str] = None, t
                 smtp_Object.ehlo()
                 logger.debug('Sending StartTLS message')
                 smtp_Object.starttls()
-            except Exception as error:
-                error_args = {
+            except Exception as exc:
+                exc_args = {
                     'main_message': 'Failed to initialize SMTP connection using TLS.',
-                    'error_type': Exception,
-                    'original_error': error,
+                    'custom_type': EmailSendFailure,
+                    'original_exception': exc
                 }
-                error_formatter(error_args, __name__, error.__traceback__.tb_lineno)
+                raise EmailSendFailure(FCustomException(exc_args))
         else:
             logger.debug('Opening connection to SMTP server on port 25')
             smtp_Object = smtplib.SMTP(email_settings.get('smtp'), 25)
-    except Exception as error:
-        if 'Originating error on line' in str(error):
-            logger.debug(f'Forwarding caught {type(error).__name__} at line {error.__traceback__.tb_lineno} in <{__name__}>')
-            raise error
+    except EmailSendFailure:
+        raise
+    except Exception as exc:
+        if (
+            "target machine actively refused it" in str(exc)
+            or "connected party did not properly respond after a period of time" in str(exc)
+            or "getaddrinfo failed" in str(exc)
+        ):
+            exc_args = {
+                'main_message': 'Failed to send the email message. Connection to SMTP server failed.',
+                'custom_type': EmailSendFailure,
+                'suggested_resolution': 'Ensure the server address and TLS options are set correctly.',
+                'original_exception': exc
+            }
+            raise EmailSendFailure(FCustomException(exc_args))
+        elif 'Connection unexpectedly closed' in str(exc):
+            exc_args = {
+                'main_message': 'Failed to reach the SMTP server.',
+                'custom_type': EmailSendFailure,
+                'suggested_resolution': 'Ensure SMTP is reachable.',
+                'original_exception': exc
+            }
+            raise EmailSendFailure(FCustomException(exc_args))
         else:
-            if (
-                "target machine actively refused it" in str(error)
-                or "connected party did not properly respond after a period of time" in str(error)
-                or "getaddrinfo failed" in str(error)
-            ):
-                error_args = {
-                    'main_message': 'Failed to send the email message. Connection to SMTP server failed.',
-                    'error_type': ValueError,
-                    'suggested_resolution': 'Ensure the server address and TLS options are set correctly.',
-                }
-                error_formatter(error_args, __name__, error.__traceback__.tb_lineno)
-            elif 'Connection unexpectedly closed' in str(error):
-                error_args = {
-                    'main_message': 'Failed to reach the SMTP server.',
-                    'error_type': ValueError,
-                    'suggested_resolution': 'Ensure SMTP is reachable.',
-                }
-                error_formatter(error_args, __name__, error.__traceback__.tb_lineno)
-            else:
-                error_args = {
-                    'main_message': 'A general exception occurred while sending the email message.',
-                    'error_type': Exception,
-                    'original_error': error,
-                }
-                error_formatter(error_args, __name__, error.__traceback__.tb_lineno)
+            exc_args = {
+                'main_message': 'A general exception occurred while sending the email message.',
+                'original_exception': exc,
+            }
+            raise FGeneralError(exc_args)
 
     # Sends email.
     try:
@@ -439,47 +512,48 @@ def send_email(email_settings: dict, subject: str, body: Optional[str] = None, t
             logger.debug('Sending the email')
 
         smtp_Object.sendmail(email_settings.get('from_email'), email_settings.get('to_email'), str(message).encode('utf-8').strip())
-    except Exception as error:
-        if 'Originating error on line' in str(error):
-            logger.debug(f'Forwarding caught {type(error).__name__} at line {error.__traceback__.tb_lineno} in <{__name__}>')
-            raise error
+    except Exception as exc:
+        if "SMTP AUTH extension not supported" in str(exc):
+            exc_args = {
+                'main_message': 'SMTP authentication is set to required but it is not supported by the server.',
+                'custom_type': EmailSendFailure,
+                'suggested_resolution': 'Try changing the INI [email] AuthenticationRequired value to False',
+                'original_exception': exc
+            }
+        elif "Client host rejected: Access denied" in str(exc):
+            exc_args = {
+                'main_message': 'The SMTP server rejected the connection.',
+                'custom_type': EmailSendFailure,
+                'suggested_resolution': 'Authentication may be required, ensure the INI [email] AuthenticationRequired is set correctly.',
+                'original_exception': exc
+            }
+        elif "authentication failed" in str(exc):
+            exc_args = {
+                'main_message': 'SMTP server authentication failed.',
+                'custom_type': EmailSendFailure,
+                'suggested_resolution': 'Ensure the INI [email] Username and Password are set correctly.',
+                'original_exception': exc
+            }
+        elif " Authentication Required. Learn more at\n5.7.0  HTMLs://support.google.com" in str(exc):
+            exc_args = {
+                'main_message': 'Incorrect username and/or password or authentication_required is not enabled or Less Secure Apps needs enabled in your gmail settings.',
+                'custom_type': EmailSendFailure,
+                'original_exception': exc
+            }
+        elif "Authentication Required" in str(exc):
+            exc_args = {
+                'main_message': 'Incorrect username and/or password or the authentication_required setting is not enabled.',
+                'custom_type': EmailSendFailure,
+                'original_exception': exc
+            }
         else:
-            if "SMTP AUTH extension not supported" in str(error):
-                error_args = {
-                    'main_message': 'SMTP authentication is set to required but it is not supported by the server.',
-                    'error_type': Exception,
-                    'suggested_resolution': 'Try changing the INI [email] AuthenticationRequired value to False',
-                }
-            elif "Client host rejected: Access denied" in str(error):
-                error_args = {
-                    'main_message': 'The SMTP server rejected the connection.',
-                    'error_type': Exception,
-                    'suggested_resolution': 'Authentication may be required, ensure the INI [email] AuthenticationRequired is set correctly',
+            exc_args = {
+                'main_message': 'A general exception occurred while sending the email.',
+                'original_exception': exc,
+            }
+            raise FGeneralError(exc_args)
 
-                }
-            elif "authentication failed" in str(error):
-                error_args = {
-                    'main_message': 'SMTP server authentication failed.',
-                    'error_type': Exception,
-                    'suggested_resolution': 'Ensure the INI [email] Username and Password are set correctly.',
-                }
-            elif " Authentication Required. Learn more at\n5.7.0  HTMLs://support.google.com" in str(error):
-                error_args = {
-                    'main_message': 'Incorrect username and/or password or authentication_required is not enabled or Less Secure Apps needs enabled in your gmail settings.',
-                    'error_type': Exception,
-                }
-            elif "Authentication Required" in str(error):
-                error_args = {
-                    'main_message': 'Incorrect username and/or password or the authentication_required setting is not enabled.',
-                    'error_type': Exception,
-                }
-            else:
-                error_args = {
-                    'main_message': 'A general exception occurred while sending the email.',
-                    'error_type': Exception,
-                    'original_error': error,
-                }
-            error_formatter(error_args, __name__, error.__traceback__.tb_lineno)
+        raise EmailSendFailure(FCustomException(exc_args))
 
     finally:
 
@@ -487,21 +561,17 @@ def send_email(email_settings: dict, subject: str, body: Optional[str] = None, t
             logger.debug(f'Terminating SMTP object')
             # Terminating SMTP object.
             smtp_Object.quit()
-        except Exception as error:
-            if 'Originating error on line' in str(error):
-                logger.debug(f'Forwarding caught {type(error).__name__} at line {error.__traceback__.tb_lineno} in <{__name__}>')
-                raise error
+        except Exception as exc:
+            if 'Failed to send message' in str(exc):
+                exc_args = {
+                    'main_message': 'Failed to send message. SMTP terminatation error occurred.',
+                    'custom_type': EmailSendFailure,
+                    'original_exception': exc
+                }
+                raise EmailSendFailure(FCustomException(exc_args))
             else:
-                if 'Failed to send message' in str(error):
-                    error_args = {
-                        'main_message': 'Failed to send message. SMTP terminatation error occurred.',
-                        'error_type': Exception,
-                        'original_error': error,
-                    }
-                else:
-                    error_args = {
-                        'main_message': 'A general exception occurred while terminating the SMTP object.',
-                        'error_type': Exception,
-                        'original_error': error,
-                    }
-                error_formatter(error_args, __name__, error.__traceback__.tb_lineno)
+                exc_args = {
+                    'main_message': 'A general exception occurred while terminating the SMTP object.',
+                    'original_exception': exc,
+                }
+                raise FGeneralError(exc_args)

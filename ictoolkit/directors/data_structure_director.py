@@ -5,53 +5,80 @@ This module is designed to offer data structure functions. These data structures
 import re
 import logging
 from itertools import groupby
-from typing import Optional
 from typing import Union
 
-# Own module
-from ictoolkit.directors.validation_director import value_type_validation
-from ictoolkit.directors.error_director import error_formatter
-from ictoolkit.helpers.py_helper import get_function_name, get_line_number
+# Libraries
+from ictoolkit.helpers.py_helper import get_function_name
+from fchecker import type_check
+
+# Exceptions
+from fexception import FGeneralError, FKeyError, FTypeError, FValueError
 
 __author__ = 'IncognitoCoding'
 __copyright__ = 'Copyright 2022, data_structure_director'
 __credits__ = ['IncognitoCoding']
 __license__ = 'GPL'
-__version__ = '2.0'
+__version__ = '2.1'
 __maintainer__ = 'IncognitoCoding'
 __status__ = 'Production'
 
 
-def remove_duplicate_dict_values_in_list(list_dictionary: list, element_number: Optional[int] = None) -> list:
+def remove_duplicate_dict_values_in_list(list_dictionary: list, element_number: int = None) -> list:
     """
-    Removes duplicate values in a dictionary within a list and returns the same list minus duplicates.
+    Removes duplicate values in a dictionary within a list and returns
+    the same list minus duplicates.
 
-    This function will convert a list of dictionaries into a list of tuples that contains items of the dictionary for duplicate removal.
+    This function will convert a list of dictionaries into a list of tuples
+    that contains items of the dictionary for duplicate removal.
 
-    A list of dictionaries are sometimes needed to be sorted based off a specific element in the dictionary entry. This function offers the ability to choose which element number to use for matching
+    A list of dictionaries are sometimes needed to be sorted based off a specific
+    element in the dictionary entry.
+
+    This function offers the ability to choose which element number to use for matching
     or match the entire dictionary element.
-    - Element Number Example: [{'search_entry': '|Error|', 'found_entry': 'the entry found'}, {'search_entry': '|Warning|', 'found_entry': 'the entry found'}]
-        - Element Number 'None' would check match on ('search_entry': '|Error|', 'found_entry': 'the entry found') & ('search_entry': '|Warning|', 'found_entry': 'the entry found')
-            - No match would occur, and both entries would dictionary entries would return.
-                - Return: [{'search_entry': '|Error|', 'found_entry': 'the entry found'}, {'search_entry': '|Warning|', 'found_entry': 'the entry found'}]
-        - Element Number 1 would check match on ('found_entry': 'the entry found') & ('found_entry': 'the entry found')
-            - A match would occur, and only one dictionary entry would return.
-                - Return: [{'search_entry': '|Error|', 'found_entry': 'the entry found'}]
-
-    Raises:
-        TypeError: The value '{list_dictionary}' is not in list format.
-        TypeError: The value '{element_number}' is not in int format.
-        Exception: Forwarding caught {type(error).__name__} at line {error.__traceback__.tb_lineno} in <{__name__}>
-        Exception: A general exception occurred during the value type validation.
-        Exception: Forwarding caught {type(error).__name__} at line {error.__traceback__.tb_lineno} in <{__name__}>
-        Exception: A failure occurred removing duplicates from the dictionary in the list.
 
     Args:
-        list_dictionary (list): A dictionary with duplicate values in a list.
-        element_number (int, optional): Enter the dictionary element number when matching based on a specific dictionary element in the dictionary line. Defaults to None for a full match.
+        list_dictionary (list):
+        \t\\- A dictionary with duplicate values in a list.
+        element_number (int, optional):
+        \t\\- Enter the dictionary element number when matching based on a specific dictionary\\
+        \t   element in the dictionary line.\\
+        \t\\- Defaults to None for a full match.
+
+    Calling Examples:\\
+    \tList Dictionary Example:\\
+    \t\t\\- list_dictionary = [{'search_entry': '|Error|',
+    \t\t\t\t\t       'found_entry': 'the entry found'},
+    \t\t\t\t\t       {'search_entry': '|Warning|',
+    \t\t\t\t\t       'found_entry': 'the entry found'}]
+    \tMatch Dictionary Example:\\
+    \t\t\\- element_number = None
+    \t\t\t\\- Match On:
+    \t\t\t\t\\- ('search_entry': '|Error|', 'found_entry': 'the entry found')\\
+    \t\t\t\t\\- ('search_entry': '|Warning|', 'found_entry': 'the entry found')
+    \t\t\t\\- No match would occur, and both dictionary entries would return.\\
+    \t\t\t\\- Return:
+    \t\t\t\t\\- [{'search_entry': '|Error|', 'found_entry': 'the entry found'},
+    \t\t\t\t   {'search_entry': '|Warning|', 'found_entry': 'the entry found'}]
+    \t\t\\- element_number = 1
+    \t\t\t\\- Match On:
+    \t\t\t\t\\- ('found_entry': 'the entry found')
+    \t\t\t\t\\- ('found_entry': 'the entry found')
+    \t\t\t\\- A match would occur, and only one dictionary entry would return.
+    \t\t\t\t\\- Return:
+    \t\t\t\t\\- [{'search_entry': '|Error|', 'found_entry': 'the entry found'}]
+
+    Raises:
+        FTypeError (fexception):
+        \t\\- The value '{list_dictionary}' is not in <class 'list'> format.
+        FTypeError (fexception):
+        \t\\- The value '{element_number}' is not in <class 'int'> format.
+        FGeneralError (fexception):
+        \t\\- A general failure occurred removing duplicates from the dictionary in the list.
 
     Returns:
-        list: A list of dictionars with duplicate values removed.
+        list:\\
+        \t\\- A list of dictionars with duplicate values removed.
     """
     logger = logging.getLogger(__name__)
     logger.debug(f'=' * 20 + get_function_name() + '=' * 20)
@@ -60,41 +87,30 @@ def remove_duplicate_dict_values_in_list(list_dictionary: list, element_number: 
     logger_flowchart = logging.getLogger('flowchart')
     logger_flowchart.debug(f'Flowchart --> Function: {get_function_name()}')
 
-    # Checks function launch variables and logs passing parameters.
     try:
-        # Validates required types.
-        value_type_validation(list_dictionary, list, __name__, get_line_number())
+        type_check(list_dictionary, list)
         if element_number:
-            value_type_validation(element_number, int, __name__, get_line_number())
+            type_check(element_number, int)
+    except FTypeError:
+        raise
 
-        formatted_list_dictionary = '  - list_dictionary (list):' + str('\n        - ' + '\n        - '.join(map(str, list_dictionary)))
-        if element_number:
-            formatted_element_number = f'  - element_number (int):\n        - {element_number}'
-        else:
-            formatted_element_number = f'  - element_number (int):\n        - None'
+    formatted_list_dictionary = '  - list_dictionary (list):' + str('\n        - ' + '\n        - '.join(map(str, list_dictionary)))
+    if element_number:
+        formatted_element_number = f'  - element_number (int):\n        - {element_number}'
+    else:
+        formatted_element_number = f'  - element_number (int):\n        - None'
+    logger.debug(
+        'Passing parameters:\n'
+        f'{formatted_list_dictionary}\n '
+        f'{formatted_element_number}\n'
+    )
 
-        logger.debug(
-            'Passing parameters:\n'
-            f'{formatted_list_dictionary}\n '
-            f'{formatted_element_number}\n'
-        )
-    except Exception as error:
-        if 'Originating error on line' in str(error):
-            logger.debug(f'Forwarding caught {type(error).__name__} at line {error.__traceback__.tb_lineno} in <{__name__}>')
-            raise error
-        else:
-            error_args = {
-                'main_message': 'A general exception occurred during the value type validation.',
-                'error_type': Exception,
-                'original_error': error,
-            }
-            error_formatter(error_args, __name__, error.__traceback__.tb_lineno)
+    # Holds temporary found elements for comparison.
+    element_found = set()
+    # Stores the revised list that does not contain any duplicates.
+    revised_list = []
 
     try:
-        # Holds temporary found elements for comparison.
-        element_found = set()
-        # Stores the revised list that does not contain any duplicates.
-        revised_list = []
 
         # Loops through each dictionary in the list
         for dictionary_in_list in list_dictionary:
@@ -123,55 +139,82 @@ def remove_duplicate_dict_values_in_list(list_dictionary: list, element_number: 
 
                     # Adds the full dictionary_in_list to the list because it is not a duplicate.
                     revised_list.append(dictionary_in_list)
-    except Exception as error:
-        if 'Originating error on line' in str(error):
-            logger.debug(f'Forwarding caught {type(error).__name__} at line {error.__traceback__.tb_lineno} in <{__name__}>')
-            raise error
-        else:
-            error_args = {
-                'main_message': 'A failure occurred removing duplicates from the dictionary in the list.',
-                'error_type': Exception,
-                'original_error': error,
-            }
-            error_formatter(error_args, __name__, error.__traceback__.tb_lineno)
+    except Exception as exc:
+        exc_args = {
+            'main_message': 'A general failure occurred removing duplicates from the dictionary in the list.',
+            'original_exception': exc,
+        }
+        raise FGeneralError(exc_args)
     else:
         return revised_list
 
 
 def get_list_of_dicts_duplicates(key: str, list_dictionary: list, grouped: bool = False) -> Union[list, dict, None]:
     """
-    Finds duplicate dictionary values in the list using the key and return the value and index points. Duplicates can be either un-grouped or grouped. Default is un-grouped.
+    Finds duplicate dictionary values in the list using the key and return the value and index points.
+
+    Duplicates can be either un-grouped or grouped. Default is un-grouped.
+
     Returning both the duplicate and original list index points allows any modification or additional data search when the duplicates return.
 
     A key is required to find all duplicates for that key.
 
-    Calling Example List of Dictionaries: [{'key1': 'ValueA'}, {'key1': 'ValueA'}, {'key1': 'ValueA'}, {'key1': 'ValueB'}, {'key1': 'ValueB'}, {'key1': 'ValueC'}, {'key1': 'ValueD'}]
+    Calling Examples:\\
+    \tExamples:\\
+    \t\t\\- key = key1
+    \t\t\\- list_dictionary = [{'key1': 'ValueA'},
+    \t\t\t\t\t      {'key1': 'ValueA'},
+    \t\t\t\t\t      {'key1': 'ValueA'},
+    \t\t\t\t\t      {'key1': 'ValueB'},
+    \t\t\t\t\t      {'key1': 'ValueB'},
+    \t\t\t\t\t      {'key1': 'ValueC'},
+    \t\t\t\t\t      {'key1': 'ValueD'}]
 
     Args:
-        key (str): the dictionary key that needs to get all duplicate values assigned to that ke
-        list_dictionary (list): dictionary with duplicate values in a list
-        grouped (bool): enables grouping of duplicate values. Disabled by default
+        key (str):
+        \t\\- the dictionary key that needs to get all duplicate values assigned to that ke
+        list_dictionary (list):
+        \t\\- dictionary with duplicate values in a list
+        grouped (bool):
+        \t\\- enables grouping of duplicate values.\\
+        \t\\- Disabled by default
 
     Raises:
-        TypeError: The value '{key}' is not in str format.
-        TypeError: The value '{list_dictionary}' is not in list format.
-        TypeError: The value '{grouped}' is not in bool format.
-        Exception: Forwarding caught {type(error).__name__} at line {error.__traceback__.tb_lineno} in <{__name__}>
-        Exception: A general exception occurred during the value type validation.
-        Exception: Forwarding caught {type(error).__name__} at line {error.__traceback__.tb_lineno} in <{__name__}>
-        Exception: A failure occurred getting duplicate values the list.
-        Exception: Forwarding caught {type(error).__name__} at line {error.__traceback__.tb_lineno} in <{__name__}>
-        Exception: A general failure occurred getting duplicate values from the key ({key}) in the list_dictionary.
-        Exception: Forwarding caught {type(error).__name__} at line {error.__traceback__.tb_lineno} in <{__name__}>
-        Exception: A genearl failure occurred grouping duplicate values.
+        FTypeError (fexception):
+        \t\\- The value '{key}' is not in <class 'str'> format.
+        FTypeError (fexception):
+        \t\\- The value '{list_dictionary}' is not in <class 'list'> format.
+        FTypeError (fexception):
+        \t\\- The value '{grouped}' is not in <class 'bool'> format.
+        FKeyError (fexception):
+        \t\\- A failure occurred getting duplicate values the list.
+        FGeneralError (fexception):
+        \t\\- A general failure occurred getting duplicate values from the key ({key}) in the list_dictionary.
+        FGeneralError (fexception):
+        \t\\- A genearl failure occurred grouping duplicate values.
 
     Returns:
-        list: the default return option is un-grouped duplicate values in dictionary format in a list
-        dict: enabling grouped will return the duplicate values grouped in a dictionary with individual nested groupings
-        None: if no duplicates are detected, a value of "None" will be returned
+        Union[list, dict, None]:
+        \t\\- list:\\
+        \t\t\\- The default return option is un-grouped duplicate values in dictionary format in a list.
+        \t\\- dict:\\
+        \t\t\\- Enabling grouped will return the duplicate values grouped in a dictionary with individual nested groupings.
+        \t\\- None:\\
+        \t\t\\- If no duplicates are detected, a value of "None" will be returned.
 
-        Return Example (Un-Grouped): [{'index': 0, 'value': 'ValueA'}, {'index': 1, 'value': 'ValueA'}, {'index': 2, 'value': 'ValueA'}, {'index': 3, 'value': 'ValueB'}, {'index': 4, 'value': 'ValueB'}]
-        Return Example (Grouped): {'ValueA': [{'index': 0, 'value': 'ValueA'}, {'index': 1, 'value': 'ValueA'}, {'index': 2, 'value': 'ValueA'}], 'ValueB': [{'index': 3, 'value': 'ValueB'}, {'index': 4, 'value': 'ValueB'}]}
+    Return Examples:\\
+    \tUn-Grouped:\\
+    \t\t\\- [{'index': 0, 'value': 'ValueA'},
+    \t\t   {'index': 1, 'value': 'ValueA'},
+    \t\t   {'index': 2, 'value': 'ValueA'},
+    \t\t   {'index': 3, 'value': 'ValueB'},
+    \t\t   {'index': 4, 'value': 'ValueB'}]
+    \tGrouped:\\
+    \t\t\\- {'ValueA': [{'index': 0, 'value': 'ValueA'},
+    \t\t\t\t   {'index': 1, 'value': 'ValueA'},
+    \t\t\t\t   {'index': 2, 'value': 'ValueA'}],
+    \t\t    'ValueB': [{'index': 3, 'value': 'ValueB'},
+    \t\t\t\t   {'index': 4, 'value': 'ValueB'}]}
     """
     logger = logging.getLogger(__name__)
     logger.debug(f'=' * 20 + get_function_name() + '=' * 20)
@@ -180,32 +223,20 @@ def get_list_of_dicts_duplicates(key: str, list_dictionary: list, grouped: bool 
     logger_flowchart = logging.getLogger('flowchart')
     logger_flowchart.debug(f'Flowchart --> Function: {get_function_name()}')
 
-    # Checks function launch variables and logs passing parameters.
     try:
-        # Validates required types.
-        value_type_validation(key, str, __name__, get_line_number())
-        value_type_validation(list_dictionary, list, __name__, get_line_number())
-        value_type_validation(grouped, bool, __name__, get_line_number())
+        type_check(key, str)
+        type_check(list_dictionary, list)
+        type_check(grouped, bool)
+    except FTypeError:
+        raise
 
-        formatted_list_dictionary = '  - list_dictionary (list):' + str('\n        - ' + '\n        - '.join(map(str, list_dictionary)))
-
-        logger.debug(
-            'Passing parameters:\n'
-            f'  - key (int):\n        - {key}\n'
-            f'{formatted_list_dictionary}\n'
-            f'  - grouped (bool):\n        - {grouped}\n'
-        )
-    except Exception as error:
-        if 'Originating error on line' in str(error):
-            logger.debug(f'Forwarding caught {type(error).__name__} at line {error.__traceback__.tb_lineno} in <{__name__}>')
-            raise error
-        else:
-            error_args = {
-                'main_message': 'A general exception occurred during the value type validation.',
-                'error_type': Exception,
-                'original_error': error,
-            }
-            error_formatter(error_args, __name__, error.__traceback__.tb_lineno)
+    formatted_list_dictionary = '  - list_dictionary (list):' + str('\n        - ' + '\n        - '.join(map(str, list_dictionary)))
+    logger.debug(
+        'Passing parameters:\n'
+        f'  - key (int):\n        - {key}\n'
+        f'{formatted_list_dictionary}\n'
+        f'  - grouped (bool):\n        - {grouped}\n'
+    )
 
     try:
         # Temporary storage for unique items.
@@ -235,26 +266,20 @@ def get_list_of_dicts_duplicates(key: str, list_dictionary: list, grouped: bool 
                         # The value will be the key and the index will be the value.
                         # This will allow the ease if finding all index points for a specific value.
                         duplicate_list_dictionary.append({'index': index, 'value': value})
-    except KeyError as error:
-        error_args = {
+    except KeyError:
+        exc_args = {
             'main_message': 'A failure occurred getting duplicate values the list.',
-            'error_type': KeyError,
-            'expected_result': f'  - The searching key ({key}) existing in the dictionary',
-            'returned_result': f'  - The searching key ({key}) does not existing in the dictionary ({list_dictionary})',
+            'expected_result': f'The searching key ({key}) existing in the dictionary',
+            'returned_result': f'The searching key ({key}) does not existing in the dictionary ({list_dictionary})',
             'suggested_resolution': 'Please verify you have set all required keys and try again.',
         }
-        error_formatter(error_args, __name__, error.__traceback__.tb_lineno)
-    except Exception as error:
-        if 'Originating error on line' in str(error):
-            logger.debug(f'Forwarding caught {type(error).__name__} at line {error.__traceback__.tb_lineno} in <{__name__}>')
-            raise error
-        else:
-            error_args = {
-                'main_message': f'A general failure occurred getting duplicate values from the key ({key}) in the list_dictionary.',
-                'error_type': Exception,
-                'original_error': error,
-            }
-            error_formatter(error_args, __name__, error.__traceback__.tb_lineno)
+        raise FKeyError(exc_args)
+    except Exception as exc:
+        exc_args = {
+            'main_message': f'A general failure occurred getting duplicate values from the key ({key}) in the list_dictionary.',
+            'original_exception': exc,
+        }
+        raise FGeneralError(exc_args)
     else:
         # Checks that duplicates exist.
         if duplicate_list_dictionary:
@@ -269,17 +294,12 @@ def get_list_of_dicts_duplicates(key: str, list_dictionary: list, grouped: bool 
                         # Gets matching entries based on the "value" key and adds them to the grouped dictionary.
                         grouped[entry['value']] = grouped.get(entry['value'], [])
                         grouped[entry['value']].append(entry)
-                except Exception as error:
-                    if 'Originating error on line' in str(error):
-                        logger.debug(f'Forwarding caught {type(error).__name__} at line {error.__traceback__.tb_lineno} in <{__name__}>')
-                        raise error
-                    else:
-                        error_args = {
-                            'main_message': f'A genearl failure occurred grouping duplicate values.',
-                            'error_type': Exception,
-                            'original_error': error,
-                        }
-                        error_formatter(error_args, __name__, error.__traceback__.tb_lineno)
+                except Exception as exc:
+                    exc_args = {
+                        'main_message': 'A genearl failure occurred grouping duplicate values.',
+                        'original_exception': exc,
+                    }
+                    raise FGeneralError(exc_args)
                 else:
                     # Returns grouped duplicates.
                     return grouped
@@ -290,37 +310,79 @@ def get_list_of_dicts_duplicates(key: str, list_dictionary: list, grouped: bool 
             return None
 
 
-def get_list_duplicates(duplicates: list, match_index: Optional[int] = None, grouped: bool = False) -> Union[list, dict, None]:
+def get_list_duplicates(duplicates: list, match_index: int = None, grouped: bool = False) -> Union[list, dict, None]:
     """
-    Finds duplicate entries in the list return the value and index points. Duplicates can be either un-grouped or grouped. Default is un-grouped.
-    Returning both the duplicate and original list index points allows any modification or additional data search when the duplicates return.
+    Finds duplicate entries in the list return the value and index points.
 
-    Calling Example List1: ['ValueA', 'ValueA', 'ValueA', 'ValueB', 'ValueB', 'ValueC', 'ValueD']
-    Calling Example List2: [['ValueA', 'ValueB'], ['ValueA', 'ValueB'], ['ValueD', 'ValueB'], ['ValueB'], ['ValueB']
-    Calling Example List3: [('ValueA', 'ValueB'), ('ValueA', 'ValueB'), ('ValueD', 'ValueB'), ('ValueB'), ('ValueB')]
+    Duplicates can be either un-grouped or grouped. Default is un-grouped.
+
+    Returning both the duplicate and original list index points allows any modification\\
+    or additional data search when the duplicates return.
 
     Args:
-        duplicates (list): list with duplicate strings, a list with duplicate list index, a list with duplicate lists, a list with duplicate tuple index, and a list with duplicate tuple lists
-        match_index (int, optional): if the entries in the lists are a list the index can be set to match on a specific index in the list. Defaults to None.
-        grouped (bool): enables grouping of duplicate values. Defaults to False.
+        duplicates (list):
+        \t\\- List with duplicate strings, a list with duplicate list index,\\
+        \t  a list with duplicate lists, a list with duplicate tuple index, and a list with duplicate tuple lists.
+        match_index (int, optional):
+        \t\\- If the entries in the lists are a list the index can be set to match on a specific index in the list.\\
+        \t\\- Defaults to None.
+        grouped (bool):
+        \t\\- Enables grouping of duplicate values.\\
+        \t\\- Defaults to False.
+
+    Calling Examples:\\
+    \tExample1:
+    \t\t\\- duplicates = ['ValueA',
+    \t\t\t\t\t'ValueA',
+    \t\t\t\t\t'ValueA',
+    \t\t\t\t\t'ValueB',
+    \t\t\t\t\t'ValueB',
+    \t\t\t\t\t'ValueC',
+    \t\t\t\t\t'ValueD']
+    \tExample2:\\
+    \t\t\\- duplicates = [['ValueA', 'ValueB'],
+    \t\t\t\t\t['ValueA', 'ValueB'],
+    \t\t\t\t\t['ValueD', 'ValueB'],
+    \t\t\t\t\t['ValueB'], ['ValueB']
+    \tExample3:\\
+    \t\t\\- duplicates = [('ValueA', 'ValueB'),
+    \t\t\t\t\t('ValueA', 'ValueB'),
+    \t\t\t\t\t('ValueD', 'ValueB'),
+    \t\t\t\t\t('ValueB'), ('ValueB')]
 
     Raises:
-        TypeError: The value '{duplicates}' is not in list format.
-        TypeError: The value '{match_index}' is not in bool format.
-        Exception: Forwarding caught {type(error).__name__} at line {error.__traceback__.tb_lineno} in <{__name__}>
-        Exception: A general exception occurred during the value type validation.
-        Exception: Forwarding caught {type(error).__name__} at line {error.__traceback__.tb_lineno} in <{__name__}>
-        Exception: A general failure occurred getting duplicate values the list.
-        Exception: Forwarding caught {type(error).__name__} at line {error.__traceback__.tb_lineno} in <{__name__}>
-        Exception: A general failure occurred grouping duplicate values.
+        FTypeError (fexception):
+        \t\\- The value '{duplicates}' is not in <class 'list'> format.
+        FTypeError (fexception):
+        \t\\- The value '{match_index}' is not in <class 'int'> format.
+        FTypeError (fexception):
+        \t\\- The value '{grouped}' is not in <class 'bool'> format.
+        FGeneralError: A general failure occurred getting duplicate values the list.
+        FGeneralError: A general failure occurred grouping duplicate values.
+
 
     Returns:
-        list: the default return option is un-grouped duplicate values in dictionary format in a list
-        dict: enabling grouped will return the duplicate values grouped in a dictionary with individual nested groupings
-        None: if no duplicates are detected, a value of "None" will be returned
+        Union[list, dict, None]:
+        \t\\- list:\\
+        \t\t\\- The default return option is un-grouped duplicate values in dictionary format in a list.
+        \t\\- dict:\\
+        \t\t\\- Enabling grouped will return the duplicate values grouped in a dictionary with individual nested groupings.
+        \t\\- None:\\
+        \t\t\\- If no duplicates are detected, a value of "None" will be returned.
 
-        Return Example (Un-Grouped): [{'index': 0, 'value': 'ValueA'}, {'index': 1, 'value': 'ValueA'}, {'index': 2, 'value': 'ValueA'}, {'index': 3, 'value': 'ValueB'}, {'index': 4, 'value': 'ValueB'}]
-        Return Example (Grouped): {'ValueA': [{'index': 0, 'value': 'ValueA'}, {'index': 1, 'value': 'ValueA'}, {'index': 2, 'value': 'ValueA'}], 'ValueB': [{'index': 3, 'value': 'ValueB'}, {'index': 4, 'value': 'ValueB'}]}
+    Return Examples:\\
+    \tUn-Grouped:\\
+    \t\t\\- [{'index': 0, 'value': 'ValueA'},
+    \t\t   {'index': 1, 'value': 'ValueA'},
+    \t\t   {'index': 2, 'value': 'ValueA'},
+    \t\t   {'index': 3, 'value': 'ValueB'},
+    \t\t   {'index': 4, 'value': 'ValueB'}]
+    \tGrouped:\\
+    \t\t\\- {'ValueA': [{'index': 0, 'value': 'ValueA'},
+    \t\t\t\t   {'index': 1, 'value': 'ValueA'},
+    \t\t\t\t   {'index': 2, 'value': 'ValueA'}],
+    \t\t    'ValueB': [{'index': 3, 'value': 'ValueB'},
+    \t\t\t\t   {'index': 4, 'value': 'ValueB'}]}
     """
     logger = logging.getLogger(__name__)
     logger.debug(f'=' * 20 + get_function_name() + '=' * 20)
@@ -329,37 +391,25 @@ def get_list_duplicates(duplicates: list, match_index: Optional[int] = None, gro
     logger_flowchart = logging.getLogger('flowchart')
     logger_flowchart.debug(f'Flowchart --> Function: {get_function_name()}')
 
-    # Checks function launch variables and logs passing parameters.
     try:
-        # Validates required types.
-        value_type_validation(duplicates, list, __name__, get_line_number())
+        type_check(duplicates, list,)
         if match_index:
-            value_type_validation(match_index, int, __name__, get_line_number())
-        value_type_validation(grouped, bool, __name__, get_line_number())
+            type_check(match_index, int)
+        type_check(grouped, bool)
+    except FTypeError:
+        raise
 
-        formatted_duplicates = '  - duplicates (list):' + str('\n        - ' + '\n        - '.join(map(str, duplicates)))
-        if match_index:
-            formatted_match_index = f'  - match_index (int):\n        - {match_index}'
-        else:
-            formatted_match_index = f'  - match_index (int):\n        - None'
-
-        logger.debug(
-            'Passing parameters:\n'
-            f'{formatted_duplicates}\n'
-            f'{formatted_match_index}\n'
-            f'  - grouped (bool):\n        - {grouped}\n'
-        )
-    except Exception as error:
-        if 'Originating error on line' in str(error):
-            logger.debug(f'Forwarding caught {type(error).__name__} at line {error.__traceback__.tb_lineno} in <{__name__}>')
-            raise error
-        else:
-            error_args = {
-                'main_message': 'A general exception occurred during the value type validation.',
-                'error_type': Exception,
-                'original_error': error,
-            }
-            error_formatter(error_args, __name__, error.__traceback__.tb_lineno)
+    formatted_duplicates = '  - duplicates (list):' + str('\n        - ' + '\n        - '.join(map(str, duplicates)))
+    if match_index:
+        formatted_match_index = f'  - match_index (int):\n        - {match_index}'
+    else:
+        formatted_match_index = f'  - match_index (int):\n        - None'
+    logger.debug(
+        'Passing parameters:\n'
+        f'{formatted_duplicates}\n'
+        f'{formatted_match_index}\n'
+        f'  - grouped (bool):\n        - {grouped}\n'
+    )
 
     try:
         # Temporary storage for unique items.
@@ -429,17 +479,12 @@ def get_list_duplicates(duplicates: list, match_index: Optional[int] = None, gro
                             # The value will be the key and the index will be the value.
                             # This will allow the ease if finding all index points for a specific value.
                             duplicate_list_dictionary.append({'index': index, 'value': value})
-    except Exception as error:
-        if 'Originating error on line' in str(error):
-            logger.debug(f'Forwarding caught {type(error).__name__} at line {error.__traceback__.tb_lineno} in <{__name__}>')
-            raise error
-        else:
-            error_args = {
-                'main_message': 'A general failure occurred getting duplicate values the list.',
-                'error_type': Exception,
-                'original_error': error,
-            }
-            error_formatter(error_args, __name__, error.__traceback__.tb_lineno)
+    except Exception as exc:
+        exc_args = {
+            'main_message': 'A general failure occurred getting duplicate values the list.',
+            'original_exception': exc,
+        }
+        raise FGeneralError(exc_args)
     else:
         # Checks that duplicates exist.
         if duplicate_list_dictionary:
@@ -478,17 +523,12 @@ def get_list_duplicates(duplicates: list, match_index: Optional[int] = None, gro
                             # Gets matching entries based on the "value" key and adds them to the grouped dictionary.
                             grouped[entry['value']] = grouped.get(entry['value'], [])
                             grouped[entry['value']].append(entry)
-                except Exception as error:
-                    if 'Originating error on line' in str(error):
-                        logger.debug(f'Forwarding caught {type(error).__name__} at line {error.__traceback__.tb_lineno} in <{__name__}>')
-                        raise error
-                    else:
-                        error_args = {
-                            'main_message': 'A general failure occurred grouping duplicate values.',
-                            'error_type': Exception,
-                            'original_error': error,
-                        }
-                        error_formatter(error_args, __name__, error.__traceback__.tb_lineno)
+                except Exception as exc:
+                    exc_args = {
+                        'main_message': 'A general failure occurred grouping duplicate values.',
+                        'original_exception': exc,
+                    }
+                    raise FGeneralError(exc_args)
                 else:
                     # Returns grouped duplicates.
                     return grouped
@@ -499,47 +539,81 @@ def get_list_duplicates(duplicates: list, match_index: Optional[int] = None, gro
             return None
 
 
-def string_grouper(list_of_strings: list, grouping_value: Union[str, int, None], grouping_option: int, case_insensitive: Optional[bool] = False) -> list:
+def string_grouper(list_of_strings: list, grouping_value: Union[str, int, None], grouping_option: int, case_insensitive: bool = False) -> list:
     """
-    String grouper will group a list of strings using three different options. Each option provides a different type of results, but covers any type of desired grouping.
+    String grouper will group a list of strings using three different options.
+
+    Each option provides a different type of results, but covers any type of desired grouping.
 
     Args:
-        list_of_strings (list): A grouping of strings that need to get grouped.
-        grouping_value (str or int or None): A group value based on a character or positions.\\
-            \- Group Option 1 Example: grouping_value = -. If the string is "Testing-1", the grouping values would match on "Testing".\\
-            \- Group Option 2 Example: grouping_value = 2. Result: If the string is "Testing-1", the grouping values would match on "Te".\\
-            \- Group Option 3 Example: No value is required. Send None or a random character as the parameter value.\\
-        grouping_option (int): A grouping option.
-            \- Option 1:
-                \- Similar Separator\\
-                    \- Using this option will use the "grouping_value" to group all like entries in the list together.\\
-            \- Option 2:
-                \- Character Position Number\\
-                    \- Using this option will group all like entries in the list together based on the number of character positions entered.\\
-            \- Option 3:
-                \- Common String\\
-                    \- Using this option will group all common strings in the list together based on the last matching character.\\
-                        \- Note1: The group_identifier may not be the same number of characters based on the importing list.\\
-                        \- Note2: Currently option3 does not support case insensitive matching.
-        case_insensitive (bool): Enables case insensitive matching. For example, lower and upper would be grouped into the same grouping. Disabled by default.
+        list_of_strings (list):
+        \t\\- A grouping of strings that need to get grouped.
+        grouping_value (Union[str, int, None]):
+        \t\\- A group value based on a character or positions.\\
+        \t\t\\- Group Option 1 Example:\\
+        \t\t\t\\- grouping_value = '-'\\
+        \t\t\t\t\\- Result:
+        \t\t\t\t\t\\- If the string is "Testing-1", the grouping\\
+        \t\t\t\t\t   values would match on "Testing".\\
+        \t\t\\- Group Option 2 Example:\\
+        \t\t\t\\- grouping_value = 2\\
+        \t\t\t\t\\- Result:\\
+        \t\t\t\t\t\\- If the string is "Testing-1", the grouping\\
+        \t\t\t\t\t   values would match on "Te".\\
+        \t\t\\- Group Option 3 Example:\\
+        \t\t\t\\- No value is required. Send None or a random\\
+        \t\t\t  character as the parameter value.\\
+        grouping_option (int):
+        \t\\- A grouping option.
+        \t\t\\- Option 1:
+        \t\t\t\\- Similar Separator\\
+        \t\t\t\t\\- Using this option will use the "grouping_value"\\
+        \t\t\t\t   to group all like entries in the list together.\\
+        \t\t\\- Option 2:
+        \t\t\t\\- Character Position Number\\
+        \t\t\t\t\\- Using this option will group all like entries in the\\
+        \t\t\t\t   list together based on the number of character\\
+        \t\t\t\t   positions entered.\\
+        \t\t\\- Option 3:
+        \t\t\t\\- Common String\\
+        \t\t\t\t\\- Using this option will group all common strings in\\
+        \t\t\t\t   the list together based on the last matching character.\\
+        \t\t\t\t\t\\- Note1: The group_identifier may not be the same number\\
+        \t\t\t\t\t\t       of characters based on the importing list.\\
+        \t\t\t\t\t\\- Note2: Currently option3 does not support case\\
+        \t\t\t\t\t\t       insensitive matching.
+        case_insensitive (bool):
+        \t\\- Enables case insensitive matching.\\
+        \t\\- For example, lower and upper would be grouped into the same grouping.\\
+        \t\\- Disabled by default.
 
     Raises:
-        TypeError: The value '{list_of_strings}' is not in list format.
-        TypeError: The value '{grouping_value}' is not in str, or int, or None format.
-        TypeError: The value '{grouping_option}' is not in int format.
-        TypeError: The value '{case_insensitive}' is not in bool format.
-        Exception: Forwarding caught {type(error).__name__} at line {error.__traceback__.tb_lineno} in <{__name__}>
-        Exception: A general exception occurred during the value type validation.
-        Exception: The grouping_value sent for the grouping is not a string.
-        Exception: The grouping_value sent for the grouping is not a int.
-        Exception: Forwarding caught {type(error).__name__} at line {error.__traceback__.tb_lineno} in <{__name__}>
-        Exception: A general failure occurred while grouping the strings.
+        FTypeError (fexception):
+        \t\\- The value '{list_of_strings}' is not in <class 'list'> format.
+        FTypeError (fexception):
+        \t\\- The value '{grouping_value}' is not in [<class 'str'>, <class 'int'>] format.
+        FTypeError (fexception):
+        \t\\- The value '{grouping_option' is not in <class 'int'> format.
+        FTypeError (fexception):
+        \t\\- The value '{case_insensitive}' is not in <class 'bool'> format.
+        FTypeError (fexception):
+        \t\\- The grouping_value sent for the grouping is not a string.
+        FTypeError (fexception):
+        \t\\- The grouping_value sent for the grouping is not a int.
+        FGeneralError (fexception):
+        \t\\- A general failure occurred while grouping the strings.
 
     Returns:
-        list: A list of grouped strings.
-            \- Return Output: [{'group_identifier': 'BA', 'grouping': ['BA-IDF1', 'BA-IDF2', 'BA-IDF3', 'BA-MDF']}, {'group_identifier': 'CB', 'grouping': ['CB-IDF0', 'CB-IDF1', 'CB-MDF']},
-                                         \{'group_identifier': 'CE', 'grouping': ['CE-BUSLABOFF', 'CE-IDF-Band']}, {'group_identifier': 'CI', 'grouping': ['CI-MDF1']},\
-                                         \{'group_identifier': 'DH', 'grouping': ['DH-IDF1', 'DH-IDF2', 'DH-MDF']}, {'group_identifier': 'GH', 'grouping': ['GH-IDF0-RM113', 'GH-IDF1-RM161', 'GH-MDF-RM113']}]
+        list:\\
+        \t\\- A list of grouped strings.
+
+    Return Example:\\
+    \t\\- [{'group_identifier': 'BA', 'grouping': ['BA-IDF1', 'BA-IDF2', 'BA-IDF3', 'BA-MDF']},\\
+    \t   {'group_identifier': 'CB', 'grouping': ['CB-IDF0', 'CB-IDF1', 'CB-MDF']},\\
+    \t   {'group_identifier': 'CE', 'grouping': ['CE-BUSLABOFF', 'CE-IDF-Band']},\\
+    \t   {'group_identifier': 'CI', 'grouping': ['CI-MDF1']},\\
+    \t   {'group_identifier': 'DH', 'grouping': ['DH-IDF1', 'DH-IDF2', 'DH-MDF']},\\
+    \t   {'group_identifier': 'GH', 'grouping': ['GH-IDF0-RM113', 'GH-IDF1-RM161', 'GH-MDF-RM113']}]
     """
     logger = logging.getLogger(__name__)
     logger.debug(f'=' * 20 + get_function_name() + '=' * 20)
@@ -548,39 +622,28 @@ def string_grouper(list_of_strings: list, grouping_value: Union[str, int, None],
     logger_flowchart = logging.getLogger('flowchart')
     logger_flowchart.debug(f'Flowchart --> Function: {get_function_name()}')
 
-    # Checks function launch variables and logs passing parameters.
     try:
-        # Validates required types.
-        value_type_validation(list_of_strings, list, __name__, get_line_number())
+        type_check(list_of_strings, list)
         if grouping_value:
-            value_type_validation(grouping_value, [str, int], __name__, get_line_number())
-        value_type_validation(grouping_option, int, __name__, get_line_number())
-        value_type_validation(case_insensitive, bool, __name__, get_line_number())
+            type_check(grouping_value, [str, int])
+        type_check(grouping_option, int)
+        type_check(case_insensitive, bool)
+    except FTypeError:
+        raise
 
-        formatted_list_of_strings = '  - list_of_strings (list):' + str('\n        - ' + '\n        - '.join(map(str, list_of_strings)))
-        if grouping_value:
-            formatted_grouping_value = f'  - grouping_value (str or int or None):\n        - {grouping_value}'
-        else:
-            formatted_grouping_value = f'  - grouping_value (str or int or None):\n        - None'
+    formatted_list_of_strings = '  - list_of_strings (list):' + str('\n        - ' + '\n        - '.join(map(str, list_of_strings)))
+    if grouping_value:
+        formatted_grouping_value = f'  - grouping_value (str or int or None):\n        - {grouping_value}'
+    else:
+        formatted_grouping_value = f'  - grouping_value (str or int or None):\n        - None'
 
-        logger.debug(
-            'Passing parameters:\n'
-            f'{formatted_list_of_strings}\n'
-            f'{formatted_grouping_value}\n'
-            f'  - grouping_option (int):\n        - {grouping_option}\n'
-            f'  - case_insensitive (bool):\n        - {case_insensitive}\n'
-        )
-    except Exception as error:
-        if 'Originating error on line' in str(error):
-            logger.debug(f'Forwarding caught {type(error).__name__} at line {error.__traceback__.tb_lineno} in <{__name__}>')
-            raise error
-        else:
-            error_args = {
-                'main_message': 'A general exception occurred during the value type validation.',
-                'error_type': Exception,
-                'original_error': error,
-            }
-            error_formatter(error_args, __name__, error.__traceback__.tb_lineno)
+    logger.debug(
+        'Passing parameters:\n'
+        f'{formatted_list_of_strings}\n'
+        f'{formatted_grouping_value}\n'
+        f'  - grouping_option (int):\n        - {grouping_option}\n'
+        f'  - case_insensitive (bool):\n        - {case_insensitive}\n'
+    )
 
     logger.debug(f'Starting string grouping with the following list of strings: {list_of_strings}')
 
@@ -642,13 +705,12 @@ def string_grouper(list_of_strings: list, grouping_value: Union[str, int, None],
                             # Appends the grouping from groupby to the list in in dictionary format.
                             grouping.append({'group_identifier': j, 'grouping': list(i)})
                 else:
-                    error_args = {
+                    exc_args = {
                         'main_message': 'The grouping_value sent for the grouping is not a string.',
-                        'error_type': ValueError,
-                        'expected_result': 'string',
-                        'returned_result': grouping_value,
+                        'expected_result': """<class 'str'>""",
+                        'returned_result': type(grouping_value),
                     }
-                    error_formatter(error_args, __name__, get_line_number())
+                    raise FTypeError(exc_args)
             elif grouping_option == 2:
                 # This section groups based on a character number. If the string is "Testing" and the number was 3, the grouping values would match on "Tes".
                 # Checks that the grouping_value is a number.
@@ -669,13 +731,12 @@ def string_grouper(list_of_strings: list, grouping_value: Union[str, int, None],
                             # Appends the grouping from groupby to the list in in dictionary format.
                             grouping.append({'group_identifier': j, 'grouping': list(i)})
                 else:
-                    error_args = {
+                    exc_args = {
                         'main_message': 'The grouping_value sent for the grouping is not a int.',
-                        'error_type': ValueError,
-                        'expected_result': 'int',
-                        'returned_result': grouping_value,
+                        'expected_result': """<class 'int'>""",
+                        'returned_result': type(grouping_value),
                     }
-                    error_formatter(error_args, __name__, get_line_number())
+                    raise FTypeError(exc_args)
             elif grouping_option == 3:
                 # This compare can have some complex checks because it has to check previous entries and make choices based on previous and current groupings.
                 # The section of code is split by two different loops. The primary loop goes through each string. The sub-string loops and checks character by character between the previous string and current string.
@@ -775,44 +836,37 @@ def string_grouper(list_of_strings: list, grouping_value: Union[str, int, None],
             return grouping
         else:
             return None
-    except Exception as error:
-        if 'Originating error on line' in str(error):
-            logger.debug(f'Forwarding caught {type(error).__name__} at line {error.__traceback__.tb_lineno} in <{__name__}>')
-            raise error
-        else:
-            error_args = {
-                'main_message': 'A general failure occurred while grouping the strings.',
-                'error_type': Exception,
-                'original_error': error,
-            }
-            error_formatter(error_args, __name__, error.__traceback__.tb_lineno)
+    except FTypeError as exc:
+        raise
+    except Exception as exc:
+        exc_args = {
+            'main_message': 'A general failure occurred while grouping the strings.',
+            'original_exception': exc,
+        }
+        raise FGeneralError(exc_args)
 
 
 def find_longest_common_substring(string1: str, string2: str) -> str:
     """
     This function finds the longest substring between two different strings.
 
-    For Example:
-        - Parameters:
-            - string1: mysamplechangeshere
-            - string2: mysampleneverchanges
-        - Results:
-            - mysample
-
     Args:
-        string1 (string): string to compare against string2
-        string2 (string): string to compare against string1
+        string1 (string):
+        \t\\- string to compare against string2
+        string2 (string):
+        \t\\- string to compare against string1
 
     Raises:
-        TypeError: The value '{string1}' is not in str format.
-        TypeError: The value '{string2}' is not in str format.
-        Exception: Forwarding caught {type(error).__name__} at line {error.__traceback__.tb_lineno} in <{__name__}>
-        Exception: A general exception occurred during the value type validation.
-        Exception: Forwarding caught {type(error).__name__} at line {error.__traceback__.tb_lineno} in <{__name__}>
-        Exception: A general exception occurred interating the two strings.
+        FTypeError (fexception):
+        \t\\- The value '{string1}' is not in <class 'str'> format.
+        FTypeError (fexception):
+        \t\\- The value '{string2}' is not in <class 'str'> format.
+        FGeneralError (fexception):
+        \t\\- A general exception occurred interating the two strings.
 
     Returns:
-        string: returns the string up to the point the characters no longer match.
+        str:\\
+        \t\\- returns the string up to the point the characters no longer match.
     """
     logger = logging.getLogger(__name__)
     logger.debug(f'=' * 20 + get_function_name() + '=' * 20)
@@ -821,71 +875,61 @@ def find_longest_common_substring(string1: str, string2: str) -> str:
     logger_flowchart = logging.getLogger('flowchart')
     logger_flowchart.debug(f'Flowchart --> Function: {get_function_name()}')
 
-    # Checks function launch variables and logs passing parameters.
     try:
-        # Validates required types.
-        value_type_validation(string1, str, __name__, get_line_number())
-        value_type_validation(string2, str, __name__, get_line_number())
+        type_check(string1, str)
+        type_check(string2, str)
+    except FTypeError:
+        raise
 
-        logger.debug(
-            'Passing parameters:\n'
-            f'  - string1 (str):\n        - {string1}\n'
-            f'  - string2 (str):\n        - {string2}\n'
-        )
-    except Exception as error:
-        if 'Originating error on line' in str(error):
-            logger.debug(f'Forwarding caught {type(error).__name__} at line {error.__traceback__.tb_lineno} in <{__name__}>')
-            raise error
-        else:
-            error_args = {
-                'main_message': 'A general exception occurred during the value type validation.',
-                'error_type': Exception,
-                'original_error': error,
-            }
-            error_formatter(error_args, __name__, error.__traceback__.tb_lineno)
+    logger.debug(
+        'Passing parameters:\n'
+        f'  - string1 (str):\n        - {string1}\n'
+        f'  - string2 (str):\n        - {string2}\n'
+    )
 
     def _iter():
-        try:
-            for a, b in zip(string1, string2):
-                if a == b:
-                    yield a
-                else:
-                    return
-        except Exception as error:
-            if 'Originating error on line' in str(error):
-                logger.debug(f'Forwarding caught {type(error).__name__} at line {error.__traceback__.tb_lineno} in <{__name__}>')
-                raise error
+        for a, b in zip(string1, string2):
+            if a == b:
+                yield a
             else:
-                error_args = {
-                    'main_message': 'A general exception occurred interating the two strings.',
-                    'error_type': Exception,
-                    'original_error': error,
-                }
-                error_formatter(error_args, __name__, error.__traceback__.tb_lineno)
+                return
 
-    if ''.join(_iter()):
-        substring = ''.join(_iter())
+    try:
+        if ''.join(_iter()):
+            substring = ''.join(_iter())
+        else:
+            substring = None
+    except Exception as exc:
+        exc_args = {
+            'main_message': 'A general exception occurred interating the two strings.',
+            'original_exception': exc,
+        }
+        raise FGeneralError(exc_args)
     else:
-        substring = None
-    return substring
+        return substring
 
 
 def user_choice_character_grouping(list_of_strings: list) -> list:
     """
-    Groups a list of characters based on the users choices. This is a user interaction function. The user can group based on a similar character or character position.
+    Groups a list of characters based on the users choices.
+
+    This is a user interaction function.
+
+    The user can group based on a similar character or character position.
 
     Args:
-        list_of_strings (list): A list of strings that need to get grouped.
+        list_of_strings (list):
+        \t\\- A list of strings that need to get grouped.
 
     Raises:
-        TypeError: The value '{list_of_strings}' is not in list format.
-        Exception: Forwarding caught {type(error).__name__} at line {error.__traceback__.tb_lineno} in <{__name__}>
-        Exception: A general exception occurred during the value type validation.
-        Exception: Forwarding caught {type(error).__name__} at line {error.__traceback__.tb_lineno} in <{__name__}>
-        Exception: A general exception occurred when getting the user choice character grouping.
+        FTypeError (fexception):
+        \t\\- The value '{list_of_strings}' is not in <class 'list'> format.
+        FGeneralError (fexception):
+        \t\\- A general exception occurred when getting the user choice character grouping.
 
     Returns:
-        list: A list of grouped characters.
+        list:\\
+        \t\\- A list of grouped characters.
     """
     logger = logging.getLogger(__name__)
     logger.debug(f'=' * 20 + get_function_name() + '=' * 20)
@@ -894,38 +938,24 @@ def user_choice_character_grouping(list_of_strings: list) -> list:
     logger_flowchart = logging.getLogger('flowchart')
     logger_flowchart.debug(f'Flowchart --> Function: {get_function_name()}')
 
-    # Checks function launch variables and logs passing parameters.
     try:
-        # Validates required types.
-        value_type_validation(list_of_strings, list, __name__, get_line_number())
+        type_check(list_of_strings, list)
+    except FTypeError:
+        raise
 
-        formatted_list_of_strings = '  - list_of_strings (list):' + str('\n        - ' + '\n        - '.join(map(str, list_of_strings)))
-
-        logger.debug(
-            'Passing parameters:\n'
-            f'{formatted_list_of_strings}\n'
-        )
-    except Exception as error:
-        if 'Originating error on line' in str(error):
-            logger.debug(f'Forwarding caught {type(error).__name__} at line {error.__traceback__.tb_lineno} in <{__name__}>')
-            raise error
-        else:
-            error_args = {
-                'main_message': 'A general exception occurred during the value type validation.',
-                'error_type': Exception,
-                'original_error': error,
-            }
-            error_formatter(error_args, __name__, error.__traceback__.tb_lineno)
+    formatted_list_of_strings = '  - list_of_strings (list):' + str('\n        - ' + '\n        - '.join(map(str, list_of_strings)))
+    logger.debug(
+        'Passing parameters:\n'
+        f'{formatted_list_of_strings}\n'
+    )
 
     logger.debug(f'Passing parameters [list_of_strings] (list):' + '\n    - ' + '\n    - '.join(map(str, list_of_strings)))
 
     # Sets grouping value to None to prevent any reference errors on a retry.
     groupings = None
-    # Infinite Loop to allow retries.
-    while True:
 
-        try:
-
+    try:
+        while True:
             # ############################################################
             # ###########Requests Options and Gets Groupings##############
             # ############################################################
@@ -1006,38 +1036,33 @@ def user_choice_character_grouping(list_of_strings: list) -> list:
                 elif int(character_grouping_overview) == 2:
                     # Returns the groupings
                     return groupings
-        except Exception as error:
-            if 'Originating error on line' in str(error):
-                logger.debug(f'Forwarding caught {type(error).__name__} at line {error.__traceback__.tb_lineno} in <{__name__}>')
-                raise error
-            elif 'invalid literal for int() with base' in str(error):
-                print('You entered a letter as an option, but it should have been a number. Please retry this section.')
-                print('')
-                print('')
-            else:
-                error_args = {
-                    'main_message': 'A general exception occurred when getting the user choice character grouping.',
-                    'error_type': Exception,
-                    'original_error': error,
-                }
-                error_formatter(error_args, __name__, error.__traceback__.tb_lineno)
+    except Exception as exc:
+        exc_args = {
+            'main_message': 'A general exception occurred when getting the user choice character grouping.',
+            'original_exception': exc,
+        }
+        raise FGeneralError(exc_args)
 
 
 def clean_non_word_characters(string: str) -> str:
     """
-    This function will remove any non-word hex characters from any passing string. Strings without non-word hex will be passed through without any errors.
+    This function will remove any non-word hex characters from any passing string.
+
+    Strings without non-word hex will be passed through without any errors.
 
     Args:
-        string (str): a string with non-word hex characters.
+        string (str):
+        \t\\- A string with non-word hex characters.
 
     Raises:
-        TypeError: The value '{string}' is not in str format.
-        Exception: Forwarding caught {type(error).__name__} at line {error.__traceback__.tb_lineno} in <{__name__}>
-        Exception: A general exception occurred during the value type validation.
-        ValueError: The string ({string}) with non-word characters did not clean.
+        FTypeError (fexception):
+        \t\\- The value '{string}' is not in <class 'str'> format.
+        FValueError (fexception):
+        \t\\- The string ({string}) with non-word characters did not clean.
 
     Returns:
-        str: a cleaned string with valid only words.
+        str:\\
+        \t\\- A cleaned string with valid only words.
     """
     logger = logging.getLogger(__name__)
     logger.debug(f'=' * 20 + get_function_name() + '=' * 20)
@@ -1046,26 +1071,15 @@ def clean_non_word_characters(string: str) -> str:
     logger_flowchart = logging.getLogger('flowchart')
     logger_flowchart.debug(f'Flowchart --> Function: {get_function_name()}')
 
-    # Checks function launch variables and logs passing parameters.
     try:
-        # Validates required types.
-        value_type_validation(string, str, __name__, get_line_number())
+        type_check(string, str)
+    except FTypeError:
+        raise
 
-        logger.debug(
-            'Passing parameters:\n'
-            f'  - string (str):\n        - {string}\n'
-        )
-    except Exception as error:
-        if 'Originating error on line' in str(error):
-            logger.debug(f'Forwarding caught {type(error).__name__} at line {error.__traceback__.tb_lineno} in <{__name__}>')
-            raise error
-        else:
-            error_args = {
-                'main_message': 'A general exception occurred during the value type validation.',
-                'error_type': Exception,
-                'original_error': error,
-            }
-            error_formatter(error_args, __name__, error.__traceback__.tb_lineno)
+    logger.debug(
+        'Passing parameters:\n'
+        f'  - string (str):\n        - {string}\n'
+    )
 
     # Some Python returned information will return with trailing hex characters (non-words). These are unescaped control characters, which is what Python displays using hexadecimal notation.
     # This expression will remove the hex characters. It can be written with either [^\x20-\x7e] or [^ -~].*
@@ -1076,13 +1090,12 @@ def clean_non_word_characters(string: str) -> str:
     cleaned_string = re.sub(r'[^ -~].*', '', string)
     encoded_string = cleaned_string.encode('ascii', 'ignore')
     if '\\x' in str(encoded_string):
-        error_args = {
+        exc_args = {
             'main_message': f'The string ({string}) with non-word characters did not clean.',
-            'error_type': ValueError,
             'expected_result': 'The string should not have contained any hex characters.',
             'returned_result': encoded_string,
         }
-        error_formatter(error_args, __name__, get_line_number())
+        raise FValueError(exc_args)
     else:
         # Checks if the lengths are different from the parameter string and cleaned string to know if the string contained non-word values.
         if len(string) > len(cleaned_string):

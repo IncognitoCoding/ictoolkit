@@ -1,9 +1,6 @@
-#!interpreter
-
 """
 This module is designed to assist with log-related actions.
 """
-
 # Built-in/Generic Imports
 import threading
 import sys
@@ -12,48 +9,78 @@ import time
 import traceback
 import logging
 
-# Own modules
-from ictoolkit.directors.error_director import error_formatter
-from ictoolkit.helpers.py_helper import get_function_name, get_line_number
-from ictoolkit.directors.validation_director import value_type_validation
-from ictoolkit.directors.error_director import error_formatter
-from ictoolkit.helpers.py_helper import get_function_name, get_line_number
+# Libraries
+from fchecker import type_check
+from ictoolkit.helpers.py_helper import get_function_name
+
+# Exceptions
+from fexception import FTypeError, FCustomException
 
 __author__ = 'IncognitoCoding'
 __copyright__ = 'Copyright 2022, thread_director'
 __credits__ = ['IncognitoCoding']
 __license__ = 'GPL'
-__version__ = '2.0'
+__version__ = '2.1'
 __maintainer__ = 'IncognitoCoding'
 __status__ = 'Production'
 
 
+class ThreadStartFailure(Exception):
+    """
+    Exception raised for the thread start failure.
+
+    Args:
+        exc_message:\\
+        \t\\- The failure reason.
+    """
+    __module__ = 'builtins'
+
+    exc_message: str
+
+    def __init__(self, exc_message: str) -> None:
+        self.exc_message = exc_message
+
+
 def start_function_thread(passing_program_function, program_function_name: str, infinite_loop_option: bool) -> None:
     """
-    This function is used to start any other function inside it's own thread. This is ideal if you need to have part of the program sleep and another part of the program always
-    active (ex: Web Interface = Always Active & Log Checking = 10 Minute Sleep)
+    This function is used to start any other function inside it's own thread.
 
-    Thread exception capturing offers a challenge because the initialized child thread is in its dedicated context with its dedicated stack. When an exception is thrown in, the
-    child thread can potentially never report to the parent function. The only time the messages can be present is during the initial call to the child thread. A message bucket
-    is used to hold any potential exception messages, and a 2 minutes sleep is set to give time for the thread to either start or fail. If neither occurs after 1 minute, the thread
+    This is ideal if you need to have part of the program sleep and another part of the program\\
+    always active. (ex: Web Interface = Always Active & Log Checking = 10 Minute Sleep)
+
+    Thread exception capturing offers a challenge because the initialized child thread is in its dedicated\\
+    context with its dedicated stack. When an exception is thrown in, the child thread can potentially never\\
+    report to the parent function. The only time the messages can be present is during the initial call to the\\
+    child thread. A message bucket is used to hold any potential exception messages, and a 2 minutes sleep is\\
+    set to give time for the thread to either start or fail. If neither occurs after 1 minute, the thread\\
     will end and throw a value error.
 
     Requires calling program to use "from functools import partial" when calling.
 
-    Calling Example: start_function_thread(partial(PassingFunction, Parameter1, Parameter2, Parameter3, etc), <function name), <bool>)
+    Calling Examples:\\
+    \tExamples:\\
+    \t\t\\- start_function_thread(partial(PassingFunction,\\
+    \t\t\t\t\t\t\t\t Parameter1,\\
+    \t\t\t\t\t\t\t\t Parameter2,\\
+    \t\t\t\t\t\t\t\t Parameter3, etc), <function name), <bool>)
 
     Args:
-        passing_program_function (function): The function without or with parameters using functools.
-        program_function_name (str): The function name used to identify the thread.
-        infinite_loop_option (bool): Enabled infinite loop.
+        passing_program_function (function):
+        \t\\- The function without or with parameters using functools.
+        program_function_name (str):
+        \t\\- The function name used to identify the thread.
+        infinite_loop_option (bool):
+        \t\\- Enabled infinite loop.
 
     Raises:
-        TypeError: The value '{program_function_name}' is not in str format.
-        TypeError: The value '{infinite_loop_option}' is not in bool format.
-        Exception: Forwarding caught {type(error).__name__} at line {error.__traceback__.tb_lineno} in <{__name__}>
-        Exception: A general exception occurred during the value type validation.
-        Exception: A failure occurred while staring the function thread.
-        Exception: The thread ({program_function_name}) timeout has reached its threshold of 1 minute.
+        FTypeError (fexception):
+        \t\\- The value '{program_function_name}' is not in <class 'str'> format.
+        FTypeError (fexception):
+        \t\\- The value '{infinite_loop_option}' is not in <class 'bool'> format.
+        ThreadStartFailure:
+        \t\\- A failure occurred while staring the function thread.
+        ThreadStartFailure:
+        \t\\- The thread ({program_function_name}) timeout has reached its threshold of 1 minute.
     """
     logger = logging.getLogger(__name__)
     logger.debug(f'=' * 20 + get_function_name() + '=' * 20)
@@ -62,28 +89,17 @@ def start_function_thread(passing_program_function, program_function_name: str, 
     logger_flowchart = logging.getLogger('flowchart')
     logger_flowchart.debug(f'Flowchart --> Function: {get_function_name()}')
 
-    # Checks function launch variables and logs passing parameters.
     try:
-        # Validates required types.
-        value_type_validation(program_function_name, str, __name__, get_line_number())
-        value_type_validation(infinite_loop_option, bool, __name__, get_line_number())
+        type_check(program_function_name, str)
+        type_check(infinite_loop_option, bool)
+    except FTypeError:
+        raise
 
-        logger.debug(
-            'Passing parameters:\n'
-            f'  - program_function_name (str):\n        - {program_function_name}\n'
-            f'  - infinite_loop_option (bool):\n        - {infinite_loop_option}\n'
-        )
-    except Exception as error:
-        if 'Originating error on line' in str(error):
-            logger.debug(f'Forwarding caught {type(error).__name__} at line {error.__traceback__.tb_lineno} in <{__name__}>')
-            raise error
-        else:
-            error_args = {
-                'main_message': 'A general exception occurred during the value type validation.',
-                'error_type': Exception,
-                'original_error': error,
-            }
-            error_formatter(error_args, __name__, error.__traceback__.tb_lineno)
+    logger.debug(
+        'Passing parameters:\n'
+        f'  - program_function_name (str):\n        - {program_function_name}\n'
+        f'  - infinite_loop_option (bool):\n        - {infinite_loop_option}\n'
+    )
 
     # Creates a dedicated thread class to run the companion decryptor.
     # This is required because the main() function will sleep x minutes between checks.
@@ -147,21 +163,21 @@ def start_function_thread(passing_program_function, program_function_name: str, 
             exc_type, exc_obj, exc_trace = exc
 
             # Passes the calling functions error output as the original error.
-            error_args = {
+            exc_args = {
                 'main_message': 'A failure occurred while staring the function thread.',
-                'error_type': Exception,
-                'original_error': exc_obj,
+                'custom_type': ThreadStartFailure,
+                'original_exception': exc_obj,
             }
-            error_formatter(error_args, __name__, get_line_number())
+            raise ThreadStartFailure(FCustomException(exc_args))
 
         # Loop breaks if the thread is alive or timeout reached.
         if thread_obj.is_alive() is True:
             break
 
         if time.time() > timeout:
-            error_args = {
+            exc_args = {
                 'main_message': f'The thread ({program_function_name}) timeout has reached its threshold of 1 minute.',
-                'error_type': Exception,
+                'custom_type': ThreadStartFailure,
                 'suggested_resolution': 'Manual intervention is required for this thread to start.',
             }
-            error_formatter(error_args, __name__, get_line_number())
+            raise ThreadStartFailure(FCustomException(exc_args))

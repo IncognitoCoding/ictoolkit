@@ -1,7 +1,6 @@
 """
 This module is designed to assist with log-related actions.
 """
-
 # Built-in/Generic Imports
 import os
 import sys
@@ -9,81 +8,118 @@ import pathlib
 import logging
 import logging.config
 from logging.handlers import RotatingFileHandler
-from typing import Optional
 
-# Own modules
+# Libraries
+from fchecker import type_check
 from ictoolkit.directors.yaml_director import read_yaml_config
-from ictoolkit.directors.validation_director import value_type_validation
-from ictoolkit.directors.error_director import error_formatter
-from ictoolkit.helpers.py_helper import get_function_name, get_line_number
+from ictoolkit.helpers.py_helper import get_function_name
+
+# Exceptions
+from fexception import FGeneralError, FTypeError, FKeyError, FCustomException
 
 __author__ = 'IncognitoCoding'
 __copyright__ = 'Copyright 2022, log_director'
 __credits__ = ['IncognitoCoding']
 __license__ = 'GPL'
-__version__ = '2.0'
+__version__ = '2.1'
 __maintainer__ = 'IncognitoCoding'
 __status__ = 'Production'
 
 
-def create_logger(logger_settings: dict) -> logging.Logger:
+class LoggerSetupFailure(Exception):
     """
-    This function creates a logger based on specific parameters. The logger is passed back and can be used throughout the program.
-    This function is ideal when needing to create new loggers on the fly or for custom usage. General programing logging should utilize a YAML file with the setup_logger_yaml function.
-
-    Checks that existing log handlers do not exist. Log handlers can exist when looping. This check will prevent child loggers from being created and having duplicate entries.
-
-    Note: Version 2.3 has updated all the passing parameters into a single dictionary. Please update any previous code from individual parameters to a single dictionary. This function
-          has been deprecated since v1.8.
+    Exception raised for a logger setup failure.
 
     Args:
-        logger_settings (dict): formatted dictionary containing all the logger settings.\n
-            \\- Key Value:
-                save_path (str): log file save path
-                logger_name (str): logger name
-                log_name (str): logger file name
-                max_bytes (int): max log size in bytes
-                file_log_level (str): file output log level
-                console_log_level (str): console output log level
-                backup_count (int): backup log copies
-                format_option (int or str): allows the ability to select a pre-defined option
-                    options:
-                        1 - '%(asctime)s|%(levelname)s|%(message)s (Module:%(module)s, Function:%(funcName)s,  Line:%(lineno)s)',datefmt='%Y-%m-%d %H:%M:%S' (Default)\\
-                        2 - '%(message)s'\\
-                        \\'%(asctime)s|%(levelname)s|%(funcName)s|%(message)s' - Manual Entry
-                handler_option (int): handler option
-                    options:
-                        1 - Both (Default)
-                        2 - File Handler
-                        3 - Console Handler
+        exc_message:\\
+        \t\\- The failure reason.
+    """
+    __module__ = 'builtins'
 
-            \\- For Example: logger_settings = {
-                'save_path': central_log_path,
-                'logger_name': container_name,
-                'log_name': log_name,
-                'max_bytes': max_log_file_size,
-                'file_log_level': 'INFO',
-                'console_log_level': 'INFO',
-                'backup_count': 4,
-                'format_option': '%(message)s',
-                'handler_option': 2,
-            }
+    exc_message: str
+
+    def __init__(self, exc_message: str) -> None:
+        self.exc_message = exc_message
+
+
+def create_logger(logger_settings: dict) -> logging.Logger:
+    """
+    This function creates a logger based on specific parameters.\\
+    The logger is passed back and can be used throughout the program.\\
+    This function is ideal when needing to create new loggers on the fly or for custom usage.\\
+    General programing logging should utilize a YAML file with the setup_logger_yaml function.\\
+    Checks that existing log handlers do not exist. Log handlers can exist when looping.\\
+    This check will prevent child loggers from being created and having duplicate entries.
+
+    Args:
+        logger_settings (dict):
+        \t\\- formatted dictionary containing all the logger settings.
+
+    Arg Keys:
+        logger_settings Keys:\\
+        \t\\- save_path (str):\\
+        \t\t\\- log file save path\\
+        \t\\- logger_name (str):\\
+        \t\t\\- logger name\\
+        \t\\- log_name (str):\\
+        \t\t\\- logger file name\\
+        \t\\- max_bytes (int):\\
+        \t\t\\- max log size in bytes\\
+        \t\\- file_log_level (str):\\
+        \t\t\\- file output log level\\
+        \t\\- console_log_level (str):\\
+        \t\t\\- console output log level\\
+        \t\\- backup_count (int):\\
+        \t\t\\- backup log copies\\
+        \t\\- format_option (int or str):\\
+        \t\t\\- allows the ability to select a pre-defined option\\
+        \t\t\t\\- options:\\
+        \t\t\t\t 1 - '%(asctime)s|%(levelname)s|%(message)s (Module:%(module)s, Function:%(funcName)s,\\
+        \t\t\t\t       Line:%(lineno)s)',datefmt='%Y-%m-%d %H:%M:%S' (Default)\\
+        \t\t\t\t 2 - '%(message)s'\\
+        \t\t\t\t (str) - '%(asctime)s|%(levelname)s|%(funcName)s|%(message)s' - Manual Entry\\
+        \t\\- handler_option (int): handler option\\
+        \t\t\\- options:\\
+        \t\t\t 1 - Both (Default)\\
+        \t\t\t 2 - File Handler\\
+        \t\t\t 3 - Console Handler
 
     Raises:
-        Exception: Forwarding caught {type(error).__name__} at line {error.__traceback__.tb_lineno} in <{__name__}>
-        Exception: A general exception occurred during the value type validation.
-        KeyError: The logger settings dictionary is missing keys.
-        Exception: Forwarding caught {type(error).__name__} at line {error.__traceback__.tb_lineno} in <{__name__}>
-        Exception: A general error occurred while validating the logger dictionary keys.
-        Exception: Forwarding caught {type(error).__name__} at line {error.__traceback__.tb_lineno} in <{__name__}>
-        Exception: A general error occurred while getting and validating the logger dictionary values.
-        ValueError: Incorrect format_option selection.
-        ValueError: Incorrect handler_option selection.
-        Exception: Forwarding caught {type(error).__name__} at line {error.__traceback__.tb_lineno} in <{__name__}>
-        Exception: A general issue occurred while create the new logger.
+        FTypeError (fexception):
+        \t\\- The value '{logger_settings}' is not in <class 'dict'> format.
+        FValueError (fexception):
+        \t\\- A general error occurred while validating the logger dictionary keys.
+        FKeyError (fexception):
+        \t\\- The logger settings dictionary is missing keys.
+        FTypeError (fexception):
+        \t\\- The value '{save_path}' is not in <class 'str'> format.
+        FTypeError (fexception):
+        \t\\- The value '{logger_name}' is not in <class 'str'> format.
+        FTypeError (fexception):
+        \t\\- The value '{max_bytes}' is not in <class 'int'> format.
+        FTypeError (fexception):
+        \t\\- The value '{file_log_level}' is not in <class 'str'> format.
+        FTypeError (fexception):
+        \t\\- The value '{console_log_level}' is not in <class 'str'> format.
+        FTypeError (fexception):
+        \t\\- The value '{backup_count}' is not in <class 'int'> format.
+        FTypeError (fexception):
+        \t\\- The value '{format_option}' is not in [<class 'str'>, <class 'int'>] format.
+        FTypeError (fexception):
+        \t\\- The value '{handler_option}' is not in <class 'int'> format.
+        LoggerSetupFailure:
+        \t\\- Incorrect format_option selection.
+        LoggerSetupFailure:
+        \t\\- Incorrect handler_option selection.
+        FGeneralError (fexception):
+        \t\\- A general issue occurred while create the new logger.
 
     Returns:
-        logger: returns the new logger (Return Example: create_logger: <Logger MySoftware1 (DEBUG)>)
+        logger:
+        \t\\- returns the new logger
+
+    Return Example:
+    \t\\- <Logger MySoftware1 (DEBUG)>)
     """
     logger = logging.getLogger(__name__)
     logger.debug(f'=' * 20 + get_function_name() + '=' * 20)
@@ -93,27 +129,17 @@ def create_logger(logger_settings: dict) -> logging.Logger:
     # Deletes the flowchart log if one already exists.
     logger_flowchart.debug(f'Flowchart --> Function: {get_function_name()}')
 
-    # Checks function launch variables and logs passing parameters.
     try:
-        value_type_validation(logger_settings, dict, __name__, get_line_number())
+        type_check(logger_settings, dict)
+    except FTypeError:
+        raise
 
-        # Requires pre-logger formatting because the logger can not use one line if/else or join without excluding sections of the the output.
-        formatted_logger_settings = '  - logger_settings (dict):\n        - ' + '\n        - '.join(': '.join((key, str(val))) for (key, val) in logger_settings.items())
-        logger.debug(
-            'Passing parameters:\n'
-            f'{formatted_logger_settings}\n'
-        )
-    except Exception as error:
-        if 'Originating error on line' in str(error):
-            logger.debug(f'Forwarding caught {type(error).__name__} at line {error.__traceback__.tb_lineno} in <{__name__}>')
-            raise error
-        else:
-            error_args = {
-                'main_message': 'A general exception occurred during the value type validation.',
-                'error_type': Exception,
-                'original_error': error,
-            }
-            error_formatter(error_args, __name__, error.__traceback__.tb_lineno)
+    formatted_logger_settings = ('  - logger_settings (dict):\n        - '
+                                 + '\n        - '.join(': '.join((key, str(val))) for (key, val) in logger_settings.items()))
+    logger.debug(
+        'Passing parameters:\n'
+        f'{formatted_logger_settings}\n'
+    )
 
     # Checks for required dictionary keys.
     try:
@@ -121,7 +147,8 @@ def create_logger(logger_settings: dict) -> logging.Logger:
         # ###################Dictionary Key Validation########################
         # ####################################################################
         # Gets a list of all expected keys.
-        # Return Output: ['save_path', 'logger_name', 'log_name', 'max_bytes', 'file_log_level', 'console_log_level', 'backup_count', 'format_option', 'handler_option']
+        # Return Output: ['save_path', 'logger_name', 'log_name', 'max_bytes', 'file_log_level',
+        #                 'console_log_level', 'backup_count', 'format_option', 'handler_option']
         logger_settings_keys = list(logger_settings.keys())
         # Checks if the key words exist in the dictionary.
         # This validates the correct dictionary keys for the logger settings.
@@ -136,58 +163,46 @@ def create_logger(logger_settings: dict) -> logging.Logger:
             or 'format_option' not in str(logger_settings_keys)
             or 'handler_option' not in str(logger_settings_keys)
         ):
-            error_args = {
+            exc_args = {
                 'main_message': 'The logger settings dictionary is missing keys.',
-                'error_type': KeyError,
-                'expected_result': ['save_path', 'logger_name', 'log_name', 'max_bytes', 'file_log_level', 'console_log_level', 'backup_count', 'format_option', 'handler_option'],
+                'expected_result': ['save_path', 'logger_name', 'log_name', 'max_bytes',
+                                    'file_log_level', 'console_log_level', 'backup_count',
+                                    'format_option', 'handler_option'],
                 'returned_result': logger_settings_keys,
                 'suggested_resolution': 'Please verify you have set all required keys and try again.',
             }
-            error_formatter(error_args, __name__, get_line_number())
-    except Exception as error:
-        if 'Originating error on line' in str(error):
-            logger.debug(f'Forwarding caught {type(error).__name__} at line {error.__traceback__.tb_lineno} in <{__name__}>')
-            raise error
-        else:
-            error_args = {
-                'main_message': 'A general error occurred while validating the logger dictionary keys.',
-                'error_type': Exception,
-                'original_error': error,
-            }
-            error_formatter(error_args, __name__, error.__traceback__.tb_lineno)
+            raise FKeyError(exc_args)
+    except FKeyError:
+        raise
+    except Exception as exc:
+        exc_args = {
+            'main_message': 'A general error occurred while validating the logger dictionary keys.',
+            'original_exception': exc,
+        }
+        raise FGeneralError(exc_args)
 
-    # Gets dictionary values and validates value types.
+    save_path = logger_settings.get('save_path')
+    logger_name = logger_settings.get('logger_name')
+    log_name = logger_settings.get('log_name')
+    max_bytes = logger_settings.get('max_bytes')
+    file_log_level = logger_settings.get('file_log_level')
+    console_log_level = logger_settings.get('console_log_level')
+    backup_count = logger_settings.get('backup_count')
+    format_option = logger_settings.get('format_option')
+    handler_option = logger_settings.get('handler_option')
+
     try:
-        save_path = logger_settings.get('save_path')
-        logger_name = logger_settings.get('logger_name')
-        log_name = logger_settings.get('log_name')
-        max_bytes = logger_settings.get('max_bytes')
-        file_log_level = logger_settings.get('file_log_level')
-        console_log_level = logger_settings.get('console_log_level')
-        backup_count = logger_settings.get('backup_count')
-        format_option = logger_settings.get('format_option')
-        handler_option = logger_settings.get('handler_option')
-
-        value_type_validation(save_path, str, __name__, get_line_number())
-        value_type_validation(logger_name, str, __name__, get_line_number())
-        value_type_validation(log_name, str, __name__, get_line_number())
-        value_type_validation(max_bytes, int, __name__, get_line_number())
-        value_type_validation(file_log_level, str, __name__, get_line_number())
-        value_type_validation(console_log_level, str, __name__, get_line_number())
-        value_type_validation(backup_count, int, __name__, get_line_number())
-        value_type_validation(format_option, [str, int], __name__, get_line_number())
-        value_type_validation(handler_option, int, __name__, get_line_number())
-    except Exception as error:
-        if 'Originating error on line' in str(error):
-            logger.debug(f'Forwarding caught {type(error).__name__} at line {error.__traceback__.tb_lineno} in <{__name__}>')
-            raise error
-        else:
-            error_args = {
-                'main_message': 'A general error occurred while getting and validating the logger dictionary values.',
-                'error_type': Exception,
-                'original_error': error,
-            }
-            error_formatter(error_args, __name__, error.__traceback__.tb_lineno)
+        type_check(save_path, str)
+        type_check(logger_name, str)
+        type_check(log_name, str)
+        type_check(max_bytes, int)
+        type_check(file_log_level, str)
+        type_check(console_log_level, str)
+        type_check(backup_count, int)
+        type_check(format_option, [str, int])
+        type_check(handler_option, int)
+    except FTypeError:
+        raise
 
     # Creates or returns a logger.
     try:
@@ -228,12 +243,12 @@ def create_logger(logger_settings: dict) -> logging.Logger:
             elif '%' in f'{format_option}':
                 formatter = logging.Formatter(fmt=format_option)
             else:
-                error_args = {
+                exc_args = {
                     'main_message': 'Incorrect format_option selection.',
-                    'error_type': ValueError,
+                    'custom_type': LoggerSetupFailure,
                     'suggested_resolution': 'Please verify you entered a valid format option number or custom format string.',
                 }
-                error_formatter(error_args, __name__, get_line_number())
+                raise LoggerSetupFailure(FCustomException(exc_args))
 
             # Sets handler option based on parameter.
             if handler_option == 1 or handler_option is None:
@@ -275,12 +290,12 @@ def create_logger(logger_settings: dict) -> logging.Logger:
                 console_stream_handler.setFormatter(formatter)
                 created_logger.addHandler(console_stream_handler)
             else:
-                error_args = {
+                exc_args = {
                     'main_message': 'Incorrect handler_option selection.',
-                    'error_type': ValueError,
+                    'custom_type': LoggerSetupFailure,
                     'suggested_resolution': 'Please verify you entered a valid handler option number.',
                 }
-                error_formatter(error_args, __name__, get_line_number())
+                raise LoggerSetupFailure(FCustomException(exc_args))
         else:
             # Setting the existing logger.
             created_logger = logging.getLogger(logger_name)
@@ -288,73 +303,81 @@ def create_logger(logger_settings: dict) -> logging.Logger:
         logger.debug(f'Returning value(s):\n  - Return = {created_logger}')
         # Returns logger
         return created_logger
-    except Exception as error:
-        if 'Originating error on line' in str(error):
-            logger.debug(f'Forwarding caught {type(error).__name__} at line {error.__traceback__.tb_lineno} in <{__name__}>')
-            raise error
-        else:
-            error_args = {
-                'main_message': 'A general issue occurred while create the new logger.',
-                'error_type': Exception,
-                'original_error': error,
-            }
-            error_formatter(error_args, __name__, error.__traceback__.tb_lineno)
+    except LoggerSetupFailure:
+        raise
+    except Exception as exc:
+        exc_args = {
+            'main_message': 'A general issue occurred while create the new logger.',
+            'original_exception': exc,
+        }
+        raise FGeneralError(exc_args)
 
 
-def setup_logger_yaml(yaml_path: str, separate_default_logs: Optional[bool] = False, allow_basic: Optional[bool] = None) -> None:
+def setup_logger_yaml(yaml_path: str, separate_default_logs: bool = False, allow_basic: bool = None) -> None:
     """
-    This function sets up a logger for the program using a YAML file. The configuration must be setup with a YAML file. This method is the best method for using logging in to additional modules.
+    This function sets up a logger for the program using a YAML file.\\
+    The configuration must be setup with a YAML file.\\
+    This method is the best method for using logging in to additional modules.\\
 
-    Default file log handler paths are supported. Cross-platform usage can be a pain and require the path to be the full path. Having default enabled allows the program to set the\\
-    filename for each log handler. This function allows the ability to have all file log handlers log to the same file, which is named the same name as the main program, or be
-    individual log files per file hander, which will be named based on the file handler key name. The "filename:" key value has to be "DEFAULT" in call caps to work.\\
-    Also, user defined DEFAULT path logs can be added by adding :<log name> to the end of DEFAULT.
-    All default logs will be at the root of the main program in a folder called logs.
-    - default YAML example1 = filename: DEFAULT
-    - default YAML example2 = filename: DEFAULT:mylog
+    Default Path Option Notes:
+    \t\\- Default file log handler paths are supported.\\
+    \t\\- Cross-platform usage can be a pain and require the path to be the full path.\\
+    \t\\- Having default enabled allows the program to set the filename for each log handler.\\
+    \t\\- This function allows the ability to have all file log handlers log to the same file,\\
+    \t   which is named the same name as the main program, or be individual log files\\
+    \t   per file hander, which will be named based on the file handler key name.\\
+    \t\\- The "filename:" key value has to be "DEFAULT" in call caps to work.
 
-    See the sample folder for an example configuration file.
+    Additional Default Option Notes:
+    \t\\- A user can define DEFAULT path logs by added :<log name> to the end of DEFAULT.\\
+    \t\\- All default logs will be at the root of the main program in a folder called logs.\\
+    \t\t\\- default YAML example1 = filename: DEFAULT\\
+    \t\t\\- default YAML example2 = filename: DEFAULT:mylog
 
     Usage:
-    - Setup your logger by running the command below.
-            - logger = logging.getLogger(__name__)
-    - Call this function to setup the logger. No return is required.
-    - Call the logger using something similar to the command below.
-            - logger.info('testing')
-   - Note: When using the same logger in other modules the only requirement is to run the command below within the function. Do not run at the module level. This can cause issues.
-            - logger = logging.getLogger(__name__)
+    \t\\- Setup your logger by running the command below.\\
+    \t\t\\- logger = logging.getLogger(__name__)\\
+    \t\\- Call this function to setup the logger. No return is required.\\
+    \t\\- Call the logger using something similar to the command below.\\
+    \t\t\\- logger.info('testing')\\
+    \t\\- When using the same logger in other modules the only requirement is to run the command\\
+    \t   below within the function. Do not run at the module level. This can cause issues.
 
     Args:
-        yaml_path (str): yaml configuration file.
-        separate_default_logs (bool, optional): If default file handelers are being used this allows the files to be separated using the file handler YAML key name. Defaults to False.
-            \- Note: Default log paths per file hander can only be enabled by setting the key value for filename: to DEFAULT.
-        allow_basic (bool, optional): Allows the default log level of "INFO" to be used if the YAML file configuration fails when set to "True".
+        yaml_path (str):
+        \t\\- yaml configuration file.\\
+        separate_default_logs (bool, optional):\\
+        \t\\- If default file handelers are being used this allows the files to be separated\\
+        \t   using the file handler YAML key name.\\
+        \t\t\\- Defaults to False.\\
+        \t\t\\- Note:\\
+        \t\t\t\\- Default log paths per file hander can only be enabled by setting the key value\\
+        \t   for filename: to DEFAULT.\\
+        allow_basic (bool, optional):\\
+        \t\\- Allows the default log level of "INFO" to be used if the YAML file configuration\\
+        \t   fails when set to "True".
 
     Raises:
-        Exception: Forwarding caught {type(error).__name__} at line {error.__traceback__.tb_lineno} in <{__name__}>
-        Exception: A general exception occurred during the value type validation.
-        Exception: Forwarding caught {type(error).__name__} at line {error.__traceback__.tb_lineno} in <{__name__}>
-        Exception: Unable to configure handler
-        Exception: A general exception occurred the logger setup.
+        FTypeError (fexception):
+        \t\\- The value '{yaml_path}' is not in <class 'str'> format.
+        FTypeError (fexception):
+        \t\\- The value '{separate_default_logs}' is not in <class 'bool'> format.
+        FTypeError (fexception):
+        \t\\- The value '{allow_basic}' is not in <class 'bool'> format.
+        LoggerSetupFailure:
+        \t\\- The logging hander failed to create.
+        FGeneralError (fexception):
+        \t\\- A general exception occurred the logger setup.
     """
 
-    # Checks function launch variables.
     try:
-        value_type_validation(yaml_path, str, __name__, get_line_number())
+        type_check(yaml_path, str)
         if separate_default_logs:
-            value_type_validation(separate_default_logs, bool, __name__, get_line_number())
+            type_check(separate_default_logs, bool)
         if allow_basic:
-            value_type_validation(allow_basic, bool, __name__, get_line_number())
-    except Exception as error:
-        if 'Originating error on line' in str(error):
-            raise error
-        else:
-            error_args = {
-                'main_message': 'A general exception occurred during the value type validation.',
-                'error_type': Exception,
-                'original_error': error,
-            }
-            error_formatter(error_args, __name__, error.__traceback__.tb_lineno)
+            type_check(allow_basic, bool)
+    except FTypeError:
+        raise
 
     # Sets up the logger based on the YAML.
     try:
@@ -427,26 +450,22 @@ def setup_logger_yaml(yaml_path: str, separate_default_logs: Optional[bool] = Fa
                             config['handlers'][handler_key]['filename'] = log_file_path
         # Sets the logging configuration from the YAML configuration.
         logging.config.dictConfig(config)
-    except Exception as error:
-        if 'Originating error on line' in str(error):
-            raise error
+    except Exception as exc:
+        # Checks if allow_default is enabled to setup default "Info" logging.
+        if allow_basic:
+            # Sets the basic logger setup configuration.
+            logging.basicConfig(level=logging.INFO)
         else:
-            # Checks if allow_default is enabled to setup default "Info" logging.
-            if allow_basic:
-                # Sets the basic logger setup configuration.
-                logging.basicConfig(level=logging.INFO)
+            if 'Unable to configure handler' in str(exc):
+                exc_args = {
+                    'main_message': 'The logging hander failed to create.',
+                    'custom_type': LoggerSetupFailure,
+                    'suggested_resolution': 'Please verify YAML file configuration.',
+                }
+                raise LoggerSetupFailure(FCustomException(exc_args))
             else:
-                if 'Unable to configure handler' in str(error):
-                    error_args = {
-                        'main_message': 'The logging hander failed to create.',
-                        'error_type': Exception,
-                        'original_error': 'Please verify YAML file configuration.',
-                    }
-                    error_formatter(error_args, __name__, error.__traceback__.tb_lineno)
-                else:
-                    error_args = {
-                        'main_message': 'A general exception occurred the logger setup.',
-                        'error_type': Exception,
-                        'original_error': error,
-                    }
-                    error_formatter(error_args, __name__, error.__traceback__.tb_lineno)
+                exc_args = {
+                    'main_message': 'A general exception occurred the logger setup.',
+                    'original_exception': exc,
+                }
+                raise FGeneralError(exc_args)
