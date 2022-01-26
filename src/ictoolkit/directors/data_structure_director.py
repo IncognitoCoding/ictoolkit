@@ -8,8 +8,11 @@ from itertools import groupby
 from typing import Union
 
 # Libraries
-from ictoolkit.helpers.py_helper import get_function_name
 from fchecker import type_check
+
+# Local Functions
+#   - Full path required to avoid partially initialized module error.
+from ictoolkit import get_function_name
 
 # Exceptions
 from fexception import FGeneralError, FKeyError, FTypeError, FValueError
@@ -17,8 +20,8 @@ from fexception import FGeneralError, FKeyError, FTypeError, FValueError
 __author__ = 'IncognitoCoding'
 __copyright__ = 'Copyright 2022, data_structure_director'
 __credits__ = ['IncognitoCoding']
-__license__ = 'GPL'
-__version__ = '2.1'
+__license__ = 'MIT'
+__version__ = '3.0'
 __maintainer__ = 'IncognitoCoding'
 __status__ = 'Production'
 

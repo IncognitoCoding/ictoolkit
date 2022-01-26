@@ -1,13 +1,25 @@
+# Virtual Environments
 venv/
-tests/
-*.log
-software_log_mobgv5t 8un
-monitor.ini
-software_log_monitor.yaml
-sample_search/
+.venv*/
+.conda*/
+
+# Project Content
 .vscode/
-.vscode/settings.json
+
+# Package Files
+*.egg
+*.eggs/
+.installed.cfg
+*.egg-info
+
+# Distribution and Build Files
+dist/*
+
+# Temp Files
 __pycache__/
-__init__.py
-pytest.ini
+.cache/*
+.*.swp
+.DS_Store
+*.xlsx
+*.log
 environment.yaml

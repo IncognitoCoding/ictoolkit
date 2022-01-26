@@ -9,7 +9,9 @@ import logging
 # Libraries
 import configparser
 from fchecker import type_check
-from ictoolkit.helpers.py_helper import get_function_name
+
+# Local Functions
+from ictoolkit import get_function_name
 
 # Exceptions
 from fexception import FGeneralError, FTypeError
@@ -17,8 +19,8 @@ from fexception import FGeneralError, FTypeError
 __author__ = 'IncognitoCoding'
 __copyright__ = 'Copyright 2022, ini_config_director'
 __credits__ = ['IncognitoCoding']
-__license__ = 'GPL'
-__version__ = '2.1'
+__license__ = 'MIT'
+__version__ = '3.0'
 __maintainer__ = 'IncognitoCoding'
 __status__ = 'Production'
 

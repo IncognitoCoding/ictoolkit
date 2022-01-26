@@ -13,6 +13,7 @@ import os
 from typing import Union
 
 # Libraries
+from fchecker import type_check, file_check
 from cryptography.fernet import Fernet, InvalidToken
 import base64
 from cryptography.hazmat.backends import default_backend
@@ -20,8 +21,9 @@ from cryptography.hazmat.primitives import hashes
 from cryptography.hazmat.primitives.kdf.pbkdf2 import PBKDF2HMAC
 from flask import Flask, render_template, request
 from waitress import serve
-from fchecker import type_check, file_check
-from ictoolkit.helpers.py_helper import get_function_name
+
+# Local Functions
+from ictoolkit import get_function_name
 
 # Exceptions
 from fexception import FGeneralError, FTypeError, FCustomException, FFileNotFoundError
@@ -30,8 +32,8 @@ from fexception import FGeneralError, FTypeError, FCustomException, FFileNotFoun
 __author__ = 'IncognitoCoding'
 __copyright__ = 'Copyright 2022, encryption_director'
 __credits__ = ['IncognitoCoding']
-__license__ = 'GPL'
-__version__ = '2.1'
+__license__ = 'MIT'
+__version__ = '3.0'
 __maintainer__ = 'IncognitoCoding'
 __status__ = 'Production'
 

@@ -11,8 +11,11 @@ from logging.handlers import RotatingFileHandler
 
 # Libraries
 from fchecker import type_check
+
+# Local Functions
+from ictoolkit import get_function_name
+# Full path required to avoid partially initialized module error.
 from ictoolkit.directors.yaml_director import read_yaml_config
-from ictoolkit.helpers.py_helper import get_function_name
 
 # Exceptions
 from fexception import FGeneralError, FTypeError, FKeyError, FCustomException
@@ -20,8 +23,8 @@ from fexception import FGeneralError, FTypeError, FKeyError, FCustomException
 __author__ = 'IncognitoCoding'
 __copyright__ = 'Copyright 2022, log_director'
 __credits__ = ['IncognitoCoding']
-__license__ = 'GPL'
-__version__ = '2.1'
+__license__ = 'MIT'
+__version__ = '3.0'
 __maintainer__ = 'IncognitoCoding'
 __status__ = 'Production'
 

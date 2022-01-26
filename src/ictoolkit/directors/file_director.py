@@ -12,9 +12,9 @@ import warnings
 
 # Libraries
 from fchecker import type_check, file_check
-from ictoolkit.directors.data_structure_director import remove_duplicate_dict_values_in_list
-from ictoolkit.directors.validation_director import value_type_validation
-from ictoolkit.directors.error_director import error_formatter
+
+# Local Functions
+from ictoolkit import remove_duplicate_dict_values_in_list
 from ictoolkit.helpers.py_helper import get_function_name, get_line_number
 
 # Exceptions
@@ -23,8 +23,8 @@ from fexception import FGeneralError, FTypeError, FCustomException, FFileNotFoun
 __author__ = 'IncognitoCoding'
 __copyright__ = 'Copyright 2022, file_director'
 __credits__ = ['IncognitoCoding']
-__license__ = 'GPL'
-__version__ = '2.1'
+__license__ = 'MIT'
+__version__ = '3.0'
 __maintainer__ = 'IncognitoCoding'
 __status__ = 'Production'
 
@@ -131,82 +131,6 @@ def write_file(file_path: str, write_value: str) -> None:
                 'returned_result': ' No return search value were returned.',
             }
             raise FileWriteFailure(FCustomException(exc_args))
-
-
-def file_exist_check(file_path: str, file_description: str) -> None:
-    """
-    Validates the file exists. An error will throw if the file does not exist.
-
-    Args:
-        file_path (str): The file path being checked.
-        file_description (str): Name of the file being checked.
-
-    Raises:
-        TypeError: The value '{file_path}' is not in str format.
-        TypeError: The value '{file_description}' is not in str format.
-        Exception: Forwarding caught {type(error).__name__} at line {error.__traceback__.tb_lineno} in <{__name__}>
-        Exception: A general exception occurred during the value type validation.
-        FileNotFoundError: {file_description} log file does not exist.
-        Exception: Forwarding caught {type(error).__name__} at line {error.__traceback__.tb_lineno} in <{__name__}>
-        Exception: A general failure occurred while checking if the file exists.
-    """
-    warnings.warn('Version 2.5 of ictoolkit deprecation. This module has been replaced with the fchecker module. '
-                  'Please switch to using the fchecker module (pip install fchecker).', DeprecationWarning)
-
-    logger = logging.getLogger(__name__)
-    logger.debug(f'=' * 20 + get_function_name() + '=' * 20)
-    # Custom flowchart tracking. This is ideal for large projects that move a lot.
-    # For any third-party modules, set the flow before making the function call.
-    logger_flowchart = logging.getLogger('flowchart')
-    logger_flowchart.debug(f'Flowchart --> Function: {get_function_name()}')
-
-    # Checks function launch variables and logs passing parameters.
-    try:
-        # Validates required types.
-        value_type_validation(file_path, str, __name__, get_line_number())
-        value_type_validation(file_description, str, __name__, get_line_number())
-
-        logger.debug(
-            'Passing parameters:\n'
-            f'  - file_path (str):\n        - {file_path}\n'
-            f'  - file_description (str):\n        - {file_description}\n'
-        )
-    except Exception as error:
-        if 'Originating error on line' in str(error):
-            logger.debug(f'Forwarding caught {type(error).__name__} at line {error.__traceback__.tb_lineno} in <{__name__}>')
-            raise error
-        else:
-            error_args = {
-                'main_message': 'A general exception occurred during the value type validation.',
-                'error_type': Exception,
-                'original_error': error,
-            }
-            error_formatter(error_args, __name__, error.__traceback__.tb_lineno)
-
-    try:
-        logger.debug(f'Begining to check the file path for {file_description}')
-        # Checks if the file does not exist
-        file = pathlib.Path(file_path)
-        if not file.exists():
-            error_args = {
-                'main_message': f'The file \'{file_description}\' file does not exist in the validating file path \'{file_path}\'',
-                'error_type': FileNotFoundError,
-                'suggested_resolution': 'Ensure the file path is the correct path to your file.',
-            }
-            error_formatter(error_args, __name__, get_line_number())
-        else:
-            logger.debug(f'{file_description} file exists')
-    except Exception as error:
-        if 'Originating error on line' in str(error):
-            logger.debug(f'Forwarding caught {type(error).__name__} at line {error.__traceback__.tb_lineno} in <{__name__}>')
-            raise error
-        else:
-            error_args = {
-                'main_message': 'A general failure occurred while checking if the file exists.',
-                'error_type': Exception,
-                'original_error': error,
-            }
-            error_formatter(error_args, __name__, error.__traceback__.tb_lineno)
 
 
 def search_file(file_path: str, searching_value: Union[str, list]) -> Union[list, None]:
