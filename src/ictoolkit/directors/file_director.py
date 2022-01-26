@@ -14,8 +14,8 @@ import warnings
 from fchecker import type_check, file_check
 
 # Local Functions
-from ictoolkit import remove_duplicate_dict_values_in_list
-from ictoolkit.helpers.py_helper import get_function_name, get_line_number
+from ..directors.data_structure_director import remove_duplicate_dict_values_in_list
+from ..helpers.py_helper import get_function_name
 
 # Exceptions
 from fexception import FGeneralError, FTypeError, FCustomException, FFileNotFoundError
@@ -24,7 +24,7 @@ __author__ = 'IncognitoCoding'
 __copyright__ = 'Copyright 2022, file_director'
 __credits__ = ['IncognitoCoding']
 __license__ = 'MIT'
-__version__ = '3.0'
+__version__ = '3.1'
 __maintainer__ = 'IncognitoCoding'
 __status__ = 'Production'
 

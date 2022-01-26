@@ -11,8 +11,7 @@ from typing import Union
 from fchecker import type_check
 
 # Local Functions
-#   - Full path required to avoid partially initialized module error.
-from ictoolkit import get_function_name
+from ..helpers.py_helper import get_function_name
 
 # Exceptions
 from fexception import FGeneralError, FKeyError, FTypeError, FValueError
@@ -21,7 +20,7 @@ __author__ = 'IncognitoCoding'
 __copyright__ = 'Copyright 2022, data_structure_director'
 __credits__ = ['IncognitoCoding']
 __license__ = 'MIT'
-__version__ = '3.0'
+__version__ = '3.1'
 __maintainer__ = 'IncognitoCoding'
 __status__ = 'Production'
 

@@ -13,7 +13,7 @@ import logging
 from fchecker import type_check
 
 # Local Functions
-from ictoolkit import get_function_name
+from ..helpers.py_helper import get_function_name
 
 # Exceptions
 from fexception import FTypeError, FCustomException
@@ -22,7 +22,7 @@ __author__ = 'IncognitoCoding'
 __copyright__ = 'Copyright 2022, thread_director'
 __credits__ = ['IncognitoCoding']
 __license__ = 'MIT'
-__version__ = '3.0'
+__version__ = '3.1'
 __maintainer__ = 'IncognitoCoding'
 __status__ = 'Production'
 

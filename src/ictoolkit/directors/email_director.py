@@ -16,18 +16,18 @@ from jinja2 import Environment, PackageLoader, select_autoescape
 from fchecker import type_check
 
 # Local Functions
-from ictoolkit.directors.encryption_director import encrypt_info
-from ictoolkit import get_function_name
+from ..directors.encryption_director import encrypt_info
+from ..helpers.py_helper import get_function_name
 
 # Exceptions
-from ictoolkit.directors.encryption_director import EncryptionFailure
+from ..directors.encryption_director import EncryptionFailure
 from fexception import FGeneralError, FTypeError, FCustomException
 
 __author__ = 'IncognitoCoding'
 __copyright__ = 'Copyright 2022, email_director'
 __credits__ = ['IncognitoCoding', 'Monoloch']
 __license__ = 'MIT'
-__version__ = '3.0'
+__version__ = '3.1'
 __maintainer__ = 'IncognitoCoding'
 __status__ = 'Production'
 
