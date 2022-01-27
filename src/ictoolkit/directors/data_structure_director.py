@@ -103,7 +103,7 @@ def remove_duplicate_dict_values_in_list(list_dictionary: list, element_number: 
         formatted_element_number = f'  - element_number (int):\n        - None'
     logger.debug(
         'Passing parameters:\n'
-        f'{formatted_list_dictionary}\n '
+        f'{formatted_list_dictionary}\n'
         f'{formatted_element_number}\n'
     )
 
