@@ -332,7 +332,7 @@ def get_list_duplicates(duplicates: list, match_index: int = None, grouped: bool
         \t\\- Enables grouping of duplicate values.\\
         \t\\- Defaults to False.
 
-    Calling Examples:\\
+    Calling Examples:
     \tExample1:
     \t\t\\- duplicates = ['ValueA',
     \t\t\t\t\t'ValueA',
@@ -394,7 +394,7 @@ def get_list_duplicates(duplicates: list, match_index: int = None, grouped: bool
     logger_flowchart.debug(f'Flowchart --> Function: {get_function_name()}')
 
     try:
-        type_check(duplicates, list,)
+        type_check(duplicates, list)
         if match_index:
             type_check(match_index, int)
         type_check(grouped, bool)

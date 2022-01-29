@@ -13,7 +13,8 @@ log = logging.getLogger(__name__)
 log.addHandler(logging.NullHandler())
 
 # Function & Methods
-from .helpers.py_helper import get_function_name
+from .helpers.py_helper import (get_function_name,
+                                get_line_number)
 from .directors.data_structure_director import (remove_duplicate_dict_values_in_list,
                                                 get_list_of_dicts_duplicates,
                                                 get_list_duplicates,
