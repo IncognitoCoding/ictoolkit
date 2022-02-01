@@ -20,7 +20,7 @@ __author__ = 'IncognitoCoding'
 __copyright__ = 'Copyright 2022, data_structure_director'
 __credits__ = ['IncognitoCoding']
 __license__ = 'MIT'
-__version__ = '3.1'
+__version__ = '3.2'
 __maintainer__ = 'IncognitoCoding'
 __status__ = 'Production'
 
@@ -837,7 +837,8 @@ def string_grouper(list_of_strings: list, grouping_value: Union[str, int, None],
             #                             {'group_identifier': 'TI-IDF', 'grouping': ['TI-IDF1-9200-1_2', 'TI-IDF2-9200-1_2']}]
             return grouping
         else:
-            return None
+            # Only one entry was sent. Returning the single entry.
+            return [{'group_identifier': list_of_strings[0], 'grouping': [list_of_strings[0]]}]
     except FTypeError as exc:
         raise
     except Exception as exc:

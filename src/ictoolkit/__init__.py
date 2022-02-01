@@ -2,7 +2,7 @@ __author__ = 'IncognitoCoding'
 __copyright__ = 'Copyright 2022, ictoolkit'
 __credits__ = ['IncognitoCoding']
 __license__ = 'MIT'
-__version__ = '3.2'
+__version__ = '3.3'
 __maintainer__ = 'IncognitoCoding'
 __status__ = 'Production'
 
