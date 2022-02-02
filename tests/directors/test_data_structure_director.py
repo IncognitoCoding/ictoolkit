@@ -193,10 +193,8 @@ def test_string_grouper():
         ValueError: A failure occurred in section 6.0 while testing the function 'string_grouper'.
         ValueError: A failure occurred in section 6.1 while testing the function 'string_grouper'. The first entries in the list do not match.
         ValueError: A failure occurred in section 7.0 while testing the function 'string_grouper'. The test did not fail when sending a non-list of strings.
-        ValueError: A failure occurred in section 7.1 while testing the function 'string_grouper'. The group did not return the value \'None\'.
-        ValueError: A failure occurred in section 7.2 while testing the function 'string_grouper'. The group did not return the value \'None\'.
-        ValueError: A failure occurred in section 7.3 while testing the function 'string_grouper'. The test did not fail when sending a non-string.
-        ValueError: A failure occurred in section 7.4 while testing the function 'string_grouper'. The test did not fail when sending a non-int.
+        ValueError: A failure occurred in section 7.1 while testing the function 'string_grouper'. The test did not fail when sending a non-string.
+        ValueError: A failure occurred in section 7.2 while testing the function 'string_grouper'. The test did not fail when sending a non-int.
     """
     print('')
     print('-' * 65)
@@ -459,28 +457,6 @@ def test_string_grouper():
             }
             raise FValueError(exc_args)
 
-    # ========Test for an empty output return.========
-    # Tests finding duplicate values in the list.
-    group_check = string_grouper(['ONE ENTRY TEST'], '-', 1)
-    if group_check is not None:
-        exc_args = {
-            'main_message': 'A failure occurred in section 7.1 while testing the function \'string_grouper\'. The group did not return the value \'None\'.',
-            'expected_result': 'None',
-            'returned_result': group_check,
-        }
-        raise FValueError(exc_args)
-
-    # ========Test for an empty output return.========
-    # Tests finding duplicate values in the list.
-    group_check = string_grouper(['ONE ENTRY1', None], 'T', 2)
-    if group_check is not None:
-        exc_args = {
-            'main_message': 'A failure occurred in section 7.2 while testing the function \'string_grouper\'. The group did not return the value \'None\'.',
-            'expected_result': 'None',
-            'returned_result': group_check,
-        }
-        raise FValueError(exc_args)
-
     # ========Tests for an incorrectly sent string format.========
     # Tests finding duplicate values in the list.
     try:
@@ -488,7 +464,7 @@ def test_string_grouper():
     except Exception as error:
         if 'The grouping_value sent for the grouping is not a string' not in str(error):
             exc_args = {
-                'main_message': 'A failure occurred in section 7.3 while testing the function \'string_grouper\'. The test did not fail when sending a non-string.',
+                'main_message': 'A failure occurred in section 7.2 while testing the function \'string_grouper\'. The test did not fail when sending a non-string.',
                 'expected_result': 'non-string error',
                 'returned_result': error,
             }
@@ -501,7 +477,7 @@ def test_string_grouper():
     except Exception as error:
         if 'The grouping_value sent for the grouping is not a int' not in str(error):
             exc_args = {
-                'main_message': 'A failure occurred in section 7.4 while testing the function \'string_grouper\'. The test did not fail when sending a non-int.',
+                'main_message': 'A failure occurred in section 7.3 while testing the function \'string_grouper\'. The test did not fail when sending a non-int.',
                 'expected_result': 'non-int error',
                 'returned_result': error,
             }
