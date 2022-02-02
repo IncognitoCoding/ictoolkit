@@ -25,25 +25,15 @@ __author__ = 'IncognitoCoding'
 __copyright__ = 'Copyright 2022, log_director'
 __credits__ = ['IncognitoCoding']
 __license__ = 'MIT'
-__version__ = '3.1'
+__version__ = '3.2'
 __maintainer__ = 'IncognitoCoding'
 __status__ = 'Production'
 
 
 class LoggerSetupFailure(Exception):
-    """
-    Exception raised for a logger setup failure.
-
-    Args:
-        exc_message:\\
-        \t\\- The failure reason.
-    """
+    """Exception raised for a logger setup failure."""
     __module__ = 'builtins'
-
-    exc_message: str
-
-    def __init__(self, exc_message: str) -> None:
-        self.exc_message = exc_message
+    pass
 
 
 def create_logger(logger_settings: dict) -> logging.Logger:

@@ -22,25 +22,15 @@ __author__ = 'IncognitoCoding'
 __copyright__ = 'Copyright 2022, thread_director'
 __credits__ = ['IncognitoCoding']
 __license__ = 'MIT'
-__version__ = '3.1'
+__version__ = '3.2'
 __maintainer__ = 'IncognitoCoding'
 __status__ = 'Production'
 
 
 class ThreadStartFailure(Exception):
-    """
-    Exception raised for the thread start failure.
-
-    Args:
-        exc_message:\\
-        \t\\- The failure reason.
-    """
+    """Exception raised for the thread start failure."""
     __module__ = 'builtins'
-
-    exc_message: str
-
-    def __init__(self, exc_message: str) -> None:
-        self.exc_message = exc_message
+    pass
 
 
 def start_function_thread(passing_program_function, program_function_name: str, infinite_loop_option: bool) -> None:

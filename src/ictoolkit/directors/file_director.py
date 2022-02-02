@@ -24,41 +24,21 @@ __author__ = 'IncognitoCoding'
 __copyright__ = 'Copyright 2022, file_director'
 __credits__ = ['IncognitoCoding']
 __license__ = 'MIT'
-__version__ = '3.1'
+__version__ = '3.2'
 __maintainer__ = 'IncognitoCoding'
 __status__ = 'Production'
 
 
 class FileWriteFailure(Exception):
-    """
-    Exception raised for file write failures.
-
-    Args:
-        exc_message:\\
-        \t\\- The failure reason.
-    """
+    """Exception raised for file write failures."""
     __module__ = 'builtins'
-
-    exc_message: str
-
-    def __init__(self, exc_message: str) -> None:
-        self.exc_message = exc_message
+    pass
 
 
 class FileSearchFailure(Exception):
-    """
-    Exception raised for file search failures.
-
-    Args:
-        exc_message:\\
-        \t\\- The failure reason.
-    """
+    """Exception raised for file search failures."""
     __module__ = 'builtins'
-
-    exc_message: str
-
-    def __init__(self, exc_message: str) -> None:
-        self.exc_message = exc_message
+    pass
 
 
 def write_file(file_path: str, write_value: str) -> None:
