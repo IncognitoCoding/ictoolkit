@@ -2,7 +2,7 @@ __author__ = 'IncognitoCoding'
 __copyright__ = 'Copyright 2022, ictoolkit'
 __credits__ = ['IncognitoCoding']
 __license__ = 'MIT'
-__version__ = '3.5'
+__version__ = '3.6'
 __maintainer__ = 'IncognitoCoding'
 __status__ = 'Production'
 
@@ -29,7 +29,6 @@ from .directors.encryption_director import (encrypt_info,
                                             launch_decryptor_website)
 from .directors.file_director import (write_file,
                                       search_file,
-                                      search_multiple_files,
                                       convert_relative_to_full_path,
                                       user_file_selection)
 from .directors.html_director import HTMLConverter

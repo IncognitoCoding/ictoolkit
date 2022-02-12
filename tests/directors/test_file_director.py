@@ -10,7 +10,6 @@ import os
 from fchecker import type_check
 from ictoolkit import (write_file,
                        search_file,
-                       search_multiple_files,
                        convert_relative_to_full_path)
 
 # Exceptions
@@ -66,6 +65,10 @@ def test_search_file():
     Raises:
         ValueError: A failure occurred in section 1.0 while testing the function 'search_file'. The function did not return a type 'list'.
         ValueError: A failure occurred in section 1.1 while testing the function 'search_file'. The returned search list length should have equaled 1.
+        ValueError: A failure occurred in section 1.2 while testing the function 'search_multiple_files' with a single search value against multiple paths.. The function did not return a type \'list\'.
+        ValueError: A failure occurred in section 1.3 while testing the function 'search_multiple_files' with a single search value against multiple paths. The returned search list length should have equaled 2.
+        ValueError: A failure occurred in section 1.4 while testing the function 'search_multiple_files' with multiple search values against multiple paths. The function did not return a type \'list\'.
+        ValueError: A failure occurred in section 1.5 while testing the function 'search_multiple_files' with multiple search values against multiple paths. The returned search list length should have equaled 2.
     """
     print('')
     print('-' * 65)
@@ -100,30 +103,9 @@ def test_search_file():
     if len(found_value) != 1:
         exc_args = {
             'main_message': 'A failure occurred in section 1.1 while testing the function \'search_file\'. The returned search list length should have equaled 1.',
-            'error_type': ValueError,
         }
         raise FValueError(exc_args)
 
-
-def test_search_multiple_files():
-    """
-    Tests searching multiple files.
-
-    Raises:
-        ValueError: A failure occurred in section 1.0 while testing the function 'search_file'. The function did not return a type 'list'.
-        ValueError: A failure occurred in section 1.1 while testing the function 'search_file'. The returned search list length should have equaled 1.
-    """
-    print('')
-    print('-' * 65)
-    print('-' * 65)
-    print('Testing Function: search_multiple_files')
-    print('-' * 65)
-    print('-' * 65)
-    print('')
-
-    # ############################################################
-    # ######Section Test Part 1 (Successful Value Checking)#######
-    # ############################################################
     # ========Tests for a successful output return.========
     # Gets the programs root directory.
     preset_root_directory = os.path.dirname(os.path.realpath(__file__))
@@ -132,13 +114,13 @@ def test_search_multiple_files():
     sample_file_path = os.path.abspath(f'{preset_root_directory}\\temp_pytest_read_write.py')
 
     # Single search value against the same path twice.
-    found_value = search_multiple_files(list([sample_file_path, sample_file_path]), 'line1')
+    found_value = search_file(list([sample_file_path, sample_file_path]), 'line1')
 
     try:
         type_check(found_value, list)
     except FTypeError as exc:
         exc_args = {
-            'main_message': 'A failure occurred in section 1.0 while testing the function \'search_multiple_files\' with a single search value against multiple paths.. The function did not return a type \'list\'.',
+            'main_message': 'A failure occurred in section 1.2 while testing the function \'search_multiple_files\' with a single search value against multiple paths.. The function did not return a type \'list\'.',
             'expected_result': 'non-list error',
             'returned_result': exc,
         }
@@ -148,19 +130,19 @@ def test_search_multiple_files():
     # Expected Return: [{'search_entry': 'line1', 'found_entry': 'testing line1'}, {'search_entry': 'line1', 'found_entry': 'testing line1'}]
     if len(found_value) != 2:
         exc_args = {
-            'main_message': 'A failure occurred in section 1.1 while testing the function \'search_multiple_files\' with a single search value against multiple paths. The returned search list length should have equaled 2.',
+            'main_message': 'A failure occurred in section 1.3 while testing the function \'search_multiple_files\' with a single search value against multiple paths. The returned search list length should have equaled 2.',
         }
         raise FValueError(exc_args)
 
     # ========Tests for a successful output return.========
     # Multi search value against the same path twice.
-    found_value = search_multiple_files(list([sample_file_path, sample_file_path]), list(['line1', 'line2']))
+    found_value = search_file(list([sample_file_path, sample_file_path]), list(['line1', 'line2']))
 
     try:
         type_check(found_value, list)
     except FTypeError as exc:
         exc_args = {
-            'main_message': 'A failure occurred in section 1.2 while testing the function \'search_multiple_files\' with multiple search values against multiple paths. The function did not return a type \'list\'.',
+            'main_message': 'A failure occurred in section 1.4 while testing the function \'search_multiple_files\' with multiple search values against multiple paths. The function did not return a type \'list\'.',
             'expected_result': 'non-list error',
             'returned_result': exc,
         }
@@ -170,7 +152,7 @@ def test_search_multiple_files():
     # Expected Return: [{'search_entry': ['line1', 'line2'], 'found_entry': 'testing line1'}, {'search_entry': ['line1', 'line2'], 'found_entry': 'testing line2'}]
     if len(found_value) != 2:
         exc_args = {
-            'main_message': 'A failure occurred while testing the function \'search_multiple_files\' with multiple search values against multiple paths. The returned search list length should have equaled 2.',
+            'main_message': 'A failure occurred in section 1.5 while testing the function \'search_multiple_files\' with multiple search values against multiple paths. The returned search list length should have equaled 2.',
         }
         raise FValueError(exc_args)
 
@@ -197,9 +179,9 @@ def test_convert_relative_to_full_path():
     # ######Section Test Part 1 (Successful Value Checking)#######
     # ############################################################
     # ========Tests for a successful output return.========
-    full_path = convert_relative_to_full_path("mytest\sample.txt")
+    full_path = convert_relative_to_full_path("mytest\\sample.txt")
 
-    if '\mytest\sample.txt' not in full_path:
+    if '\\mytest\\sample.txt' not in full_path:
         exc_args = {
             'main_message': 'A failure occurred in section 1.0 while testing the function \'convert_relative_to_full_path\'. The full path did not return correctly.',
         }

@@ -45,6 +45,9 @@ def write_file(file_path: str, write_value: str) -> None:
     """
     Writes a value to the file.
 
+    Write validation is performed after the write. Supports writes with
+    new lines (\\n).
+
     Args:
         file_path (str):
         \t\\- The file path being written into.
@@ -86,8 +89,11 @@ def write_file(file_path: str, write_value: str) -> None:
         logger.debug(f'Begining to write the value to the file. write_value = {write_value}')
         logger.debug('Writing the value to the file')
         # Using "with" to take care of open and closing.
-        with open(file_path, 'a+') as f:
-            f.writelines(write_value + "\n")
+        with open(file_path, 'a') as f:
+            if '\n' in write_value:
+                f.writelines(write_value + "\n")
+            else:
+                f.write(write_value + "\n")
     except Exception as exc:
         exc_args = {
             'main_message': 'The file failed to write.',
@@ -97,9 +103,18 @@ def write_file(file_path: str, write_value: str) -> None:
         raise FileWriteFailure(FCustomException(exc_args))
     else:
         try:
-            # Checking if the file entry written to the file.
-            # Calling Example: search_file(<log file>, <search string>, <configured logger>)
-            return_search = search_file(file_path, write_value)
+            # Checks if a file that was written had new lines, so each line can get checked
+            # individually.
+            if '\n' in write_value:
+                split_new_line_write_value = write_value.split('\n')
+                for line in split_new_line_write_value:
+                    return_search = search_file(file_path, line)
+                    if not return_search:
+                        break
+            else:
+                # Checking if the file entry written to the file.
+                # Calling Example: search_file(<log file>, <search string>, <configured logger>)
+                return_search = search_file(file_path, write_value)
         except FFileNotFoundError:
             raise
 
@@ -113,168 +128,29 @@ def write_file(file_path: str, write_value: str) -> None:
             raise FileWriteFailure(FCustomException(exc_args))
 
 
-def search_file(file_path: str, searching_value: Union[str, list]) -> Union[list, None]:
+def search_file(file_path: Union[str, list], searching_value: Union[str, list],
+                include_next_line_value: Union[str, list] = None) -> Union[list, None]:
     """
-    Searches the file for a value.
+    Searches a single or multiple files for a value.
 
     The search can look for multiple values when the searching value arguments are passed as a list.
 
     A single-string search is supported as well.
 
     Args:
-        file_path (str):
-        \t\\- the file path being checked
-        searching_value (Union[str, list]):
-        \t\\- Search value that is looked for within the file.\\
-        \t\\- The entry can be a single string or a list to search.
-
-    Raises:
-        FTypeError (fexception):
-        \t\\- The value '{file_path}' is not in <class 'str'> format.
-        FTypeError (fexception):
-        \t\\- The value '{searching_value}' is not in [<class 'str'>, <class 'list'>] format.
-        FFileNotFoundError (fexception):
-        \t\\- The file does not exist in the validating file path ({file_path}).
-        FileSearchFailure:
-        \t\\- A failure occurred while searching the file. The file path does not include a file with an extension.
-        FGeneralError (fexception):
-        \t\\- A general failure occurred while while searching the file.
-
-    Returns:
-        list:
-        \t\\- A dictionary in a list.
-
-    Return Examples:
-    \t\\- [{'search_entry': '|Error|', 'found_entry': 'the entry found'},
-    \t   {'search_entry': '|Warning|', 'found_entry': 'the entry found'}]
-
-    Return Usage Keys:
-    \t\\- search_entry\\
-    \t\\- found_entry
-    """
-    logger = logging.getLogger(__name__)
-    logger.debug(f'=' * 20 + get_function_name() + '=' * 20)
-    # Custom flowchart tracking. This is ideal for large projects that move a lot.
-    # For any third-party modules, set the flow before making the function call.
-    logger_flowchart = logging.getLogger('flowchart')
-    logger_flowchart.debug(f'Flowchart --> Function: {get_function_name()}')
-
-    try:
-        type_check(file_path, str)
-        type_check(searching_value, [str, list])
-    except FTypeError:
-        raise
-
-    try:
-        file_check(file_path)
-    except FFileNotFoundError:
-        raise
-
-    if isinstance(searching_value, list):
-        formatted_searching_value = ('  - searching_value (list):'
-                                     + str('\n        - ' + '\n        - '.join(map(str, searching_value))))
-    elif isinstance(searching_value, str):
-        formatted_searching_value = f'  - searching_value (str):\n        - {searching_value}'
-    logger.debug(
-        'Passing parameters:\n'
-        f'  - file_path (str):\n        - {file_path}\n'
-        f'{formatted_searching_value}\n'
-    )
-
-    logger.debug(f'Begining to search the file \"{file_path}\" for a value \"{searching_value}\"')
-
-    # Checks that the passing file_path contains a file extension.
-    if '.' not in file_path:
-        exc_args = {
-            'main_message': 'A failure occurred while searching the file. The file path does not include a file with an extension.',
-            'custom_type': FileSearchFailure,
-            'expected_result': 'A file with an extension (ex: myfile.txt)',
-            'returned_result': file_path,
-            'suggested_resolution': 'Please verify you have sent a full file path and not a directory.',
-        }
-        raise FileSearchFailure(FCustomException(exc_args))
-
-    try:
-        # Stores the search entry and found info.
-        # Required to return multiple found strings.
-        matched_entries = []
-
-        logger.debug('Reading in all lines from the file')
-        # Using "with" to take care of open and closing.
-        with open(file_path, 'r') as f:
-            lines = f.readlines()
-        logger.debug('Looping through all lines from the file 1 by 1')
-        # Looping through all lines from the log file 1 by 1.
-        for line in lines:
-            # Strips off the '\n' character.
-            stripped_line = (line.strip())
-            # Checks if searching_value is a str or list
-            if isinstance(searching_value, str):
-                # Checks if a value exists as each line is read.
-                if searching_value in stripped_line:
-                    logger.debug(f'Searched file value \"{searching_value}\" found. Adding file value to the returning list \"matched_entries\"')
-                    # Adds found line and search value to list
-                    matched_entries.append({'search_entry': searching_value, 'found_entry': stripped_line})
-            elif isinstance(searching_value, list):
-                # Loops through each search value
-                for search_value in searching_value:
-                    # Checks if a value exists as each line is read.
-                    if search_value in stripped_line:
-                        logger.debug(f'Searched file value \"{search_value}\" from value list \"{searching_value}\" found. Adding file value \"{stripped_line}\" to the returning list \"matched_entries\"')
-                        # Adds found line and search value to list
-                        matched_entries.append({'search_entry': searching_value, 'found_entry': stripped_line})
-
-            logger.debug('Checking if the list \"matched_entries\" has matched values')
-
-        # Checking if the list has discovered values for potential cleanup.
-        if matched_entries:
-            # Checks if searching_value is str or list to clean up any potential duplicates
-            if isinstance(searching_value, list):
-
-                logger.debug(f'A list of all found search matches is listed below: {matched_entries}')
-                logger.debug(f'Removing any duplicate entries that may have matched multiple times with similar search info')
-                # Removes any duplicate matched values using the 2nd entry (1st element). This can happen if a search list has a similar search word that discovers the same line.
-                # Example Return: [{'search_entry': '|Error|', 'found_entry': 'the entry found2'}]
-                matched_entries = remove_duplicate_dict_values_in_list(matched_entries, 1)
-
-                logger.debug(f'The adjusted match list with removed duplicates is listed below: {matched_entries}')
-    except Exception as exc:
-        exc_args = {
-            'main_message': 'A general failure occurred while while searching the file.',
-            'original_exception': exc,
-        }
-        raise FGeneralError(exc_args)
-    else:
-        # Checking if the list has discovered log entry values.
-        if matched_entries:
-            logger.debug('Returning found values')
-            # Returns found lines(s).
-            return matched_entries
-        elif not matched_entries:
-            logger.debug('No searched value has have been found')
-            logger.debug('Returning None')
-            # Returns "None" because no strings found.
-            return None
-
-
-def search_multiple_files(file_paths: list, searching_value: Union[str, list]) -> Union[list, None]:
-    """
-    Searches multiple files for a value.
-
-    The search can look for multiple values when the searching value arguments are passed as a list.
-
-    A single-string search is supported as well.
-
-    Args:
-        file_paths (list):
+        file_path (list):
         \t\\- A list of file path being checked.
         searching_value (Union[str, list]):
         \t\\- search value that is looked for within the file.\\
         \t\\- The entry can be a single string or a list to search
+        include_next_line_value (Union[str, list], optional):
+        \t\\- Includes any next line containing a character or characters that match.\\
+        \t\\- Ideal when logs add new line information and the output needs returned.\\
+        \t\\- The next line value check can be a single string or a list to search.
 
     Raises:
         FTypeError (fexception):
-        \t\\- The value '{file_paths}' is not in <class 'list'> format.
+        \t\\- The value '{file_path}' is not in <class '[str, list]'> format.
         FTypeError (fexception):
         \t\\- The value '{searching_value}' is not in [<class 'str'>, <class 'list'>] format.
         FFileNotFoundError (fexception):
@@ -308,12 +184,12 @@ def search_multiple_files(file_paths: list, searching_value: Union[str, list]) -
     logger_flowchart.debug(f'Flowchart --> Function: {get_function_name()}')
 
     try:
-        type_check(file_paths, list)
+        type_check(file_path, [str, list])
         type_check(searching_value, [str, list])
     except FTypeError:
         raise
 
-    formatted_file_paths = '  - file_paths (list):' + str('\n        - ' + '\n        - '.join(map(str, file_paths)))
+    formatted_file_path = '  - file_path (list):' + str('\n        - ' + '\n        - '.join(map(str, file_path)))
     if isinstance(searching_value, list):
         formatted_searching_value = ('  - searching_value (list):'
                                      + str('\n        - ' + '\n        - '.join(map(str, searching_value))))
@@ -321,74 +197,133 @@ def search_multiple_files(file_paths: list, searching_value: Union[str, list]) -
         formatted_searching_value = f'  - searching_value (str):\n        - {searching_value}'
     logger.debug(
         'Passing parameters:\n'
-        f'{formatted_file_paths}\n'
+        f'{formatted_file_path}\n'
         f'{formatted_searching_value}\n'
     )
 
-    logger.debug(f'Begining to search the files \"{file_paths}\" for a value \"{searching_value}\"')
+    # Assigns list variable to be used in this function.
+    # Required to return multiple found strings.
+    matched_entries: list = []
+    grouped_found_file_lines: list = []
 
     try:
-        # Assigns list variable to be used in this function.
-        # Required to return multiple found strings.
-        grouped_found_files = []
-        matched_entries = []
+        if isinstance(file_path, list):
+            # Sets count on total files being searched.
+            total_files = len(file_path)
+            logger.debug('Starting to loop through file(s)')
+            logger.debug(f'Begining to search the files \"{file_path}\" for a value \"{searching_value}\"')
+            # Loops through each file path to add all lines into a single list.
+            for index, file_path in enumerate(file_path):
+                # Checks that the passing file_path contains a file extension.
+                if '.' not in file_path:
+                    exc_args = {
+                        'main_message': 'A failure occurred while searching the file. The file path does not include a file with an extension.',
+                        'custom_type': FileSearchFailure,
+                        'expected_result': 'A file with an extension (ex: myfile.txt)',
+                        'returned_result': file_path,
+                        'suggested_resolution': 'Please verify you have sent a full file path and not a directory.',
+                    }
+                    raise FileSearchFailure(FCustomException(exc_args))
 
-        # Sets count on total files being searched.
-        total_files = len(file_paths)
-        logger.debug('Starting to loop through file(s)')
-        # Loops through each file path to add all lines into a single list.
-        for index, file_path in enumerate(file_paths):
-            # Checks that the passing file_path contains a file extension.
-            if '.' not in file_path:
-                exc_args = {
-                    'main_message': 'A failure occurred while searching the file. The file path does not include a file with an extension.',
-                    'custom_type': FileSearchFailure,
-                    'expected_result': 'A file with an extension (ex: myfile.txt)',
-                    'returned_result': file_path,
-                    'suggested_resolution': 'Please verify you have sent a full file path and not a directory.',
-                }
-                raise FileSearchFailure(FCustomException(exc_args))
+                logger.debug(f'Reading in all lines from the file \"{file_path}\"')
+                # Sets the basename for cleaner logging output.
+                basename_searched_file = os.path.basename(file_path)
+                logger.debug(f'Looping through file \"{basename_searched_file}\" {index + 1} of {total_files}')
 
-            logger.debug(f'Reading in all lines from the file \"{file_path}\"')
-            # Sets the basename for cleaner logging output.
-            basename_searched_file = os.path.basename(file_path)
-            logger.debug(f'Looping through file \"{basename_searched_file}\" {index + 1} of {total_files}')
+                try:
+                    file_check(file_path)
+                except FFileNotFoundError:
+                    raise
 
-            try:
-                file_check(file_path)
-            except FFileNotFoundError:
-                raise
+                # Using "with" to take care of open and closing.
+                with open(file_path, 'r') as f:
+                    readLines = f.readlines()
+                    # Loops through each line.
+                    for line in readLines:
+                        # Adds line to list.
+                        grouped_found_file_lines.append(line)
 
+                logger.debug('Looping through all lines from the files 1 by 1')
+        else:
             # Using "with" to take care of open and closing.
             with open(file_path, 'r') as f:
                 readLines = f.readlines()
                 # Loops through each line.
                 for line in readLines:
                     # Adds line to list.
-                    grouped_found_files.append(line)
+                    grouped_found_file_lines.append(line)
 
-            logger.debug('Looping through all lines from the files 1 by 1')
-
-        # Looping through all lines from the log file 1 by 1.
-        for line in grouped_found_files:
+        # Looping through all lines from the log file(s) line list 1 by 1.
+        for index, line in enumerate(grouped_found_file_lines):
             # Strips off the '\n' character.
-            stripped_line = (line.strip())
+            stripped_line: str = str(line).strip()
             # Checks if searching_value is a str or list
             if isinstance(searching_value, str):
                 # Checks if a value exists as each line is read.
                 if searching_value in stripped_line:
                     logger.debug(f'Searched file value \"{searching_value}\" found. Adding file value to the returning list \"matched_entries\"')
-                    # Adds found line and search value to list
-                    matched_entries.append({'search_entry': searching_value, 'found_entry': stripped_line})
+                    # Checks if the next line needs to be included in the search.
+                    if include_next_line_value:
+                        multi_line_builder: list = []
+                        line_tracker: int = index
+                        while True:
+                            # Adds found line and search value to list
+                            multi_line_builder.append(grouped_found_file_lines[line_tracker].strip())
+
+                            line_tracker += 1
+
+                            # Checks if the next line value filters do not match to break loop.
+                            if isinstance(include_next_line_value, str):
+                                if include_next_line_value not in str(grouped_found_file_lines[line_tracker]):
+                                    break
+                            if isinstance(include_next_line_value, list):
+                                found: bool = True
+                                for next_line_value in include_next_line_value:
+                                    if next_line_value in str(grouped_found_file_lines[line_tracker]):
+                                        found = True
+                                        break
+                                    else:
+                                        found = False
+                                if found is False:
+                                    break
+                        matched_entries.append({'search_entry': searching_value, 'found_entry': str('\n'.join(multi_line_builder))})
+                    else:
+                        # Adds found line and search value to list
+                        matched_entries.append({'search_entry': searching_value, 'found_entry': stripped_line})
             elif isinstance(searching_value, list):
                 # Loops through each search value
                 for search_value in searching_value:
                     # Checks if a value exists as each line is read.
                     if search_value in stripped_line:
                         logger.debug(f'Searched file value \"{search_value}\" from value list \"{searching_value}\" found. Adding file value \"{stripped_line}\" to the returning list \"matched_entries\"')
+                        # Checks if the next line needs to be included in the search.
+                        if include_next_line_value:
+                            multi_line_builder: list = []
+                            line_tracker: int = index
+                            while True:
+                                # Adds found line and search value to list
+                                multi_line_builder.append(grouped_found_file_lines[line_tracker].strip())
 
-                        # Adds found line and search value to list
-                        matched_entries.append({'search_entry': searching_value, 'found_entry': stripped_line})
+                                line_tracker += 1
+
+                                # Checks if the next line value filters do not match to break loop.
+                                if isinstance(include_next_line_value, str):
+                                    if include_next_line_value not in str(grouped_found_file_lines[line_tracker]):
+                                        break
+                                if isinstance(include_next_line_value, list):
+                                    found: bool = True
+                                    for next_line_value in include_next_line_value:
+                                        if next_line_value in str(grouped_found_file_lines[line_tracker]):
+                                            found = True
+                                            break
+                                        else:
+                                            found = False
+                                    if found is False:
+                                        break
+                            matched_entries.append({'search_entry': searching_value, 'found_entry': str('\n'.join(multi_line_builder))})
+                        else:
+                            # Adds found line and search value to list
+                            matched_entries.append({'search_entry': searching_value, 'found_entry': stripped_line})
 
             logger.debug('Checking if the list has discovered file entry values')
 
