@@ -5,10 +5,8 @@ This module is designed to assist with file-related actions.
 import os
 import sys
 import logging
-import pathlib
 from pathlib import Path
 from typing import Union
-import warnings
 
 # Libraries
 from fchecker import type_check, file_check
@@ -24,7 +22,7 @@ __author__ = 'IncognitoCoding'
 __copyright__ = 'Copyright 2022, file_director'
 __credits__ = ['IncognitoCoding']
 __license__ = 'MIT'
-__version__ = '3.2'
+__version__ = '3.3'
 __maintainer__ = 'IncognitoCoding'
 __status__ = 'Production'
 
@@ -189,7 +187,10 @@ def search_file(file_path: Union[str, list], searching_value: Union[str, list],
     except FTypeError:
         raise
 
-    formatted_file_path = '  - file_path (list):' + str('\n        - ' + '\n        - '.join(map(str, file_path)))
+    if isinstance(file_path, list):
+        formatted_file_path = '  - file_path (list):' + str('\n        - ' + '\n        - '.join(map(str, file_path)))
+    elif isinstance(file_path, str):
+        formatted_file_path = f'  - file_path (str):\n        - {file_path}'
     if isinstance(searching_value, list):
         formatted_searching_value = ('  - searching_value (list):'
                                      + str('\n        - ' + '\n        - '.join(map(str, searching_value))))
@@ -205,7 +206,9 @@ def search_file(file_path: Union[str, list], searching_value: Union[str, list],
     # Required to return multiple found strings.
     matched_entries: list = []
     grouped_found_file_lines: list = []
-
+    import sys
+    logging.getLogger().addHandler(logging.StreamHandler(sys.stdout))
+    logger.setLevel(logging.DEBUG)
     try:
         if isinstance(file_path, list):
             # Sets count on total files being searched.
@@ -272,6 +275,9 @@ def search_file(file_path: Union[str, list], searching_value: Union[str, list],
 
                             line_tracker += 1
 
+                            # Checks if the end of the file lines.
+                            if line_tracker >= len(grouped_found_file_lines):
+                                break
                             # Checks if the next line value filters do not match to break loop.
                             if isinstance(include_next_line_value, str):
                                 if include_next_line_value not in str(grouped_found_file_lines[line_tracker]):
@@ -324,8 +330,6 @@ def search_file(file_path: Union[str, list], searching_value: Union[str, list],
                         else:
                             # Adds found line and search value to list
                             matched_entries.append({'search_entry': searching_value, 'found_entry': stripped_line})
-
-            logger.debug('Checking if the list has discovered file entry values')
 
         # Checking if the list has discovered values for potential cleanup.
         if matched_entries:
