@@ -22,7 +22,7 @@ __author__ = 'IncognitoCoding'
 __copyright__ = 'Copyright 2022, file_director'
 __credits__ = ['IncognitoCoding']
 __license__ = 'MIT'
-__version__ = '3.3'
+__version__ = '3.4'
 __maintainer__ = 'IncognitoCoding'
 __status__ = 'Production'
 
@@ -206,9 +206,7 @@ def search_file(file_path: Union[str, list], searching_value: Union[str, list],
     # Required to return multiple found strings.
     matched_entries: list = []
     grouped_found_file_lines: list = []
-    import sys
-    logging.getLogger().addHandler(logging.StreamHandler(sys.stdout))
-    logger.setLevel(logging.DEBUG)
+
     try:
         if isinstance(file_path, list):
             # Sets count on total files being searched.
