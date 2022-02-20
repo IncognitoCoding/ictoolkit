@@ -5,7 +5,8 @@ This module is designed to offer data structure functions. These data structures
 import re
 import logging
 from itertools import groupby
-from typing import Union
+from typing import Union, Type
+from dataclasses import dataclass, make_dataclass
 
 # Libraries
 from fchecker import type_check
@@ -20,9 +21,54 @@ __author__ = 'IncognitoCoding'
 __copyright__ = 'Copyright 2022, data_structure_director'
 __credits__ = ['IncognitoCoding']
 __license__ = 'MIT'
-__version__ = '3.2'
+__version__ = '3.3'
 __maintainer__ = 'IncognitoCoding'
 __status__ = 'Production'
+
+
+def create_dataclass(dataclass_name: str, a_dict: dict) -> Type[dataclass]:
+    """
+    This class is used to create a dynamic dataclass from a dictionary.
+
+    Args:
+        dataclass_name (str):
+        \t\\- The name of the dataclass.
+        a_dict (dict):
+        \t\\- The dictionary converting to a dataclass.
+
+    Return:
+        Type[<User Defined Dataclass>]:
+        \t\\- The users defined dataclass name.
+    """
+    logger = logging.getLogger(__name__)
+    logger.debug(f'=' * 20 + get_function_name() + '=' * 20)
+    # Custom flowchart tracking. This is ideal for large projects that move a lot.
+    # For any third-party modules, set the flow before making the function call.
+    logger_flowchart = logging.getLogger('flowchart')
+    logger_flowchart.debug(f'Flowchart --> Function: {get_function_name()}')
+
+    try:
+        type_check(value=dataclass_name, required_type=str)
+        type_check(value=a_dict, required_type=dict)
+    except FTypeError:
+        raise
+
+    formatted_a_dict = ('  - order (dict):\n        - '
+                        + '\n        - '.join(': '.join((key, str(val))) for (key, val) in a_dict.items()))
+    logger.debug(
+        'Passing parameters:\n'
+        f'  - dataclass_name (str):\n        - {dataclass_name}'
+        f'{formatted_a_dict}\n'
+    )
+
+    # Converts a dictionary from key:value to key:type.
+    __annotations__ = {k: type(v) for k, v in a_dict.items()}
+    # Converts the dictionary into a tuple and creates the dataclass.
+    new_dataclass = make_dataclass(dataclass_name, list(__annotations__.items()))
+    # Converts the dictionary to kwargs to set the dataclass values.
+    populated_dataclass = new_dataclass(**a_dict)
+
+    return populated_dataclass
 
 
 def remove_duplicate_dict_values_in_list(list_dictionary: list, element_number: int = None) -> list:
@@ -161,6 +207,15 @@ def get_list_of_dicts_duplicates(key: str, list_dictionary: list, grouped: bool 
 
     A key is required to find all duplicates for that key.
 
+    Args:
+        key (str):
+        \t\\- the dictionary key that needs to get all duplicate values assigned to that ke
+        list_dictionary (list):
+        \t\\- dictionary with duplicate values in a list
+        grouped (bool):
+        \t\\- enables grouping of duplicate values.\\
+        \t\\- Disabled by default
+
     Calling Examples:\\
     \tExamples:\\
     \t\t\\- key = key1
@@ -171,15 +226,6 @@ def get_list_of_dicts_duplicates(key: str, list_dictionary: list, grouped: bool 
     \t\t\t\t\t      {'key1': 'ValueB'},
     \t\t\t\t\t      {'key1': 'ValueC'},
     \t\t\t\t\t      {'key1': 'ValueD'}]
-
-    Args:
-        key (str):
-        \t\\- the dictionary key that needs to get all duplicate values assigned to that ke
-        list_dictionary (list):
-        \t\\- dictionary with duplicate values in a list
-        grouped (bool):
-        \t\\- enables grouping of duplicate values.\\
-        \t\\- Disabled by default
 
     Raises:
         FTypeError (fexception):

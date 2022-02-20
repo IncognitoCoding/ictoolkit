@@ -1,8 +1,12 @@
 """
 This script is used to test the dict_director module using pytest.
 """
+# Built-in/Generic Imports
+from dataclasses import asdict
+
 # Local Functions
-from ictoolkit import (remove_duplicate_dict_values_in_list,
+from ictoolkit import (create_dataclass,
+                       remove_duplicate_dict_values_in_list,
                        get_list_of_dicts_duplicates,
                        get_list_duplicates,
                        string_grouper,
@@ -11,6 +15,41 @@ from ictoolkit import (remove_duplicate_dict_values_in_list,
 
 # Exceptions
 from fexception import FValueError
+
+
+def test_create_dataclass():
+    """
+    This tests creating a dataclass.
+
+    Raises:
+    """
+    print('')
+    print('-' * 65)
+    print('-' * 65)
+    print('Testing Function: create_dataclass')
+    print('-' * 65)
+    print('-' * 65)
+    print('')
+
+    # ############################################################
+    # ######Section Test Part 1 (Successful Value Checking)#######
+    # ############################################################
+    # ========Tests for a successful output return.========
+    # Creating the dictionary
+    a_dict = {'name': "Bob",
+              'room_number': 1223,
+              'teaching_subject': "Python"}
+    new_dataclass = create_dataclass('MyTestClass', a_dict)
+    assert """<class 'types.MyTestClass'>""" == str(type(new_dataclass))
+    assert """MyTestClass(name='Bob', room_number=1223, teaching_subject='Python')""" == str(new_dataclass)
+    assert """{'name': 'Bob', 'room_number': 1223, 'teaching_subject': 'Python'}""" == str(asdict(new_dataclass))
+    assert 'Bob' == str(new_dataclass.name)
+    assert 1223 == int(new_dataclass.room_number)
+    assert 'Python' == str(new_dataclass.teaching_subject)
+
+    # Tests changing dataclass value.
+    new_dataclass.name = 'John'
+    assert 'John' == str(new_dataclass.name)
 
 
 def test_remove_duplicate_dict_values_in_list():

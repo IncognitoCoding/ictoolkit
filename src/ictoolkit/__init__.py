@@ -2,7 +2,7 @@ __author__ = 'IncognitoCoding'
 __copyright__ = 'Copyright 2022, ictoolkit'
 __credits__ = ['IncognitoCoding']
 __license__ = 'MIT'
-__version__ = '3.6'
+__version__ = '3.7'
 __maintainer__ = 'IncognitoCoding'
 __status__ = 'Production'
 
@@ -15,7 +15,8 @@ log.addHandler(logging.NullHandler())
 # Function & Methods
 from .helpers.py_helper import (get_function_name,
                                 get_line_number)
-from .directors.data_structure_director import (remove_duplicate_dict_values_in_list,
+from .directors.data_structure_director import (create_dataclass,
+                                                remove_duplicate_dict_values_in_list,
                                                 get_list_of_dicts_duplicates,
                                                 get_list_duplicates,
                                                 string_grouper,
