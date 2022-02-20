@@ -27,7 +27,7 @@ __author__ = 'IncognitoCoding'
 __copyright__ = 'Copyright 2022, data_structure_director'
 __credits__ = ['IncognitoCoding']
 __license__ = 'MIT'
-__version__ = '3.6'
+__version__ = '3.7'
 __maintainer__ = 'IncognitoCoding'
 __status__ = 'Production'
 
@@ -44,7 +44,7 @@ class InputFailure(Exception):
     pass
 
 
-def create_dataclass(dataclass_name: str, my_dict: Union[dict, List[dict]],
+def create_dataclass(dataclass_name: str, my_dict: Union[dict, List[dict]], req_keys: set = None,
                      caller_override: dict = None) -> Union[List[Type[dataclass]], Type[dataclass]]:
     """
     Create a dynamic dataclass from a dictionary or a dynamic dataclass list from a list of dictionaries.
@@ -57,6 +57,9 @@ def create_dataclass(dataclass_name: str, my_dict: Union[dict, List[dict]],
         my_dict (Union[dict, List[dict]]):
         \t\\- The dictionary converting to a dataclass.
         \t\\- A list of dictionaries converting to a list of dataclasses.
+        req_keys (set, optional):
+        \t\\- A set of required dictionary keys.
+        \t\\- Defaults to None.
         caller_override (dict, optional):
         \t\\- Change the traceback output.\\
         \t\\- Defaults to None.
@@ -97,8 +100,16 @@ def create_dataclass(dataclass_name: str, my_dict: Union[dict, List[dict]],
     logger_flowchart.debug(f'Flowchart --> Function: {get_function_name()}')
 
     try:
-        type_check(value=dataclass_name, required_type=str)
-        type_check(value=my_dict, required_type=[list, dict])
+        caller_override = {
+            'module': Path(inspect.currentframe().f_back.f_code.co_filename).stem,
+            'name': inspect.currentframe().f_back.f_code.co_name,
+            'line': inspect.currentframe().f_back.f_lineno,
+            'tb_remove': 'create_dataclass'
+        }
+        type_check(value=dataclass_name, required_type=str, caller_override=caller_override)
+        type_check(value=my_dict, required_type=[list, dict], caller_override=caller_override)
+        if req_keys:
+            type_check(value=req_keys, required_type=set, caller_override=caller_override)
     except FTypeError:
         raise
 
@@ -107,10 +118,15 @@ def create_dataclass(dataclass_name: str, my_dict: Union[dict, List[dict]],
     if isinstance(my_dict, dict):
         formatted_my_dict = ('  - my_dict (dict):\n        - '
                              + '\n        - '.join(': '.join((key, str(val))) for (key, val) in my_dict.items()))
+    if req_keys:
+        formatted_req_keys = f'  - req_keys (set):\n        - {req_keys}'
+    else:
+        formatted_req_keys = f'  - req_keys (set):\n        - None'
     logger.debug(
         'Passing parameters:\n'
         f'  - dataclass_name (str):\n        - {dataclass_name}'
         f'{formatted_my_dict}\n'
+        f'{formatted_req_keys}\n'
     )
 
     try:
@@ -124,63 +140,73 @@ def create_dataclass(dataclass_name: str, my_dict: Union[dict, List[dict]],
                 # Converts the dictionary to kwargs to set the dataclass values.
                 populated_dataclass = new_dataclass(**entry)
 
-                if index != 0:
+                # Sets required fields.
+                if index == 0:
+                    if req_keys:
+                        required_field_names: set = req_keys
+                    else:
+                        # No req_keys. Setting to the current dataclass keys, so the compare passes.
+                        required_field_names: set = {field.name for field in fields(populated_dataclass)}
+                elif index != 0:
                     # Gets previous current dataclass fields.
-                    previous_field_names: dict = {field.name for field in fields(populated_dataclasses[index - 1])}
-                    # Gets current dataclass fields.
-                    current_field_names: dict = {field.name for field in fields(populated_dataclass)}
-                    if previous_field_names != current_field_names:
-                        # Gets the difference between the field names.
-                        # Original Example: {'name', 'teaching_subject'}
-                        # Replaced: 'name', 'teaching_subject'
-                        diff_names: str = str(set(previous_field_names) ^ set(current_field_names)).replace('{', '').replace('}', '')
-                        previous_field_names = str(previous_field_names).replace('{', '').replace('}', '')
-                        current_field_names = str(current_field_names).replace('{', '').replace('}', '')
-                        # If set, checks and sets the caller_override args or uses caller info.
-                        if caller_override:
-                            if not isinstance(caller_override, dict):
-                                raise InputFailure('dict format is the required input to set the caller override option.')
-                            if (
-                                'module' not in str(caller_override.keys())
-                                or 'name' not in str(caller_override.keys())
-                                or 'line' not in str(caller_override.keys())
-                                or 'tb_remove' not in str(caller_override.keys())
-                            ):
-                                exc_args = {
-                                    'main_message': 'Incorrect caller_overide keys.',
-                                    'custom_type': InputFailure,
-                                    'expected_result': """Expected Key(s) = ['module', 'name', 'line', 'tb_remove']""",
-                                    'returned_result': f'Failed Key(s) = {caller_override.keys()}'
-                                }
-                                caller_override = {
-                                    'module': Path(inspect.currentframe().f_back.f_code.co_filename).stem,
-                                    'name': inspect.currentframe().f_back.f_code.co_name,
-                                    'line': inspect.currentframe().f_back.f_lineno,
-                                    'tb_remove': 'type_checks'
-                                }
-                                raise InputFailure(FCustomException(exc_args, tb_limit=None, caller_override=caller_override))
-                            else:
-                                caller_override = {
-                                    'module': caller_override.get('module'),
-                                    'name': caller_override.get('name'),
-                                    'line': caller_override.get('line'),
-                                    'tb_remove': caller_override.get('tb_remove')
-                                }
-                        else:
+                    required_field_names: set = {field.name for field in fields(populated_dataclasses[index - 1])}
+
+                # Compares required and current field names.
+                # Gets current dataclass fields.
+                current_field_names: set = {field.name for field in fields(populated_dataclass)}
+                if required_field_names != current_field_names:
+                    # Gets the difference between the field names.
+                    # Original Example: {'name', 'teaching_subject'}
+                    # Replaced: 'name', 'teaching_subject'
+                    diff_names: str = str(set(required_field_names) ^ set(current_field_names)).replace('{', '').replace('}', '')
+                    required_field_names = str(required_field_names).replace('{', '').replace('}', '')
+                    current_field_names = str(current_field_names).replace('{', '').replace('}', '')
+                    # If set, checks and sets the caller_override args or uses caller info.
+                    if caller_override:
+                        if not isinstance(caller_override, dict):
+                            raise InputFailure('dict format is the required input to set the caller override option.')
+                        if (
+                            'module' not in str(caller_override.keys())
+                            or 'name' not in str(caller_override.keys())
+                            or 'line' not in str(caller_override.keys())
+                            or 'tb_remove' not in str(caller_override.keys())
+                        ):
+                            exc_args = {
+                                'main_message': 'Incorrect caller_overide keys.',
+                                'custom_type': InputFailure,
+                                'expected_result': """Expected Key(s) = ['module', 'name', 'line', 'tb_remove']""",
+                                'returned_result': f'Failed Key(s) = {caller_override.keys()}'
+                            }
                             caller_override = {
                                 'module': Path(inspect.currentframe().f_back.f_code.co_filename).stem,
                                 'name': inspect.currentframe().f_back.f_code.co_name,
                                 'line': inspect.currentframe().f_back.f_lineno,
-                                'tb_remove': 'create_dataclass'
+                                'tb_remove': 'type_checks'
                             }
-
-                        exc_args = {
-                            'main_message': f'{dataclass_name} got an unexpected keyward argument {diff_names}',
-                            'expected_result': previous_field_names,
-                            'returned_result': current_field_names,
-                            'suggested_resolution': 'Make sure your list of dictionaries contains the same keys per entry.'
+                            raise InputFailure(FCustomException(exc_args, tb_limit=None, caller_override=caller_override))
+                        else:
+                            caller_override = {
+                                'module': caller_override.get('module'),
+                                'name': caller_override.get('name'),
+                                'line': caller_override.get('line'),
+                                'tb_remove': caller_override.get('tb_remove')
+                            }
+                    else:
+                        caller_override = {
+                            'module': Path(inspect.currentframe().f_back.f_code.co_filename).stem,
+                            'name': inspect.currentframe().f_back.f_code.co_name,
+                            'line': inspect.currentframe().f_back.f_lineno,
+                            'tb_remove': 'create_dataclass'
                         }
-                        raise FTypeError(message_args=exc_args, tb_limit=None, caller_override=caller_override)
+
+                    exc_args = {
+                        'main_message': f'{dataclass_name} got an unexpected keyward argument {diff_names}',
+                        'expected_result': required_field_names,
+                        'returned_result': current_field_names,
+                        'suggested_resolution': ['Verify the passing dictionary does not require specific keys.',
+                                                 'Make sure your list of dictionaries contains the same keys per entry.']
+                    }
+                    raise FTypeError(message_args=exc_args, tb_limit=None, caller_override=caller_override)
 
                 populated_dataclasses.append(populated_dataclass)
 

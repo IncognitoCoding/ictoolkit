@@ -39,10 +39,10 @@ def test_create_dataclass():
     # ========Tests for a successful output return.========
     # =====================================================
     # Creating the dictionary
-    a_dict = {'name': "Bob",
+    my_dict = {'name': "Bob",
               'room_number': 1223,
               'teaching_subject': "Python"}
-    new_dataclass = create_dataclass('MyTestClass', a_dict)
+    new_dataclass = create_dataclass(dataclass_name='MyTestClass', my_dict=my_dict)
     assert """<class 'types.MyTestClass'>""" == str(type(new_dataclass))
     assert """MyTestClass(name='Bob', room_number=1223, teaching_subject='Python')""" == str(new_dataclass)
     assert """{'name': 'Bob', 'room_number': 1223, 'teaching_subject': 'Python'}""" == str(asdict(new_dataclass))
@@ -58,10 +58,10 @@ def test_create_dataclass():
     # ========Tests for a successful output return.========
     # =====================================================
     # Creating the dictionary
-    a_dict = [{'name': "Bob", 'room_number': 1223, 'teaching_subject': "Python"},
-              {'name': "Tim", 'room_number': 1333, 'teaching_subject': "Python2"}]
+    my_dict = [{'name': "Bob", 'room_number': 1223, 'teaching_subject': "Python"},
+               {'name': "Tim", 'room_number': 1333, 'teaching_subject': "Python2"}]
 
-    new_dataclass = create_dataclass('MyTestClass', a_dict)
+    new_dataclass = create_dataclass(dataclass_name='MyTestClass', my_dict=my_dict)
     assert """<class 'list'>""" == str(type(new_dataclass))
     assert """<class 'types.MyTestClass'>""" == str(type(new_dataclass[0]))
     assert """{'name': 'Bob', 'room_number': 1223, 'teaching_subject': 'Python'}""" == str(asdict(new_dataclass[0]))
@@ -71,13 +71,23 @@ def test_create_dataclass():
     # ######Section Test Part 2 (Error/Catch Value Checking)######
     # ############################################################
     # =====================================================
-    # ======Tests for an incorrectly sent list format.=====
+    # ========Tests for an incorrectly sent info.==========
     # =====================================================
     with pytest.raises(Exception) as excinfo:
-        a_dict = [{'name': "Bob", 'room_number': 1223, 'teaching_subject': "Python"},
-                  {'name': "Tim", 'teaching_subject': "Python2"}]
-        new_dataclass = create_dataclass('MyTestClass', a_dict)
+        my_dict = [{'name': "Bob", 'room_number': 1223, 'teaching_subject': "Python"},
+                   {'name': "Tim", 'teaching_subject': "Python2", 'teaching_subject': "Python2"}]
+
+        new_dataclass = create_dataclass(dataclass_name='MyTestClass', my_dict=my_dict)
     assert """MyTestClass got an unexpected keyward argument 'room_number'""" in str(excinfo.value)
+    # =====================================================
+    # ========Tests for an incorrectly sent info.==========
+    # =====================================================
+    with pytest.raises(Exception) as excinfo:
+        my_dict = [{'name': "Bob", 'room_number': 1223, 'teaching_subject': "Python"},
+                   {'name': "Tim", 'teaching_subject': "Python2"}]
+        req_keys = {'name', 'room_number', 'teaching_subject', 'grade_level'}
+        new_dataclass = create_dataclass('MyTestClass', my_dict=my_dict, req_keys=req_keys)
+    assert """MyTestClass got an unexpected keyward argument 'grade_level'""" in str(excinfo.value)
 
 
 def test_remove_duplicate_dict_values_in_list():
