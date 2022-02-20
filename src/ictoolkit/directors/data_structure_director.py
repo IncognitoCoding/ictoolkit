@@ -5,7 +5,7 @@ This module is designed to offer data structure functions. These data structures
 import re
 import logging
 from itertools import groupby
-from typing import Union, Type
+from typing import Union, List, Type
 from dataclasses import dataclass, make_dataclass
 
 # Libraries
@@ -21,24 +21,34 @@ __author__ = 'IncognitoCoding'
 __copyright__ = 'Copyright 2022, data_structure_director'
 __credits__ = ['IncognitoCoding']
 __license__ = 'MIT'
-__version__ = '3.3'
+__version__ = '3.4'
 __maintainer__ = 'IncognitoCoding'
 __status__ = 'Production'
 
 
-def create_dataclass(dataclass_name: str, a_dict: dict) -> Type[dataclass]:
+def create_dataclass(dataclass_name: str, my_dict: Union[dict, List[dict]]) -> Union[List[Type[dataclass]], Type[dataclass]]:
     """
-    This class is used to create a dynamic dataclass from a dictionary.
+    Create a dynamic dataclass from a dictionary or a dynamic dataclass list from a list of dictionaries.
 
     Args:
         dataclass_name (str):
         \t\\- The name of the dataclass.
-        a_dict (dict):
+        my_dict (Union[dict, List[dict]]):
         \t\\- The dictionary converting to a dataclass.
+        \t\\- A list of dictionaries converting to a list of dataclasses.
+
+    Raises:
+        FTypeError (fexception):
+        \t\\- The value '{dataclass_name}' is not in <class 'str'> format.
+        FTypeError (fexception):
+        \t\\- The value '{my_dict}' is not in [<class 'list'>, <class 'dict'>] format.
+        FGeneralError:
+        \t\\- A general error caused a dictionary to dataclass conversion failure.
 
     Return:
-        Type[<User Defined Dataclass>]:
-        \t\\- The users defined dataclass name.
+        Union[List[Type[<User Defined Dataclass>]], Type[<User Defined Dataclass>]]
+        \t\\- The users defined dataclass values.
+        \t\\- A list of the users defined dataclass values.
     """
     logger = logging.getLogger(__name__)
     logger.debug(f'=' * 20 + get_function_name() + '=' * 20)
@@ -49,26 +59,49 @@ def create_dataclass(dataclass_name: str, a_dict: dict) -> Type[dataclass]:
 
     try:
         type_check(value=dataclass_name, required_type=str)
-        type_check(value=a_dict, required_type=dict)
+        type_check(value=my_dict, required_type=[list, dict])
     except FTypeError:
         raise
 
-    formatted_a_dict = ('  - order (dict):\n        - '
-                        + '\n        - '.join(': '.join((key, str(val))) for (key, val) in a_dict.items()))
+    if isinstance(my_dict, list):
+        formatted_my_dict = '  - my_dict (list):' + str('\n        - ' + '\n        - '.join(map(str, my_dict)))
+    if isinstance(my_dict, dict):
+        formatted_my_dict = ('  - my_dict (dict):\n        - '
+                             + '\n        - '.join(': '.join((key, str(val))) for (key, val) in my_dict.items()))
     logger.debug(
         'Passing parameters:\n'
         f'  - dataclass_name (str):\n        - {dataclass_name}'
-        f'{formatted_a_dict}\n'
+        f'{formatted_my_dict}\n'
     )
 
-    # Converts a dictionary from key:value to key:type.
-    __annotations__ = {k: type(v) for k, v in a_dict.items()}
-    # Converts the dictionary into a tuple and creates the dataclass.
-    new_dataclass = make_dataclass(dataclass_name, list(__annotations__.items()))
-    # Converts the dictionary to kwargs to set the dataclass values.
-    populated_dataclass = new_dataclass(**a_dict)
+    try:
+        if isinstance(my_dict, list):
+            populated_dataclasses: list = []
+            for entry in my_dict:
+                # Converts a dictionary from key:value to key:type.
+                __annotations__ = {k: type(v) for k, v in entry.items()}
+                # Converts the dictionary into a tuple and creates the dataclass.
+                new_dataclass = make_dataclass(dataclass_name, list(__annotations__.items()))
+                # Converts the dictionary to kwargs to set the dataclass values.
+                populated_dataclass = new_dataclass(**entry)
+                populated_dataclasses.append(populated_dataclass)
 
-    return populated_dataclass
+            return populated_dataclasses
+        elif isinstance(my_dict, dict):
+            # Converts a dictionary from key:value to key:type.
+            __annotations__ = {k: type(v) for k, v in my_dict.items()}
+            # Converts the dictionary into a tuple and creates the dataclass.
+            new_dataclass = make_dataclass(dataclass_name, list(__annotations__.items()))
+            # Converts the dictionary to kwargs to set the dataclass values.
+            populated_dataclass = new_dataclass(**my_dict)
+
+            return populated_dataclass
+    except Exception as exc:
+        exc_args = {
+            'main_message': 'A general error caused a dictionary to dataclass conversion failure.',
+            'original_exception': exc,
+        }
+        raise FGeneralError(exc_args)
 
 
 def remove_duplicate_dict_values_in_list(list_dictionary: list, element_number: int = None) -> list:
@@ -293,7 +326,7 @@ def get_list_of_dicts_duplicates(key: str, list_dictionary: list, grouped: bool 
         # The key is the duplicate from the list and the value is the index.
         duplicate_list_dictionary = []
         # Gets values of the keys.
-        duplicates_of_key = [a_dict[key] for a_dict in list_dictionary]
+        duplicates_of_key = [my_dict[key] for my_dict in list_dictionary]
 
         # Loops through all values.
         for entry in duplicates_of_key:

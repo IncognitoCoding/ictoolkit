@@ -34,7 +34,9 @@ def test_create_dataclass():
     # ############################################################
     # ######Section Test Part 1 (Successful Value Checking)#######
     # ############################################################
+    # =====================================================
     # ========Tests for a successful output return.========
+    # =====================================================
     # Creating the dictionary
     a_dict = {'name': "Bob",
               'room_number': 1223,
@@ -50,6 +52,19 @@ def test_create_dataclass():
     # Tests changing dataclass value.
     new_dataclass.name = 'John'
     assert 'John' == str(new_dataclass.name)
+
+    # =====================================================
+    # ========Tests for a successful output return.========
+    # =====================================================
+    # Creating the dictionary
+    a_dict = [{'name': "Bob", 'room_number': 1223, 'teaching_subject': "Python"},
+              {'name': "Tim", 'room_number': 1333, 'teaching_subject': "Python2"}]
+
+    new_dataclass = create_dataclass('MyTestClass', a_dict)
+    assert """<class 'list'>""" == str(type(new_dataclass))
+    assert """<class 'types.MyTestClass'>""" == str(type(new_dataclass[0]))
+    assert """{'name': 'Bob', 'room_number': 1223, 'teaching_subject': 'Python'}""" == str(asdict(new_dataclass[0]))
+    assert """{'name': 'Tim', 'room_number': 1333, 'teaching_subject': 'Python2'}""" == str(asdict(new_dataclass[1]))
 
 
 def test_remove_duplicate_dict_values_in_list():
