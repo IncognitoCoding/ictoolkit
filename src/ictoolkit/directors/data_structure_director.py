@@ -7,8 +7,8 @@ import logging
 from itertools import groupby
 from typing import Union, List, Type
 from dataclasses import dataclass, make_dataclass, fields
-import difflib
-from attr import asdict
+import inspect
+from pathlib import Path
 
 # Libraries
 from fchecker import type_check
@@ -17,18 +17,35 @@ from fchecker import type_check
 from ..helpers.py_helper import get_function_name
 
 # Exceptions
-from fexception import FGeneralError, FKeyError, FTypeError, FValueError
+from fexception import (FGeneralError,
+                        FKeyError,
+                        FTypeError,
+                        FValueError,
+                        FCustomException)
 
 __author__ = 'IncognitoCoding'
 __copyright__ = 'Copyright 2022, data_structure_director'
 __credits__ = ['IncognitoCoding']
 __license__ = 'MIT'
-__version__ = '3.5'
+__version__ = '3.6'
 __maintainer__ = 'IncognitoCoding'
 __status__ = 'Production'
 
 
-def create_dataclass(dataclass_name: str, my_dict: Union[dict, List[dict]]) -> Union[List[Type[dataclass]], Type[dataclass]]:
+class InputFailure(Exception):
+    """
+    Exception raised for an input exception message.
+
+    Args:
+        exc_message:\\
+        \t\\- The incorrect input reason.
+    """
+    __module__ = 'builtins'
+    pass
+
+
+def create_dataclass(dataclass_name: str, my_dict: Union[dict, List[dict]],
+                     caller_override: dict = None) -> Union[List[Type[dataclass]], Type[dataclass]]:
     """
     Create a dynamic dataclass from a dictionary or a dynamic dataclass list from a list of dictionaries.
 
@@ -40,18 +57,36 @@ def create_dataclass(dataclass_name: str, my_dict: Union[dict, List[dict]]) -> U
         my_dict (Union[dict, List[dict]]):
         \t\\- The dictionary converting to a dataclass.
         \t\\- A list of dictionaries converting to a list of dataclasses.
+        caller_override (dict, optional):
+        \t\\- Change the traceback output.\\
+        \t\\- Defaults to None.
+
+    Arg Keys:
+        caller_override Keys:\\
+            \t\\- module (str):\\
+            \t\t\\- The override module.\\
+            \t\\- name (str):\\
+            \t\t\\- The override name.\\
+            \t\\- line (int):\\
+            \t\t\\- The override line.\\
+            \t\\- tb_remove (str):\\
+            \t\t\\- The traceback module name that needing removed.
 
     Raises:
         FTypeError (fexception):
         \t\\- The value '{dataclass_name}' is not in <class 'str'> format.
         FTypeError (fexception):
         \t\\- The value '{my_dict}' is not in [<class 'list'>, <class 'dict'>] format.
+        InputFailure:
+        \t\\- dict format is the required input to set the caller override option.
+        InputFailure:
+        \t\\- Incorrect caller_overide keys.
         FGeneralError:
         \t\\- A general error caused a dictionary to dataclass conversion failure.
 
     Return:
-        Union[List[Type[<User Defined Dataclass>]], Type[<User Defined Dataclass>]]
-        \t\\- The users defined dataclass values.
+        Union[List[Type[<User Defined Dataclass>]], Type[<User Defined Dataclass>]]\\
+        \t\\- The users defined dataclass values.\\
         \t\\- A list of the users defined dataclass values.
     """
     logger = logging.getLogger(__name__)
@@ -101,13 +136,51 @@ def create_dataclass(dataclass_name: str, my_dict: Union[dict, List[dict]]) -> U
                         diff_names: str = str(set(previous_field_names) ^ set(current_field_names)).replace('{', '').replace('}', '')
                         previous_field_names = str(previous_field_names).replace('{', '').replace('}', '')
                         current_field_names = str(current_field_names).replace('{', '').replace('}', '')
+                        # If set, checks and sets the caller_override args or uses caller info.
+                        if caller_override:
+                            if not isinstance(caller_override, dict):
+                                raise InputFailure('dict format is the required input to set the caller override option.')
+                            if (
+                                'module' not in str(caller_override.keys())
+                                or 'name' not in str(caller_override.keys())
+                                or 'line' not in str(caller_override.keys())
+                                or 'tb_remove' not in str(caller_override.keys())
+                            ):
+                                exc_args = {
+                                    'main_message': 'Incorrect caller_overide keys.',
+                                    'custom_type': InputFailure,
+                                    'expected_result': """Expected Key(s) = ['module', 'name', 'line', 'tb_remove']""",
+                                    'returned_result': f'Failed Key(s) = {caller_override.keys()}'
+                                }
+                                caller_override = {
+                                    'module': Path(inspect.currentframe().f_back.f_code.co_filename).stem,
+                                    'name': inspect.currentframe().f_back.f_code.co_name,
+                                    'line': inspect.currentframe().f_back.f_lineno,
+                                    'tb_remove': 'type_checks'
+                                }
+                                raise InputFailure(FCustomException(exc_args, tb_limit=None, caller_override=caller_override))
+                            else:
+                                caller_override = {
+                                    'module': caller_override.get('module'),
+                                    'name': caller_override.get('name'),
+                                    'line': caller_override.get('line'),
+                                    'tb_remove': caller_override.get('tb_remove')
+                                }
+                        else:
+                            caller_override = {
+                                'module': Path(inspect.currentframe().f_back.f_code.co_filename).stem,
+                                'name': inspect.currentframe().f_back.f_code.co_name,
+                                'line': inspect.currentframe().f_back.f_lineno,
+                                'tb_remove': 'create_dataclass'
+                            }
+
                         exc_args = {
                             'main_message': f'{dataclass_name} got an unexpected keyward argument {diff_names}',
                             'expected_result': previous_field_names,
                             'returned_result': current_field_names,
                             'suggested_resolution': 'Make sure your list of dictionaries contains the same keys per entry.'
                         }
-                        raise FTypeError(exc_args)
+                        raise FTypeError(message_args=exc_args, tb_limit=None, caller_override=caller_override)
 
                 populated_dataclasses.append(populated_dataclass)
 
@@ -122,6 +195,8 @@ def create_dataclass(dataclass_name: str, my_dict: Union[dict, List[dict]]) -> U
 
             return populated_dataclass
     except FTypeError:
+        raise
+    except InputFailure:
         raise
     except Exception as exc:
         exc_args = {
