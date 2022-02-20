@@ -6,7 +6,9 @@ import re
 import logging
 from itertools import groupby
 from typing import Union, List, Type
-from dataclasses import dataclass, make_dataclass
+from dataclasses import dataclass, make_dataclass, fields
+import difflib
+from attr import asdict
 
 # Libraries
 from fchecker import type_check
@@ -21,7 +23,7 @@ __author__ = 'IncognitoCoding'
 __copyright__ = 'Copyright 2022, data_structure_director'
 __credits__ = ['IncognitoCoding']
 __license__ = 'MIT'
-__version__ = '3.4'
+__version__ = '3.5'
 __maintainer__ = 'IncognitoCoding'
 __status__ = 'Production'
 
@@ -29,6 +31,8 @@ __status__ = 'Production'
 def create_dataclass(dataclass_name: str, my_dict: Union[dict, List[dict]]) -> Union[List[Type[dataclass]], Type[dataclass]]:
     """
     Create a dynamic dataclass from a dictionary or a dynamic dataclass list from a list of dictionaries.
+
+    A list of dictionaries will have the keys compares with eachother to ensure all arguments are populated the same.
 
     Args:
         dataclass_name (str):
@@ -77,13 +81,34 @@ def create_dataclass(dataclass_name: str, my_dict: Union[dict, List[dict]]) -> U
     try:
         if isinstance(my_dict, list):
             populated_dataclasses: list = []
-            for entry in my_dict:
+            for index, entry in enumerate(my_dict):
                 # Converts a dictionary from key:value to key:type.
                 __annotations__ = {k: type(v) for k, v in entry.items()}
                 # Converts the dictionary into a tuple and creates the dataclass.
                 new_dataclass = make_dataclass(dataclass_name, list(__annotations__.items()))
                 # Converts the dictionary to kwargs to set the dataclass values.
                 populated_dataclass = new_dataclass(**entry)
+
+                if index != 0:
+                    # Gets previous current dataclass fields.
+                    previous_field_names: dict = {field.name for field in fields(populated_dataclasses[index - 1])}
+                    # Gets current dataclass fields.
+                    current_field_names: dict = {field.name for field in fields(populated_dataclass)}
+                    if previous_field_names != current_field_names:
+                        # Gets the difference between the field names.
+                        # Original Example: {'name', 'teaching_subject'}
+                        # Replaced: 'name', 'teaching_subject'
+                        diff_names: str = str(set(previous_field_names) ^ set(current_field_names)).replace('{', '').replace('}', '')
+                        previous_field_names = str(previous_field_names).replace('{', '').replace('}', '')
+                        current_field_names = str(current_field_names).replace('{', '').replace('}', '')
+                        exc_args = {
+                            'main_message': f'{dataclass_name} got an unexpected keyward argument {diff_names}',
+                            'expected_result': previous_field_names,
+                            'returned_result': current_field_names,
+                            'suggested_resolution': 'Make sure your list of dictionaries contains the same keys per entry.'
+                        }
+                        raise FTypeError(exc_args)
+
                 populated_dataclasses.append(populated_dataclass)
 
             return populated_dataclasses
@@ -96,6 +121,8 @@ def create_dataclass(dataclass_name: str, my_dict: Union[dict, List[dict]]) -> U
             populated_dataclass = new_dataclass(**my_dict)
 
             return populated_dataclass
+    except FTypeError:
+        raise
     except Exception as exc:
         exc_args = {
             'main_message': 'A general error caused a dictionary to dataclass conversion failure.',

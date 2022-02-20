@@ -3,6 +3,7 @@ This script is used to test the dict_director module using pytest.
 """
 # Built-in/Generic Imports
 from dataclasses import asdict
+import pytest
 
 # Local Functions
 from ictoolkit import (create_dataclass,
@@ -65,6 +66,18 @@ def test_create_dataclass():
     assert """<class 'types.MyTestClass'>""" == str(type(new_dataclass[0]))
     assert """{'name': 'Bob', 'room_number': 1223, 'teaching_subject': 'Python'}""" == str(asdict(new_dataclass[0]))
     assert """{'name': 'Tim', 'room_number': 1333, 'teaching_subject': 'Python2'}""" == str(asdict(new_dataclass[1]))
+
+    # ############################################################
+    # ######Section Test Part 2 (Error/Catch Value Checking)######
+    # ############################################################
+    # =====================================================
+    # ======Tests for an incorrectly sent list format.=====
+    # =====================================================
+    with pytest.raises(Exception) as excinfo:
+        a_dict = [{'name': "Bob", 'room_number': 1223, 'teaching_subject': "Python"},
+                  {'name': "Tim", 'teaching_subject': "Python2"}]
+        new_dataclass = create_dataclass('MyTestClass', a_dict)
+    assert """MyTestClass got an unexpected keyward argument 'room_number'""" in str(excinfo.value)
 
 
 def test_remove_duplicate_dict_values_in_list():
