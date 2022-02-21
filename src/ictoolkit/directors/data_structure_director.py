@@ -27,7 +27,7 @@ __author__ = 'IncognitoCoding'
 __copyright__ = 'Copyright 2022, data_structure_director'
 __credits__ = ['IncognitoCoding']
 __license__ = 'MIT'
-__version__ = '3.7'
+__version__ = '3.8'
 __maintainer__ = 'IncognitoCoding'
 __status__ = 'Production'
 
@@ -158,9 +158,11 @@ def create_dataclass(dataclass_name: str, my_dict: Union[dict, List[dict]], req_
                     # Gets the difference between the field names.
                     # Original Example: {'name', 'teaching_subject'}
                     # Replaced: 'name', 'teaching_subject'
-                    diff_names: str = str(set(required_field_names) ^ set(current_field_names)).replace('{', '').replace('}', '')
-                    required_field_names = str(required_field_names).replace('{', '').replace('}', '')
-                    current_field_names = str(current_field_names).replace('{', '').replace('}', '')
+                    diff_names: str = str(required_field_names.difference(current_field_names)).replace('{', '').replace('}', '')
+                    # Sorts the sets to sorted lists for output.
+                    required_field_names = str(sorted(required_field_names)).replace('[', '').replace(']', '')
+                    current_field_names = str(sorted(current_field_names)).replace('[', '').replace(']', '')
+
                     # If set, checks and sets the caller_override args or uses caller info.
                     if caller_override:
                         if not isinstance(caller_override, dict):
