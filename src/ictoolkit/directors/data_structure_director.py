@@ -202,7 +202,7 @@ def create_dataclass(dataclass_name: str, my_dict: Union[dict, List[dict]], req_
                         }
 
                     exc_args = {
-                        'main_message': f'{dataclass_name} got an unexpected keyward argument {diff_names}',
+                        'main_message': f'{dataclass_name} got an unexpected keyword argument {diff_names}',
                         'expected_result': required_field_names,
                         'returned_result': current_field_names,
                         'suggested_resolution': ['Verify the passing dictionary does not require specific keys.',
