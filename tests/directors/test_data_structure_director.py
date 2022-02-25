@@ -40,8 +40,8 @@ def test_create_dataclass():
     # =====================================================
     # Creating the dictionary
     my_dict = {'name': "Bob",
-              'room_number': 1223,
-              'teaching_subject': "Python"}
+               'room_number': 1223,
+               'teaching_subject': "Python"}
     new_dataclass = create_dataclass(dataclass_name='MyTestClass', my_dict=my_dict)
     assert """<class 'types.MyTestClass'>""" == str(type(new_dataclass))
     assert """MyTestClass(name='Bob', room_number=1223, teaching_subject='Python')""" == str(new_dataclass)
@@ -73,12 +73,25 @@ def test_create_dataclass():
     # =====================================================
     # ========Tests for an incorrectly sent info.==========
     # =====================================================
+    # =====================================================
+    # ========Tests for an incorrectly sent info.==========
+    # =====================================================
+    with pytest.raises(Exception) as excinfo:
+        my_dict = {'name': "Bob", 'room_number': 1223, 'teaching_subject': "Python"}
+        req_keys = {'name', 'room_number', 'teaching_subject', 'grade_level'}
+        new_dataclass = create_dataclass('MyTestClass', my_dict=my_dict, req_keys=req_keys)
+    assert """MyTestClass got an unexpected keyword argument 'grade_level'""" in str(excinfo.value)
+    assert """'grade_level', 'name', 'room_number', 'teaching_subject'""" in str(excinfo.value)
+    assert """'name', 'room_number', 'teaching_subject'""" in str(excinfo.value)
+
+    # =====================================================
+    # ========Tests for an incorrectly sent info.==========
+    # =====================================================
     with pytest.raises(Exception) as excinfo:
         my_dict = [{'name': "Bob", 'room_number': 1223, 'teaching_subject': "Python"},
                    {'name': "Tim", 'teaching_subject': "Python2", 'teaching_subject': "Python2"}]
-
         new_dataclass = create_dataclass(dataclass_name='MyTestClass', my_dict=my_dict)
-    assert """MyTestClass got an unexpected keyward argument 'room_number'""" in str(excinfo.value)
+    assert """MyTestClass got an unexpected keyword argument 'room_number'""" in str(excinfo.value)
     # =====================================================
     # ========Tests for an incorrectly sent info.==========
     # =====================================================
@@ -87,7 +100,7 @@ def test_create_dataclass():
                    {'name': "Tim", 'teaching_subject': "Python2"}]
         req_keys = {'name', 'room_number', 'teaching_subject', 'grade_level'}
         new_dataclass = create_dataclass('MyTestClass', my_dict=my_dict, req_keys=req_keys)
-    assert """MyTestClass got an unexpected keyward argument 'grade_level'""" in str(excinfo.value)
+    assert """MyTestClass got an unexpected keyword argument 'grade_level'""" in str(excinfo.value)
 
 
 def test_remove_duplicate_dict_values_in_list():
@@ -561,7 +574,7 @@ def test_string_grouper():
             raise FValueError(exc_args)
 
 
-def test_find_longest_common_substring():
+def t1est_find_longest_common_substring():
     """
     Tests finding a common grouping substring.
 
@@ -608,7 +621,7 @@ def test_find_longest_common_substring():
             raise FValueError(exc_args)
 
 
-def test_clean_non_word_characters():
+def t1est_clean_non_word_characters():
     """
     Tests cleaning non-word characters.
 

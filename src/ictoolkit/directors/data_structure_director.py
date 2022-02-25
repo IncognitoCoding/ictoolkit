@@ -22,30 +22,20 @@ from fexception import (FGeneralError,
                         FTypeError,
                         FValueError,
                         FCustomException)
+from .common import InputFailure, RequirementFailure
+
 
 __author__ = 'IncognitoCoding'
 __copyright__ = 'Copyright 2022, data_structure_director'
 __credits__ = ['IncognitoCoding']
 __license__ = 'MIT'
-__version__ = '3.8'
+__version__ = '3.9'
 __maintainer__ = 'IncognitoCoding'
 __status__ = 'Production'
 
 
-class InputFailure(Exception):
-    """
-    Exception raised for an input exception message.
-
-    Args:
-        exc_message:\\
-        \t\\- The incorrect input reason.
-    """
-    __module__ = 'builtins'
-    pass
-
-
 def create_dataclass(dataclass_name: str, my_dict: Union[dict, List[dict]], req_keys: set = None,
-                     caller_override: dict = None) -> Union[List[Type[dataclass]], Type[dataclass]]:
+                     tb_remove_name: str = None) -> Union[List[Type[dataclass]], Type[dataclass]]:
     """
     Create a dynamic dataclass from a dictionary or a dynamic dataclass list from a list of dictionaries.
 
@@ -60,20 +50,11 @@ def create_dataclass(dataclass_name: str, my_dict: Union[dict, List[dict]], req_
         req_keys (set, optional):
         \t\\- A set of required dictionary keys.
         \t\\- Defaults to None.
-        caller_override (dict, optional):
-        \t\\- Change the traceback output.\\
+        tb_remove_name (str, optional):\\
+        \t\\- Caller function name or any other function in the\\
+        \t   traceback chain.\\
+        \t\\- Removes all traceback before and at this function.\\
         \t\\- Defaults to None.
-
-    Arg Keys:
-        caller_override Keys:\\
-            \t\\- module (str):\\
-            \t\t\\- The override module.\\
-            \t\\- name (str):\\
-            \t\t\\- The override name.\\
-            \t\\- line (int):\\
-            \t\t\\- The override line.\\
-            \t\\- tb_remove (str):\\
-            \t\t\\- The traceback module name that needing removed.
 
     Raises:
         FTypeError (fexception):
@@ -100,16 +81,10 @@ def create_dataclass(dataclass_name: str, my_dict: Union[dict, List[dict]], req_
     logger_flowchart.debug(f'Flowchart --> Function: {get_function_name()}')
 
     try:
-        caller_override = {
-            'module': Path(inspect.currentframe().f_back.f_code.co_filename).stem,
-            'name': inspect.currentframe().f_back.f_code.co_name,
-            'line': inspect.currentframe().f_back.f_lineno,
-            'tb_remove': 'create_dataclass'
-        }
-        type_check(value=dataclass_name, required_type=str, caller_override=caller_override)
-        type_check(value=my_dict, required_type=[list, dict], caller_override=caller_override)
+        type_check(value=dataclass_name, required_type=str, tb_remove_name='create_dataclass')
+        type_check(value=my_dict, required_type=[list, dict], tb_remove_name='create_dataclass')
         if req_keys:
-            type_check(value=req_keys, required_type=set, caller_override=caller_override)
+            type_check(value=req_keys, required_type=set, tb_remove_name='create_dataclass')
     except FTypeError:
         raise
 
@@ -163,55 +138,17 @@ def create_dataclass(dataclass_name: str, my_dict: Union[dict, List[dict]], req_
                     required_field_names = str(sorted(required_field_names)).replace('[', '').replace(']', '')
                     current_field_names = str(sorted(current_field_names)).replace('[', '').replace(']', '')
 
-                    # If set, checks and sets the caller_override args or uses caller info.
-                    if caller_override:
-                        if not isinstance(caller_override, dict):
-                            raise InputFailure('dict format is the required input to set the caller override option.')
-                        if (
-                            'module' not in str(caller_override.keys())
-                            or 'name' not in str(caller_override.keys())
-                            or 'line' not in str(caller_override.keys())
-                            or 'tb_remove' not in str(caller_override.keys())
-                        ):
-                            exc_args = {
-                                'main_message': 'Incorrect caller_overide keys.',
-                                'custom_type': InputFailure,
-                                'expected_result': """Expected Key(s) = ['module', 'name', 'line', 'tb_remove']""",
-                                'returned_result': f'Failed Key(s) = {caller_override.keys()}'
-                            }
-                            caller_override = {
-                                'module': Path(inspect.currentframe().f_back.f_code.co_filename).stem,
-                                'name': inspect.currentframe().f_back.f_code.co_name,
-                                'line': inspect.currentframe().f_back.f_lineno,
-                                'tb_remove': 'type_checks'
-                            }
-                            raise InputFailure(FCustomException(exc_args, tb_limit=None, caller_override=caller_override))
-                        else:
-                            caller_override = {
-                                'module': caller_override.get('module'),
-                                'name': caller_override.get('name'),
-                                'line': caller_override.get('line'),
-                                'tb_remove': caller_override.get('tb_remove')
-                            }
-                    else:
-                        caller_override = {
-                            'module': Path(inspect.currentframe().f_back.f_code.co_filename).stem,
-                            'name': inspect.currentframe().f_back.f_code.co_name,
-                            'line': inspect.currentframe().f_back.f_lineno,
-                            'tb_remove': 'create_dataclass'
-                        }
-
                     exc_args = {
                         'main_message': f'{dataclass_name} got an unexpected keyword argument {diff_names}',
+                        'custom_type': RequirementFailure,
                         'expected_result': required_field_names,
                         'returned_result': current_field_names,
                         'suggested_resolution': ['Verify the passing dictionary does not require specific keys.',
                                                  'Make sure your list of dictionaries contains the same keys per entry.']
                     }
-                    raise FTypeError(message_args=exc_args, tb_limit=None, caller_override=caller_override)
+                    raise RequirementFailure(FCustomException(message_args=exc_args, tb_limit=None, tb_remove_name=tb_remove_name))
 
                 populated_dataclasses.append(populated_dataclass)
-
             return populated_dataclasses
         elif isinstance(my_dict, dict):
             # Converts a dictionary from key:value to key:type.
@@ -221,10 +158,39 @@ def create_dataclass(dataclass_name: str, my_dict: Union[dict, List[dict]], req_
             # Converts the dictionary to kwargs to set the dataclass values.
             populated_dataclass = new_dataclass(**my_dict)
 
+            if req_keys:
+                required_field_names: set = req_keys
+            else:
+                # No req_keys. Setting to the current dataclass keys, so the compare passes.
+                required_field_names: set = {field.name for field in fields(populated_dataclass)}
+            # Compares required and current field names.
+            # Gets current dataclass fields.
+            current_field_names: set = {field.name for field in fields(populated_dataclass)}
+            if required_field_names != current_field_names:
+                # Gets the difference between the field names.
+                # Original Example: {'name', 'teaching_subject'}
+                # Replaced: 'name', 'teaching_subject'
+                diff_names: str = str(required_field_names.difference(current_field_names)).replace('{', '').replace('}', '')
+                # Sorts the sets to sorted lists for output.
+                required_field_names = str(sorted(required_field_names)).replace('[', '').replace(']', '')
+                current_field_names = str(sorted(current_field_names)).replace('[', '').replace(']', '')
+
+                exc_args = {
+                    'main_message': f'{dataclass_name} got an unexpected keyword argument {diff_names}',
+                    'custom_type': RequirementFailure,
+                    'expected_result': required_field_names,
+                    'returned_result': current_field_names,
+                    'suggested_resolution': ['Verify the passing dictionary does not require specific keys.',
+                                             'Make sure your list of dictionaries contains the same keys per entry.']
+                }
+                raise RequirementFailure(FCustomException(message_args=exc_args, tb_limit=None, tb_remove_name=tb_remove_name))
+
             return populated_dataclass
     except FTypeError:
         raise
     except InputFailure:
+        raise
+    except RequirementFailure:
         raise
     except Exception as exc:
         exc_args = {
