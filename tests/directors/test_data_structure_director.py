@@ -43,8 +43,8 @@ def test_create_dataclass():
                'room_number': 1223,
                'teaching_subject': "Python"}
     new_dataclass = create_dataclass(dataclass_name='MyTestClass', my_dict=my_dict)
-    assert """<class 'types.MyTestClass'>""" == str(type(new_dataclass))
-    assert """MyTestClass(name='Bob', room_number=1223, teaching_subject='Python')""" == str(new_dataclass)
+    assert """<class '__main__.MyTestClass'>""" == str(type(new_dataclass))
+    assert """MyTestClass()""" == str(new_dataclass)
     assert """{'name': 'Bob', 'room_number': 1223, 'teaching_subject': 'Python'}""" == str(asdict(new_dataclass))
     assert 'Bob' == str(new_dataclass.name)
     assert 1223 == int(new_dataclass.room_number)
@@ -63,7 +63,7 @@ def test_create_dataclass():
 
     new_dataclass = create_dataclass(dataclass_name='MyTestClass', my_dict=my_dict)
     assert """<class 'list'>""" == str(type(new_dataclass))
-    assert """<class 'types.MyTestClass'>""" == str(type(new_dataclass[0]))
+    assert """<class '__main__.MyTestClass'>""" == str(type(new_dataclass[0]))
     assert """{'name': 'Bob', 'room_number': 1223, 'teaching_subject': 'Python'}""" == str(asdict(new_dataclass[0]))
     assert """{'name': 'Tim', 'room_number': 1333, 'teaching_subject': 'Python2'}""" == str(asdict(new_dataclass[1]))
 
@@ -294,7 +294,7 @@ def test_string_grouper():
     print('-' * 65)
     print('')
 
-    # List of sample switch names for multiple sites. Case insensitve testing.
+    # List of sample switch names for multiple sites. Case insensitive testing.
     list_of_strings = [
         "JJ-MDF-9200-1_2",
         "KV-MDF-9200-1_2",

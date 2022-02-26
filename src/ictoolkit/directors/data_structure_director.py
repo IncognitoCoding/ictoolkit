@@ -5,10 +5,11 @@ This module is designed to offer data structure functions. These data structures
 import re
 import logging
 from itertools import groupby
-from typing import Union, List, Type
-from dataclasses import dataclass, make_dataclass, fields
-import inspect
-from pathlib import Path
+from typing import Union, List, Type, Any
+from dataclasses import (dataclass,
+                         make_dataclass,
+                         fields,
+                         field)
 
 # Libraries
 from fchecker import type_check
@@ -29,7 +30,7 @@ __author__ = 'IncognitoCoding'
 __copyright__ = 'Copyright 2022, data_structure_director'
 __credits__ = ['IncognitoCoding']
 __license__ = 'MIT'
-__version__ = '3.9'
+__version__ = '3.10'
 __maintainer__ = 'IncognitoCoding'
 __status__ = 'Production'
 
@@ -39,7 +40,13 @@ def create_dataclass(dataclass_name: str, my_dict: Union[dict, List[dict]], req_
     """
     Create a dynamic dataclass from a dictionary or a dynamic dataclass list from a list of dictionaries.
 
+    All args are set to None by default.
+
+    Use the req_keys to force requirements.
+
     A list of dictionaries will have the keys compares with eachother to ensure all arguments are populated the same.
+
+    The dynamic dataclass will have a type return from the main (ex: <class '__main__.MyTestClass'>).
 
     Args:
         dataclass_name (str):
@@ -105,67 +112,58 @@ def create_dataclass(dataclass_name: str, my_dict: Union[dict, List[dict]], req_
     )
 
     try:
+        # Sets the processing_dicts based on a single dict or List[dict].
+        processing_dicts: list = []
+        if isinstance(my_dict, dict):
+            # Adds one entry.
+            processing_dicts.append(my_dict)
         if isinstance(my_dict, list):
-            populated_dataclasses: list = []
-            for index, entry in enumerate(my_dict):
-                # Converts a dictionary from key:value to key:type.
-                __annotations__ = {k: type(v) for k, v in entry.items()}
-                # Converts the dictionary into a tuple and creates the dataclass.
-                new_dataclass = make_dataclass(dataclass_name, list(__annotations__.items()))
-                # Converts the dictionary to kwargs to set the dataclass values.
-                populated_dataclass = new_dataclass(**entry)
+            # Converts all List[dict] to new list.
+            processing_dicts = my_dict
 
-                # Sets required fields.
-                if index == 0:
-                    if req_keys:
-                        required_field_names: set = req_keys
-                    else:
-                        # No req_keys. Setting to the current dataclass keys, so the compare passes.
-                        required_field_names: set = {field.name for field in fields(populated_dataclass)}
-                elif index != 0:
-                    # Gets previous current dataclass fields.
-                    required_field_names: set = {field.name for field in fields(populated_dataclasses[index - 1])}
+        populated_dataclasses: list = []
+        for index, entry in enumerate(processing_dicts):
+            existing_fields: list = []
+            for key, value in entry.items():
+                arg_name: str = key
+                entry_type: type = type(value)
+                # Creates fields to send when making the dynamic dataclass.
+                existing_fields.append((arg_name, entry_type, field(init=None, repr=False)))
 
-                # Compares required and current field names.
-                # Gets current dataclass fields.
-                current_field_names: set = {field.name for field in fields(populated_dataclass)}
-                if required_field_names != current_field_names:
-                    # Gets the difference between the field names.
-                    # Original Example: {'name', 'teaching_subject'}
-                    # Replaced: 'name', 'teaching_subject'
-                    diff_names: str = str(required_field_names.difference(current_field_names)).replace('{', '').replace('}', '')
-                    # Sorts the sets to sorted lists for output.
-                    required_field_names = str(sorted(required_field_names)).replace('[', '').replace(']', '')
-                    current_field_names = str(sorted(current_field_names)).replace('[', '').replace(']', '')
+            # Creates the dataclass.
+            # Args are set to None to initial the dataclass before writing.
+            # Any required args need to be validated before write.
+            new_dataclass = make_dataclass(dataclass_name, existing_fields)
+            # Set the dynamic dataclass name to __main__ function.
+            # This could be set to the calling func if needed.
+            # This converts the dynamic dataclass type ('type') to the actual
+            # path to this function.
+            # Requires for some usages such as dill pickling.
+            #   - Bug: https://bugs.python.org/issue35510
+            new_dataclass.__module__ = '__main__'
+            # Initiates the dynamic dataclass.
+            initiated_dynamic_dataclass = new_dataclass()
+            # Populates the dataclass with the dictionary values.
+            for key, value in entry.items():
+                arg_name: str = key
+                value: Any = value
+                # Sets the dictionary key as the type and value as value.
+                setattr(initiated_dynamic_dataclass, arg_name, value)
 
-                    exc_args = {
-                        'main_message': f'{dataclass_name} got an unexpected keyword argument {diff_names}',
-                        'custom_type': RequirementFailure,
-                        'expected_result': required_field_names,
-                        'returned_result': current_field_names,
-                        'suggested_resolution': ['Verify the passing dictionary does not require specific keys.',
-                                                 'Make sure your list of dictionaries contains the same keys per entry.']
-                    }
-                    raise RequirementFailure(FCustomException(message_args=exc_args, tb_limit=None, tb_remove_name=tb_remove_name))
+            # Sets required fields.
+            if index == 0:
+                if req_keys:
+                    required_field_names: set = req_keys
+                else:
+                    # No req_keys. Setting to the current dataclass keys, so the compare passes.
+                    required_field_names: set = {field.name for field in fields(initiated_dynamic_dataclass)}
+            elif index != 0:
+                # Gets previous current dataclass fields.
+                required_field_names: set = {field.name for field in fields(populated_dataclasses[index - 1])}
 
-                populated_dataclasses.append(populated_dataclass)
-            return populated_dataclasses
-        elif isinstance(my_dict, dict):
-            # Converts a dictionary from key:value to key:type.
-            __annotations__ = {k: type(v) for k, v in my_dict.items()}
-            # Converts the dictionary into a tuple and creates the dataclass.
-            new_dataclass = make_dataclass(dataclass_name, list(__annotations__.items()))
-            # Converts the dictionary to kwargs to set the dataclass values.
-            populated_dataclass = new_dataclass(**my_dict)
-
-            if req_keys:
-                required_field_names: set = req_keys
-            else:
-                # No req_keys. Setting to the current dataclass keys, so the compare passes.
-                required_field_names: set = {field.name for field in fields(populated_dataclass)}
             # Compares required and current field names.
             # Gets current dataclass fields.
-            current_field_names: set = {field.name for field in fields(populated_dataclass)}
+            current_field_names: set = {field.name for field in fields(initiated_dynamic_dataclass)}
             if required_field_names != current_field_names:
                 # Gets the difference between the field names.
                 # Original Example: {'name', 'teaching_subject'}
@@ -185,7 +183,15 @@ def create_dataclass(dataclass_name: str, my_dict: Union[dict, List[dict]], req_
                 }
                 raise RequirementFailure(FCustomException(message_args=exc_args, tb_limit=None, tb_remove_name=tb_remove_name))
 
-            return populated_dataclass
+            populated_dataclasses.append(initiated_dynamic_dataclass)
+
+        # Checks the input type for the return.
+        if isinstance(my_dict, dict):
+            # One dict sent in, one dataclass returned.
+            return populated_dataclasses[0]
+        elif isinstance(my_dict, list):
+            return populated_dataclasses
+
     except FTypeError:
         raise
     except InputFailure:
