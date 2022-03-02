@@ -36,7 +36,7 @@ __status__ = 'Production'
 
 
 def create_dataclass(dataclass_name: str, my_dict: Union[dict, List[dict]], req_keys: set = None,
-                     tb_remove_name: str = None) -> Union[List[Type[dataclass]], Type[dataclass]]:
+                     tb_remove_name: str = None) -> Union[List[dataclass], dataclass]:
     """
     Create a dynamic dataclass from a dictionary or a dynamic dataclass list from a list of dictionaries.
 
@@ -169,6 +169,10 @@ def create_dataclass(dataclass_name: str, my_dict: Union[dict, List[dict]], req_
                 # Original Example: {'name', 'teaching_subject'}
                 # Replaced: 'name', 'teaching_subject'
                 diff_names: str = str(required_field_names.difference(current_field_names)).replace('{', '').replace('}', '')
+                # Checks for an empty set.
+                # An empty set means the table_columns contains more entries than the required.
+                if diff_names == str(set()):
+                    diff_names: str = str(current_field_names.difference(required_field_names)).replace('{', '').replace('}', '')
                 # Sorts the sets to sorted lists for output.
                 required_field_names = str(sorted(required_field_names)).replace('[', '').replace(']', '')
                 current_field_names = str(sorted(current_field_names)).replace('[', '').replace(']', '')
