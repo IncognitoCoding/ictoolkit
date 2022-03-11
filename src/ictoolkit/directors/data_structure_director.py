@@ -726,7 +726,7 @@ def get_list_duplicates(duplicates: list, match_index: int = None, grouped: bool
             return None
 
 
-def string_grouper(list_of_strings: list, grouping_value: Union[str, int, None], grouping_option: int, case_insensitive: bool = False) -> list:
+def string_grouper(list_of_strings: list, grouping_value: Union[str, int, None], grouping_option: int, case_insensitive: bool = False) -> List[dict]:
     """
     String grouper will group a list of strings using three different options.
 
