@@ -2,7 +2,7 @@ __author__ = 'IncognitoCoding'
 __copyright__ = 'Copyright 2022, ictoolkit'
 __credits__ = ['IncognitoCoding']
 __license__ = 'MIT'
-__version__ = '3.7'
+__version__ = '3.8'
 __maintainer__ = 'IncognitoCoding'
 __status__ = 'Production'
 
@@ -22,7 +22,8 @@ from .directors.data_structure_director import (create_dataclass,
                                                 string_grouper,
                                                 find_longest_common_substring,
                                                 user_choice_character_grouping,
-                                                clean_non_word_characters)
+                                                clean_non_word_characters,
+                                                str_to_list)
 from .directors.email_director import (create_template_email,
                                        send_email)
 from .directors.encryption_director import (encrypt_info,

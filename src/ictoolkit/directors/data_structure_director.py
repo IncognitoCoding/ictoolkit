@@ -30,7 +30,7 @@ __author__ = 'IncognitoCoding'
 __copyright__ = 'Copyright 2022, data_structure_director'
 __credits__ = ['IncognitoCoding']
 __license__ = 'MIT'
-__version__ = '3.10'
+__version__ = '3.11'
 __maintainer__ = 'IncognitoCoding'
 __status__ = 'Production'
 
@@ -106,7 +106,7 @@ def create_dataclass(dataclass_name: str, my_dict: Union[dict, List[dict]], req_
         formatted_req_keys = f'  - req_keys (set):\n        - None'
     logger.debug(
         'Passing parameters:\n'
-        f'  - dataclass_name (str):\n        - {dataclass_name}'
+        f'  - dataclass_name (str):\n        - {dataclass_name}\n'
         f'{formatted_my_dict}\n'
         f'{formatted_req_keys}\n'
     )
@@ -1291,3 +1291,88 @@ def clean_non_word_characters(string: str) -> str:
         else:
             logger.debug(f'The string did not contain any non-word characters. No change required.')
         return cleaned_string
+
+
+def str_to_list(value: Union[str, list], sep: str) -> list:
+    """
+    Take any string and converts it based on the separator.\\
+    The difference between this function and .split() is this function\\
+    allows the ability to convert single values or multiple values to a list.
+
+    Ideal for converting database cells that were converted from\\
+    list to str for storage. Ex: .join('my_list_values')
+
+    Whitespace is stripped from the start or end.
+
+    Usage Notes:
+    \t\\- If a list is sent the original list will forward.\\
+    \t\\- If the separator never matches the entry will be considered\\
+    \t   a single entry and add to the list.
+
+    Args:
+        value (Union[str, list]):
+        \t\\- The string getting split.
+        \t\\- A list will forward through.
+        sep (str):
+        \t\\- The delimeter that will split the string.
+
+    Raises:
+        FTypeError (fexception):
+        \t\\- The value '{value}' is not in [<class 'str'>, <class 'list'>] format.
+        FGeneralError:
+        \t\\- A general failure occurred while converting the string to list.
+        FValueError:
+        \t\\- The value ({value}) did not convert to a list.
+
+    Returns:
+        list:
+        \t\\- A converted string to list or forwarded list.
+    """
+    logger = logging.getLogger(__name__)
+    logger.debug(f'=' * 20 + get_function_name() + '=' * 20)
+    # Custom flowchart tracking. This is ideal for large projects that move a lot.
+    # For any third-party modules, set the flow before making the function call.
+    logger_flowchart = logging.getLogger('flowchart')
+    logger_flowchart.debug(f'Flowchart --> Function: {get_function_name()}')
+
+    try:
+        type_check(value, [str, list])
+    except FTypeError:
+        raise
+
+    if isinstance(value, str):
+        formatted_value = f'  - string (str):\n        - {value}\n'
+    else:
+        formatted_value = '  - value (list):' + str('\n        - ' + '\n        - '.join(map(str, value)))
+    logger.debug(
+        'Passing parameters:\n'
+        f'{formatted_value}\n'
+    )
+    
+    try:
+        new_list: list = []
+        if isinstance(value, str):
+            # Converts if the delimeter is in the value.
+            if sep in str(value):
+                new_list = str(value.strip()).split(sep)
+            else:
+                new_list.append(value.strip())
+        else:
+            new_list = value
+    except FTypeError as exc:
+        raise
+    except Exception as exc:
+        exc_args = {
+            'main_message': 'A general failure occurred while converting the string to list.',
+            'original_exception': exc,
+        }
+        raise FGeneralError(exc_args)
+    else:
+        if new_list:
+            return new_list
+        else:
+            exc_args = {
+            'main_message': f'The value ({value}) did not convert to a list.',
+            'original_exception': exc,
+        }
+        raise FValueError(exc_args)

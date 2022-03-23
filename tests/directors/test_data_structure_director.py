@@ -12,7 +12,8 @@ from ictoolkit import (create_dataclass,
                        get_list_duplicates,
                        string_grouper,
                        find_longest_common_substring,
-                       clean_non_word_characters)
+                       clean_non_word_characters,
+                       str_to_list)
 
 # Exceptions
 from fexception import FValueError
@@ -574,7 +575,7 @@ def test_string_grouper():
             raise FValueError(exc_args)
 
 
-def t1est_find_longest_common_substring():
+def test_find_longest_common_substring():
     """
     Tests finding a common grouping substring.
 
@@ -621,7 +622,7 @@ def t1est_find_longest_common_substring():
             raise FValueError(exc_args)
 
 
-def t1est_clean_non_word_characters():
+def test_clean_non_word_characters():
     """
     Tests cleaning non-word characters.
 
@@ -666,3 +667,27 @@ def t1est_clean_non_word_characters():
                 'returned_result': error,
             }
             raise FValueError(exc_args)
+
+
+def test_1_str_to_list():
+    """
+    This function tests converting a single string to list.
+    """
+    my_list = str_to_list(value='sample1', sep=', ')
+    assert ['sample1'] == my_list
+
+
+def test_1_1_str_to_list():
+    """
+    This function tests converting a string to list.
+    """
+    my_list = str_to_list(value='sample1, sample2, sample3', sep=', ')
+    assert ['sample1', 'sample2', 'sample3'] == my_list
+
+
+def test_1_2_str_to_list():
+    """
+    This function tests passing an existing list through.
+    """
+    my_list = str_to_list(value=['sample1', 'sample2', 'sample3'], sep=', ')
+    assert ['sample1', 'sample2', 'sample3'] == my_list
