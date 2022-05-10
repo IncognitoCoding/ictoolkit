@@ -5,38 +5,35 @@ This module is designed to offer data structure functions. These data structures
 import re
 import logging
 from itertools import groupby
-from typing import Union, List, Type, Any
-from dataclasses import (dataclass,
-                         make_dataclass,
-                         fields,
-                         field)
+from typing import Union, List, Any, Optional
+from dataclasses import dataclass, make_dataclass, fields, field
 
 # Libraries
-from fchecker import type_check
+from fchecker.type import type_check
 
 # Local Functions
 from ..helpers.py_helper import get_function_name
 
 # Exceptions
-from fexception import (FGeneralError,
-                        FKeyError,
-                        FTypeError,
-                        FValueError,
-                        FCustomException)
+from fexception import FGeneralError, FKeyError, FTypeError, FValueError, FCustomException
 from .common import InputFailure, RequirementFailure
 
 
-__author__ = 'IncognitoCoding'
-__copyright__ = 'Copyright 2022, data_structure_director'
-__credits__ = ['IncognitoCoding']
-__license__ = 'MIT'
-__version__ = '3.11'
-__maintainer__ = 'IncognitoCoding'
-__status__ = 'Production'
+__author__ = "IncognitoCoding"
+__copyright__ = "Copyright 2022, data_structure_director"
+__credits__ = ["IncognitoCoding"]
+__license__ = "MIT"
+__version__ = "3.12"
+__maintainer__ = "IncognitoCoding"
+__status__ = "Production"
 
 
-def create_dataclass(dataclass_name: str, my_dict: Union[dict, List[dict]], req_keys: set = None,
-                     tb_remove_name: str = None) -> Union[List[dataclass], dataclass]:
+def create_dataclass(
+    dataclass_name: str,
+    my_dict: Union[dict, List[dict]],
+    req_keys: Optional[set] = None,
+    tb_remove_name: Optional[str] = None,
+) -> Union[List[dataclass], dataclass]:
     """
     Create a dynamic dataclass from a dictionary or a dynamic dataclass list from a list of dictionaries.
 
@@ -44,7 +41,7 @@ def create_dataclass(dataclass_name: str, my_dict: Union[dict, List[dict]], req_
 
     Use the req_keys to force requirements.
 
-    A list of dictionaries will have the keys compares with eachother to ensure all arguments are populated the same.
+    A list of dictionaries will have the keys compared with eachother to ensure all arguments are populated the same.
 
     The dynamic dataclass will have a type return from the main (ex: <class '__main__.MyTestClass'>).
 
@@ -65,9 +62,9 @@ def create_dataclass(dataclass_name: str, my_dict: Union[dict, List[dict]], req_
 
     Raises:
         FTypeError (fexception):
-        \t\\- The value '{dataclass_name}' is not in <class 'str'> format.
+        \t\\- The object value '{dataclass_name}' is not an instance of the required class(es) or subclass(es).
         FTypeError (fexception):
-        \t\\- The value '{my_dict}' is not in [<class 'list'>, <class 'dict'>] format.
+        \t\\- The object value '{my_dict}' is not an instance of the required class(es) or subclass(es).
         InputFailure:
         \t\\- dict format is the required input to set the caller override option.
         InputFailure:
@@ -81,34 +78,36 @@ def create_dataclass(dataclass_name: str, my_dict: Union[dict, List[dict]], req_
         \t\\- A list of the users defined dataclass values.
     """
     logger = logging.getLogger(__name__)
-    logger.debug(f'=' * 20 + get_function_name() + '=' * 20)
+    logger.debug(f"=" * 20 + get_function_name() + "=" * 20)
     # Custom flowchart tracking. This is ideal for large projects that move a lot.
     # For any third-party modules, set the flow before making the function call.
-    logger_flowchart = logging.getLogger('flowchart')
-    logger_flowchart.debug(f'Flowchart --> Function: {get_function_name()}')
+    logger_flowchart = logging.getLogger("flowchart")
+    logger_flowchart.debug(f"Flowchart --> Function: {get_function_name()}")
 
     try:
-        type_check(value=dataclass_name, required_type=str, tb_remove_name='create_dataclass')
-        type_check(value=my_dict, required_type=[list, dict], tb_remove_name='create_dataclass')
+        type_check(value=dataclass_name, required_type=str, tb_remove_name="create_dataclass")
+        type_check(value=my_dict, required_type=(list, dict), tb_remove_name="create_dataclass")
         if req_keys:
-            type_check(value=req_keys, required_type=set, tb_remove_name='create_dataclass')
+            type_check(value=req_keys, required_type=set, tb_remove_name="create_dataclass")
     except FTypeError:
         raise
 
+    formatted_my_dict: Union[str, None] = None
     if isinstance(my_dict, list):
-        formatted_my_dict = '  - my_dict (list):' + str('\n        - ' + '\n        - '.join(map(str, my_dict)))
+        formatted_my_dict = "  - my_dict (list):" + str("\n        - " + "\n        - ".join(map(str, my_dict)))
     if isinstance(my_dict, dict):
-        formatted_my_dict = ('  - my_dict (dict):\n        - '
-                             + '\n        - '.join(': '.join((key, str(val))) for (key, val) in my_dict.items()))
+        formatted_my_dict = "  - my_dict (dict):\n        - " + "\n        - ".join(
+            ": ".join((key, str(val))) for (key, val) in my_dict.items()
+        )
     if req_keys:
-        formatted_req_keys = f'  - req_keys (set):\n        - {req_keys}'
+        formatted_req_keys = f"  - req_keys (set):\n        - {req_keys}"
     else:
-        formatted_req_keys = f'  - req_keys (set):\n        - None'
+        formatted_req_keys = f"  - req_keys (set):\n        - None"
     logger.debug(
-        'Passing parameters:\n'
-        f'  - dataclass_name (str):\n        - {dataclass_name}\n'
-        f'{formatted_my_dict}\n'
-        f'{formatted_req_keys}\n'
+        "Passing parameters:\n"
+        f"  - dataclass_name (str):\n        - {dataclass_name}\n"
+        f"{formatted_my_dict}\n"
+        f"{formatted_req_keys}\n"
     )
 
     try:
@@ -128,7 +127,7 @@ def create_dataclass(dataclass_name: str, my_dict: Union[dict, List[dict]], req_
                 arg_name: str = key
                 entry_type: type = type(value)
                 # Creates fields to send when making the dynamic dataclass.
-                existing_fields.append((arg_name, entry_type, field(init=None, repr=False)))
+                existing_fields.append((arg_name, entry_type, field(init=False, repr=False)))
 
             # Creates the dataclass.
             # Args are set to None to initial the dataclass before writing.
@@ -140,7 +139,7 @@ def create_dataclass(dataclass_name: str, my_dict: Union[dict, List[dict]], req_
             # path to this function.
             # Requires for some usages such as dill pickling.
             #   - Bug: https://bugs.python.org/issue35510
-            new_dataclass.__module__ = '__main__'
+            new_dataclass.__module__ = "__main__"
             # Initiates the dynamic dataclass.
             initiated_dynamic_dataclass = new_dataclass()
             # Populates the dataclass with the dictionary values.
@@ -151,41 +150,48 @@ def create_dataclass(dataclass_name: str, my_dict: Union[dict, List[dict]], req_
                 setattr(initiated_dynamic_dataclass, arg_name, value)
 
             # Sets required fields.
+            required_field_names: Union[set[str], None] = None
             if index == 0:
                 if req_keys:
-                    required_field_names: set = req_keys
+                    required_field_names = req_keys
                 else:
                     # No req_keys. Setting to the current dataclass keys, so the compare passes.
-                    required_field_names: set = {field.name for field in fields(initiated_dynamic_dataclass)}
+                    required_field_names = {field.name for field in fields(initiated_dynamic_dataclass)}
             elif index != 0:
                 # Gets previous current dataclass fields.
-                required_field_names: set = {field.name for field in fields(populated_dataclasses[index - 1])}
+                required_field_names = {field.name for field in fields(populated_dataclasses[index - 1])}
 
             # Compares required and current field names.
             # Gets current dataclass fields.
-            current_field_names: set = {field.name for field in fields(initiated_dynamic_dataclass)}
-            if required_field_names != current_field_names:
-                # Gets the difference between the field names.
-                # Original Example: {'name', 'teaching_subject'}
-                # Replaced: 'name', 'teaching_subject'
-                diff_names: str = str(required_field_names.difference(current_field_names)).replace('{', '').replace('}', '')
-                # Checks for an empty set.
-                # An empty set means the table_columns contains more entries than the required.
-                if diff_names == str(set()):
-                    diff_names: str = str(current_field_names.difference(required_field_names)).replace('{', '').replace('}', '')
-                # Sorts the sets to sorted lists for output.
-                required_field_names = str(sorted(required_field_names)).replace('[', '').replace(']', '')
-                current_field_names = str(sorted(current_field_names)).replace('[', '').replace(']', '')
+            current_field_names = {field.name for field in fields(initiated_dynamic_dataclass)}
+            if isinstance(required_field_names, set) and isinstance(current_field_names, set):
+                if required_field_names != current_field_names:
+                    # Gets the difference between the field names.
+                    # Original Example: {'name', 'teaching_subject'}
+                    # Replaced: 'name', 'teaching_subject'
+                    diff_names: str = (
+                        str(required_field_names.difference(current_field_names)).replace("{", "").replace("}", "")
+                    )
+                    # Checks for an empty set.
+                    # An empty set means the table_columns contains more entries than the required.
+                    if diff_names == str(set()):
+                        diff_names: str = (
+                            str(current_field_names.difference(required_field_names)).replace("{", "").replace("}", "")
+                        )
 
-                exc_args = {
-                    'main_message': f'{dataclass_name} got an unexpected keyword argument {diff_names}',
-                    'custom_type': RequirementFailure,
-                    'expected_result': required_field_names,
-                    'returned_result': current_field_names,
-                    'suggested_resolution': ['Verify the passing dictionary does not require specific keys.',
-                                             'Make sure your list of dictionaries contains the same keys per entry.']
-                }
-                raise RequirementFailure(FCustomException(message_args=exc_args, tb_limit=None, tb_remove_name=tb_remove_name))
+                    exc_args = {
+                        "main_message": f"{dataclass_name} got an unexpected keyword argument {diff_names}",
+                        "custom_type": RequirementFailure,
+                        "expected_result": str(sorted(required_field_names)).replace("[", "").replace("]", ""),
+                        "returned_result": str(sorted(current_field_names)).replace("[", "").replace("]", ""),
+                        "suggested_resolution": [
+                            "Verify the passing dictionary does not require specific keys.",
+                            "Make sure your list of dictionaries contains the same keys per entry.",
+                        ],
+                    }
+                    raise RequirementFailure(
+                        FCustomException(message_args=exc_args, tb_limit=None, tb_remove_name=tb_remove_name)
+                    )
 
             populated_dataclasses.append(initiated_dynamic_dataclass)
 
@@ -196,21 +202,21 @@ def create_dataclass(dataclass_name: str, my_dict: Union[dict, List[dict]], req_
         elif isinstance(my_dict, list):
             return populated_dataclasses
 
-    except FTypeError:
+    except FTypeError:  # pragma: no cover
         raise
-    except InputFailure:
+    except InputFailure:  # pragma: no cover
         raise
-    except RequirementFailure:
+    except RequirementFailure:  # pragma: no cover
         raise
-    except Exception as exc:
+    except Exception as exc:  # pragma: no cover
         exc_args = {
-            'main_message': 'A general error caused a dictionary to dataclass conversion failure.',
-            'original_exception': exc,
+            "main_message": "A general error caused a dictionary to dataclass conversion failure.",
+            "original_exception": exc,
         }
         raise FGeneralError(exc_args)
 
 
-def remove_duplicate_dict_values_in_list(list_dictionary: list, element_number: int = None) -> list:
+def remove_duplicate_dict_values_in_list(list_dictionary: List[dict], element_number: Optional[int] = None) -> list:
     """
     Removes duplicate values in a dictionary within a list and returns
     the same list minus duplicates.
@@ -218,14 +224,14 @@ def remove_duplicate_dict_values_in_list(list_dictionary: list, element_number: 
     This function will convert a list of dictionaries into a list of tuples
     that contains items of the dictionary for duplicate removal.
 
-    A list of dictionaries are sometimes needed to be sorted based off a specific
+    A list of dictionaries are sometimes needed to be sorted based on a specific
     element in the dictionary entry.
 
     This function offers the ability to choose which element number to use for matching
     or match the entire dictionary element.
 
     Args:
-        list_dictionary (list):
+        list_dictionary (List[dict]):
         \t\\- A dictionary with duplicate values in a list.
         element_number (int, optional):
         \t\\- Enter the dictionary element number when matching based on a specific dictionary\\
@@ -257,9 +263,9 @@ def remove_duplicate_dict_values_in_list(list_dictionary: list, element_number: 
 
     Raises:
         FTypeError (fexception):
-        \t\\- The value '{list_dictionary}' is not in <class 'list'> format.
+        \t\\- The object value '{list_dictionary}' is not an instance of the required class(es) or subclass(es).
         FTypeError (fexception):
-        \t\\- The value '{element_number}' is not in <class 'int'> format.
+        \t\\- The object value '{element_number}' is not an instance of the required class(es) or subclass(es).
         FGeneralError (fexception):
         \t\\- A general failure occurred removing duplicates from the dictionary in the list.
 
@@ -268,29 +274,27 @@ def remove_duplicate_dict_values_in_list(list_dictionary: list, element_number: 
         \t\\- A list of dictionars with duplicate values removed.
     """
     logger = logging.getLogger(__name__)
-    logger.debug(f'=' * 20 + get_function_name() + '=' * 20)
+    logger.debug(f"=" * 20 + get_function_name() + "=" * 20)
     # Custom flowchart tracking. This is ideal for large projects that move a lot.
     # For any third-party modules, set the flow before making the function call.
-    logger_flowchart = logging.getLogger('flowchart')
-    logger_flowchart.debug(f'Flowchart --> Function: {get_function_name()}')
+    logger_flowchart = logging.getLogger("flowchart")
+    logger_flowchart.debug(f"Flowchart --> Function: {get_function_name()}")
 
     try:
-        type_check(list_dictionary, list)
+        type_check(value=list_dictionary, required_type=list)
         if element_number:
-            type_check(element_number, int)
+            type_check(value=element_number, required_type=int)
     except FTypeError:
         raise
 
-    formatted_list_dictionary = '  - list_dictionary (list):' + str('\n        - ' + '\n        - '.join(map(str, list_dictionary)))
-    if element_number:
-        formatted_element_number = f'  - element_number (int):\n        - {element_number}'
-    else:
-        formatted_element_number = f'  - element_number (int):\n        - None'
-    logger.debug(
-        'Passing parameters:\n'
-        f'{formatted_list_dictionary}\n'
-        f'{formatted_element_number}\n'
+    formatted_list_dictionary = "  - list_dictionary (list):" + str(
+        "\n        - " + "\n        - ".join(map(str, list_dictionary))
     )
+    if element_number:
+        formatted_element_number = f"  - element_number (int):\n        - {element_number}"
+    else:
+        formatted_element_number = f"  - element_number (int):\n        - None"
+    logger.debug("Passing parameters:\n" f"{formatted_list_dictionary}\n" f"{formatted_element_number}\n")
 
     # Holds temporary found elements for comparison.
     element_found = set()
@@ -304,7 +308,7 @@ def remove_duplicate_dict_values_in_list(list_dictionary: list, element_number: 
             # Checks if section number is being used for matching or a full match is being used.
             if element_number is None:
                 # Used tuple because it can be hashed, which allows removal using set.
-                # This will convert the dictionaries in the list to tuples that contains the dictionaries.
+                # This will convert the dictionaries in the list to tuples that contain the dictionaries.
                 # Sorted is added to help with any possible match issues wien adding/removing lots of key history.
                 items_of_dictionary = tuple(sorted(dictionary_in_list.items()))
                 # Checks if dictionary entry matches previous entries.
@@ -316,7 +320,7 @@ def remove_duplicate_dict_values_in_list(list_dictionary: list, element_number: 
                     revised_list.append(dictionary_in_list)
             elif element_number:
                 # Used tuple because it can be hashed, which allows removal using set.
-                # This will convert the dictionaries in the list to tuples that contains the dictionaries.
+                # This will convert the dictionaries in the list to tuples that contain the dictionaries.
                 # No sort is added here because sort will break the element number order.
                 items_of_dictionary = tuple(dictionary_in_list.items())
                 # Checks if dictionary element section does not match previous entries.
@@ -326,19 +330,21 @@ def remove_duplicate_dict_values_in_list(list_dictionary: list, element_number: 
 
                     # Adds the full dictionary_in_list to the list because it is not a duplicate.
                     revised_list.append(dictionary_in_list)
-    except Exception as exc:
+    except Exception as exc:  # pragma: no cover
         exc_args = {
-            'main_message': 'A general failure occurred removing duplicates from the dictionary in the list.',
-            'original_exception': exc,
+            "main_message": "A general failure occurred removing duplicates from the dictionary in the list.",
+            "original_exception": exc,
         }
         raise FGeneralError(exc_args)
     else:
         return revised_list
 
 
-def get_list_of_dicts_duplicates(key: str, list_dictionary: list, grouped: bool = False) -> Union[list, dict, None]:
+def get_list_of_dicts_duplicates(
+    key: str, list_dictionary: List[dict], grouped: bool = False
+) -> Union[list, dict, None]:
     """
-    Finds duplicate dictionary values in the list using the key and return the value and index points.
+    This function finds duplicate dictionary values in the list using the key and return the value and index points.
 
     Duplicates can be either un-grouped or grouped. Default is un-grouped.
 
@@ -349,7 +355,7 @@ def get_list_of_dicts_duplicates(key: str, list_dictionary: list, grouped: bool 
     Args:
         key (str):
         \t\\- the dictionary key that needs to get all duplicate values assigned to that ke
-        list_dictionary (list):
+        list_dictionary (List[dict]):
         \t\\- dictionary with duplicate values in a list
         grouped (bool):
         \t\\- enables grouping of duplicate values.\\
@@ -368,11 +374,11 @@ def get_list_of_dicts_duplicates(key: str, list_dictionary: list, grouped: bool 
 
     Raises:
         FTypeError (fexception):
-        \t\\- The value '{key}' is not in <class 'str'> format.
+        \t\\- The object value '{key}' is not an instance of the required class(es) or subclass(es).
         FTypeError (fexception):
-        \t\\- The value '{list_dictionary}' is not in <class 'list'> format.
+        \t\\- The object value '{list_dictionary}' is not an instance of the required class(es) or subclass(es).
         FTypeError (fexception):
-        \t\\- The value '{grouped}' is not in <class 'bool'> format.
+        \t\\- The object value '{grouped}' is not an instance of the required class(es) or subclass(es).
         FKeyError (fexception):
         \t\\- A failure occurred getting duplicate values the list.
         FGeneralError (fexception):
@@ -404,25 +410,27 @@ def get_list_of_dicts_duplicates(key: str, list_dictionary: list, grouped: bool 
     \t\t\t\t   {'index': 4, 'value': 'ValueB'}]}
     """
     logger = logging.getLogger(__name__)
-    logger.debug(f'=' * 20 + get_function_name() + '=' * 20)
+    logger.debug(f"=" * 20 + get_function_name() + "=" * 20)
     # Custom flowchart tracking. This is ideal for large projects that move a lot.
     # For any third-party modules, set the flow before making the function call.
-    logger_flowchart = logging.getLogger('flowchart')
-    logger_flowchart.debug(f'Flowchart --> Function: {get_function_name()}')
+    logger_flowchart = logging.getLogger("flowchart")
+    logger_flowchart.debug(f"Flowchart --> Function: {get_function_name()}")
 
     try:
-        type_check(key, str)
-        type_check(list_dictionary, list)
-        type_check(grouped, bool)
+        type_check(value=key, required_type=str)
+        type_check(value=list_dictionary, required_type=list)
+        type_check(value=grouped, required_type=bool)
     except FTypeError:
         raise
 
-    formatted_list_dictionary = '  - list_dictionary (list):' + str('\n        - ' + '\n        - '.join(map(str, list_dictionary)))
+    formatted_list_dictionary = "  - list_dictionary (list):" + str(
+        "\n        - " + "\n        - ".join(map(str, list_dictionary))
+    )
     logger.debug(
-        'Passing parameters:\n'
-        f'  - key (int):\n        - {key}\n'
-        f'{formatted_list_dictionary}\n'
-        f'  - grouped (bool):\n        - {grouped}\n'
+        "Passing parameters:\n"
+        f"  - key (int):\n        - {key}\n"
+        f"{formatted_list_dictionary}\n"
+        f"  - grouped (bool):\n        - {grouped}\n"
     )
 
     try:
@@ -444,7 +452,11 @@ def get_list_of_dicts_duplicates(key: str, list_dictionary: list, grouped: bool 
             # Checks if the duplicate entry already exists in the duplicate_list_dictionary list.
             # This has to check if the 'duplicate_list_dictionary' is empty and if the duplicate list does not contain the entry.
             # The two different "entry" searches are required in case the key is a string or an INT. A string would have a single quote and an INT would not.
-            elif bool(duplicate_list_dictionary) is False or f'\'value\': {entry}' not in str(duplicate_list_dictionary) and f'\'value\': \'{entry}\'' not in str(duplicate_list_dictionary):
+            elif (
+                bool(duplicate_list_dictionary) is False
+                or f"'value': {entry}" not in str(duplicate_list_dictionary)
+                and f"'value': '{entry}'" not in str(duplicate_list_dictionary)
+            ):
                 # Loops through all entries in the list.
                 for index, value in enumerate(duplicates_of_key):
                     # Checks if the value from the list is equal to the discovered duplicate.
@@ -452,19 +464,19 @@ def get_list_of_dicts_duplicates(key: str, list_dictionary: list, grouped: bool 
                         # Adds the duplicate entry values and index
                         # The value will be the key and the index will be the value.
                         # This will allow the ease if finding all index points for a specific value.
-                        duplicate_list_dictionary.append({'index': index, 'value': value})
-    except KeyError:
+                        duplicate_list_dictionary.append({"index": index, "value": value})
+    except KeyError:  # pragma: no cover
         exc_args = {
-            'main_message': 'A failure occurred getting duplicate values the list.',
-            'expected_result': f'The searching key ({key}) existing in the dictionary',
-            'returned_result': f'The searching key ({key}) does not existing in the dictionary ({list_dictionary})',
-            'suggested_resolution': 'Please verify you have set all required keys and try again.',
+            "main_message": "A failure occurred getting duplicate values the list.",
+            "expected_result": f"The searching key ({key}) existing in the dictionary",
+            "returned_result": f"The searching key ({key}) does not existing in the dictionary ({list_dictionary})",
+            "suggested_resolution": "Please verify you have set all required keys and try again.",
         }
         raise FKeyError(exc_args)
-    except Exception as exc:
+    except Exception as exc:  # pragma: no cover
         exc_args = {
-            'main_message': f'A general failure occurred getting duplicate values from the key ({key}) in the list_dictionary.',
-            'original_exception': exc,
+            "main_message": f"A general failure occurred getting duplicate values from the key ({key}) in the list_dictionary.",
+            "original_exception": exc,
         }
         raise FGeneralError(exc_args)
     else:
@@ -475,21 +487,21 @@ def get_list_of_dicts_duplicates(key: str, list_dictionary: list, grouped: bool 
 
                 try:
                     # Stores new grouped entries
-                    grouped = {}
+                    grouped_entries: dict[str, list[Any]] = {}
                     # Loops through each grouped entry.
                     for entry in duplicate_list_dictionary:
                         # Gets matching entries based on the "value" key and adds them to the grouped dictionary.
-                        grouped[entry['value']] = grouped.get(entry['value'], [])
-                        grouped[entry['value']].append(entry)
-                except Exception as exc:
+                        grouped_entries[entry["value"]] = grouped_entries.get(entry["value"], [])
+                        grouped_entries[entry["value"]].append(entry)
+                except Exception as exc:  # pragma: no cover
                     exc_args = {
-                        'main_message': 'A genearl failure occurred grouping duplicate values.',
-                        'original_exception': exc,
+                        "main_message": "A genearl failure occurred grouping duplicate values.",
+                        "original_exception": exc,
                     }
                     raise FGeneralError(exc_args)
                 else:
                     # Returns grouped duplicates.
-                    return grouped
+                    return grouped_entries
             else:
                 # Returns un-grouped duplicates.
                 return duplicate_list_dictionary
@@ -497,9 +509,11 @@ def get_list_of_dicts_duplicates(key: str, list_dictionary: list, grouped: bool 
             return None
 
 
-def get_list_duplicates(duplicates: list, match_index: int = None, grouped: bool = False) -> Union[list, dict, None]:
+def get_list_duplicates(
+    duplicates: list, match_index: Optional[int] = None, grouped: bool = False
+) -> Union[list, dict, None]:
     """
-    Finds duplicate entries in the list return the value and index points.
+    Finds duplicate entries in the list and return the value and index points.
 
     Duplicates can be either un-grouped or grouped. Default is un-grouped.
 
@@ -539,14 +553,15 @@ def get_list_duplicates(duplicates: list, match_index: int = None, grouped: bool
 
     Raises:
         FTypeError (fexception):
-        \t\\- The value '{duplicates}' is not in <class 'list'> format.
+        \t\\- The object value '{duplicates}' is not an instance of the required class(es) or subclass(es).
         FTypeError (fexception):
-        \t\\- The value '{match_index}' is not in <class 'int'> format.
+        \t\\- The object value '{match_index}' is not an instance of the required class(es) or subclass(es).
         FTypeError (fexception):
-        \t\\- The value '{grouped}' is not in <class 'bool'> format.
-        FGeneralError: A general failure occurred getting duplicate values the list.
-        FGeneralError: A general failure occurred grouping duplicate values.
-
+        \t\\- The object value '{grouped}' is not an instance of the required class(es) or subclass(es).
+        FGeneralError:
+        \t\\- A general failure occurred getting duplicate values in the list.
+        FGeneralError:
+        \t\\- A general failure occurred grouping duplicate values.
 
     Returns:
         Union[list, dict, None]:
@@ -572,30 +587,30 @@ def get_list_duplicates(duplicates: list, match_index: int = None, grouped: bool
     \t\t\t\t   {'index': 4, 'value': 'ValueB'}]}
     """
     logger = logging.getLogger(__name__)
-    logger.debug(f'=' * 20 + get_function_name() + '=' * 20)
+    logger.debug(f"=" * 20 + get_function_name() + "=" * 20)
     # Custom flowchart tracking. This is ideal for large projects that move a lot.
     # For any third-party modules, set the flow before making the function call.
-    logger_flowchart = logging.getLogger('flowchart')
-    logger_flowchart.debug(f'Flowchart --> Function: {get_function_name()}')
+    logger_flowchart = logging.getLogger("flowchart")
+    logger_flowchart.debug(f"Flowchart --> Function: {get_function_name()}")
 
     try:
-        type_check(duplicates, list)
+        type_check(value=duplicates, required_type=list)
         if match_index:
-            type_check(match_index, int)
-        type_check(grouped, bool)
+            type_check(value=match_index, required_type=int)
+        type_check(value=grouped, required_type=bool)
     except FTypeError:
         raise
 
-    formatted_duplicates = '  - duplicates (list):' + str('\n        - ' + '\n        - '.join(map(str, duplicates)))
+    formatted_duplicates = "  - duplicates (list):" + str("\n        - " + "\n        - ".join(map(str, duplicates)))
     if match_index:
-        formatted_match_index = f'  - match_index (int):\n        - {match_index}'
+        formatted_match_index = f"  - match_index (int):\n        - {match_index}"
     else:
-        formatted_match_index = f'  - match_index (int):\n        - None'
+        formatted_match_index = f"  - match_index (int):\n        - None"
     logger.debug(
-        'Passing parameters:\n'
-        f'{formatted_duplicates}\n'
-        f'{formatted_match_index}\n'
-        f'  - grouped (bool):\n        - {grouped}\n'
+        "Passing parameters:\n"
+        f"{formatted_duplicates}\n"
+        f"{formatted_match_index}\n"
+        f"  - grouped (bool):\n        - {grouped}\n"
     )
 
     try:
@@ -609,7 +624,7 @@ def get_list_duplicates(duplicates: list, match_index: int = None, grouped: bool
             # Checks if the entry in the list is another list.
             # This allows lists to be in a list and be searched.
             if isinstance(entry, list) or isinstance(entry, tuple):
-                # Checks a match_index is given to match a specific index in the list entry.
+                # Checks that a match_index is given to match a specific index in the list entry.
                 if isinstance(match_index, int):
                     # Checks if the entry from the list exists in the "temp_unique_items" list. If not it gets added to the temp list.
                     # If the entry exists the entry will hit the elif statement and get all index points for the duplicates.
@@ -619,7 +634,11 @@ def get_list_duplicates(duplicates: list, match_index: int = None, grouped: bool
                     # Checks if the duplicate entry already exists in the duplicate_list_dictionary list.
                     # This has to check if the 'duplicate_list_dictionary' is empty and if the duplicate list does not contain the entry.
                     # The two different "entry" searches are required in case the key is a string or an INT. A string would have a single quote and an INT would not.
-                    elif bool(duplicate_list_dictionary) is False or f'\'value\': {entry[match_index]}' not in str(duplicate_list_dictionary) and f'\'value\': \'{entry[match_index]}\'' not in str(duplicate_list_dictionary):
+                    elif (
+                        bool(duplicate_list_dictionary) is False
+                        or f"'value': {entry[match_index]}" not in str(duplicate_list_dictionary)
+                        and f"'value': '{entry[match_index]}'" not in str(duplicate_list_dictionary)
+                    ):
                         # Loops through all entries in the list.
                         for index, value in enumerate(duplicates):
                             # Checks if the value from the list is equal to the discovered duplicate.
@@ -627,7 +646,7 @@ def get_list_duplicates(duplicates: list, match_index: int = None, grouped: bool
                                 # Adds the duplicate entry values and index
                                 # The value will be the key and the index will be the value.
                                 # This will allow the ease if finding all index points for a specific value.
-                                duplicate_list_dictionary.append({'index': index, 'value': value})
+                                duplicate_list_dictionary.append({"index": index, "value": value})
                 # No match_index given, so the entire list entry will be used for matching, so the entry will be converted to a string.
                 else:
                     # Checks if the entry from the list exists in the "temp_unique_items" list. If not it gets added to the temp list.
@@ -638,7 +657,11 @@ def get_list_duplicates(duplicates: list, match_index: int = None, grouped: bool
                     # Checks if the duplicate entry already exists in the duplicate_list_dictionary list.
                     # This has to check if the 'duplicate_list_dictionary' is empty and if the duplicate list does not contain the entry.
                     # The two different "entry" searches are required in case the key is a string or an INT. A string would have a single quote and an INT would not.
-                    elif bool(duplicate_list_dictionary) is False or f'\'value\': {str(entry)}' not in str(duplicate_list_dictionary) and f'\'value\': \'{str(entry)}\'' not in str(duplicate_list_dictionary):
+                    elif (
+                        bool(duplicate_list_dictionary) is False
+                        or f"'value': {str(entry)}" not in str(duplicate_list_dictionary)
+                        and f"'value': '{str(entry)}'" not in str(duplicate_list_dictionary)
+                    ):
                         # Loops through all entries in the list.
                         for index, value in enumerate(duplicates):
                             # Checks if the value from the list is equal to the discovered duplicate.
@@ -646,7 +669,7 @@ def get_list_duplicates(duplicates: list, match_index: int = None, grouped: bool
                                 # Adds the duplicate entry values and index
                                 # The value will be the key and the index will be the value.
                                 # This will allow the ease if finding all index points for a specific value.
-                                duplicate_list_dictionary.append({'index': index, 'value': value})
+                                duplicate_list_dictionary.append({"index": index, "value": value})
             # Standard strings in the list.
             else:
                 # Checks if the entry from the list exists in the "temp_unique_items" list. If not it gets added to the temp list.
@@ -657,7 +680,11 @@ def get_list_duplicates(duplicates: list, match_index: int = None, grouped: bool
                 # Checks if the duplicate entry already exists in the duplicate_list_dictionary list.
                 # This has to check if the 'duplicate_list_dictionary' is empty and if the duplicate list does not contain the entry.
                 # The two different "entry" searches are required in case the key is a string or an INT. A string would have a single quote and an INT would not.
-                elif bool(duplicate_list_dictionary) is False or f'\'value\': {entry}' not in str(duplicate_list_dictionary) and f'\'value\': \'{entry}\'' not in str(duplicate_list_dictionary):
+                elif (
+                    bool(duplicate_list_dictionary) is False
+                    or f"'value': {entry}" not in str(duplicate_list_dictionary)
+                    and f"'value': '{entry}'" not in str(duplicate_list_dictionary)
+                ):
                     # Loops through all entries in the list.
                     for index, value in enumerate(duplicates):
                         # Checks if the value from the list is equal to the discovered duplicate.
@@ -665,11 +692,11 @@ def get_list_duplicates(duplicates: list, match_index: int = None, grouped: bool
                             # Adds the duplicate entry values and index
                             # The value will be the key and the index will be the value.
                             # This will allow the ease if finding all index points for a specific value.
-                            duplicate_list_dictionary.append({'index': index, 'value': value})
-    except Exception as exc:
+                            duplicate_list_dictionary.append({"index": index, "value": value})
+    except Exception as exc:  # pragma: no cover
         exc_args = {
-            'main_message': 'A general failure occurred getting duplicate values the list.',
-            'original_exception': exc,
+            "main_message": "A general failure occurred getting duplicate values the list.",
+            "original_exception": exc,
         }
         raise FGeneralError(exc_args)
     else:
@@ -680,7 +707,7 @@ def get_list_duplicates(duplicates: list, match_index: int = None, grouped: bool
 
                 try:
                     # Stores new grouped entries
-                    grouped = {}
+                    grouped_entries: dict[str, list[Any]] = {}
                     # Loops through each grouped entry.
                     for entry in duplicate_list_dictionary:
                         # Checks if the match_index is set to match a specific list index in the list entry.
@@ -689,36 +716,38 @@ def get_list_duplicates(duplicates: list, match_index: int = None, grouped: bool
                             # If tuple the matched_index will be used to set the key.
                             # This is required because single value will be a string and the index will only pull the first letter.
                             # Output Example: {'index': 0, 'value': ('ValueA', 'ValueB')}
-                            if isinstance(entry['value'], tuple):
+                            if isinstance(entry["value"], tuple):
                                 # Gets matching entries based on the "value" key and adds them to the grouped dictionary.
-                                grouped[str(entry['value'][match_index])] = grouped.get(str(entry['value'][match_index]), [])
-                                grouped[str(entry['value'][match_index])].append(entry)
+                                grouped_entries[str(entry["value"][match_index])] = grouped_entries.get(
+                                    str(entry["value"][match_index]), []
+                                )
+                                grouped_entries[str(entry["value"][match_index])].append(entry)
                             # Means only one entry exists as the value, and the value type is a string.
                             # Output Example: {'index': 3, 'value': 'ValueB'}
                             else:
                                 # Gets matching entries based on the "value" key and adds them to the grouped dictionary.
-                                grouped[str(entry['value'])] = grouped.get(str(entry['value']), [])
-                                grouped[str(entry['value'])].append(entry)
+                                grouped_entries[str(entry["value"])] = grouped_entries.get(str(entry["value"]), [])
+                                grouped_entries[str(entry["value"])].append(entry)
                         # Checks if no match_index exists, which matches the entire list entry.
                         # The list entry is converted to a string for the key.
                         elif not isinstance(match_index, int):
                             # Gets matching entries based on the "value" key and adds them to the grouped dictionary.
-                            grouped[str(entry['value'])] = grouped.get(str(entry['value']), [])
-                            grouped[str(entry['value'])].append(entry)
+                            grouped_entries[str(entry["value"])] = grouped_entries.get(str(entry["value"]), [])
+                            grouped_entries[str(entry["value"])].append(entry)
                         # Standard string element in the list.
                         else:
                             # Gets matching entries based on the "value" key and adds them to the grouped dictionary.
-                            grouped[entry['value']] = grouped.get(entry['value'], [])
-                            grouped[entry['value']].append(entry)
-                except Exception as exc:
+                            grouped_entries[entry["value"]] = grouped_entries.get(entry["value"], [])
+                            grouped_entries[entry["value"]].append(entry)
+                except Exception as exc:  # pragma: no cover
                     exc_args = {
-                        'main_message': 'A general failure occurred grouping duplicate values.',
-                        'original_exception': exc,
+                        "main_message": "A general failure occurred grouping duplicate values.",
+                        "original_exception": exc,
                     }
                     raise FGeneralError(exc_args)
                 else:
                     # Returns grouped duplicates.
-                    return grouped
+                    return grouped_entries
             else:
                 # Returns un-grouped duplicates.
                 return duplicate_list_dictionary
@@ -726,11 +755,13 @@ def get_list_duplicates(duplicates: list, match_index: int = None, grouped: bool
             return None
 
 
-def string_grouper(list_of_strings: list, grouping_value: Union[str, int, None], grouping_option: int, case_insensitive: bool = False) -> List[dict]:
+def string_grouper(
+    list_of_strings: list, grouping_value: Union[str, int, None], grouping_option: int, case_insensitive: bool = False
+) -> List[dict]:
     """
     String grouper will group a list of strings using three different options.
 
-    Each option provides a different type of results, but covers any type of desired grouping.
+    Each option provides a different type of results but covers any type of desired grouping.
 
     Args:
         list_of_strings (list):
@@ -776,13 +807,13 @@ def string_grouper(list_of_strings: list, grouping_value: Union[str, int, None],
 
     Raises:
         FTypeError (fexception):
-        \t\\- The value '{list_of_strings}' is not in <class 'list'> format.
+        \t\\- The object value '{list_of_strings}' is not an instance of the required class(es) or subclass(es).
         FTypeError (fexception):
-        \t\\- The value '{grouping_value}' is not in [<class 'str'>, <class 'int'>] format.
+        \t\\- The object value '{grouping_value}' is not an instance of the required class(es) or subclass(es).
         FTypeError (fexception):
-        \t\\- The value '{grouping_option' is not in <class 'int'> format.
+        \t\\- The object value '{grouping_option}' is not an instance of the required class(es) or subclass(es).
         FTypeError (fexception):
-        \t\\- The value '{case_insensitive}' is not in <class 'bool'> format.
+        \t\\- The object value '{case_insensitive}' is not an instance of the required class(es) or subclass(es).
         FTypeError (fexception):
         \t\\- The grouping_value sent for the grouping is not a string.
         FTypeError (fexception):
@@ -803,41 +834,43 @@ def string_grouper(list_of_strings: list, grouping_value: Union[str, int, None],
     \t   {'group_identifier': 'GH', 'grouping': ['GH-IDF0-RM113', 'GH-IDF1-RM161', 'GH-MDF-RM113']}]
     """
     logger = logging.getLogger(__name__)
-    logger.debug(f'=' * 20 + get_function_name() + '=' * 20)
+    logger.debug(f"=" * 20 + get_function_name() + "=" * 20)
     # Custom flowchart tracking. This is ideal for large projects that move a lot.
     # For any third-party modules, set the flow before making the function call.
-    logger_flowchart = logging.getLogger('flowchart')
-    logger_flowchart.debug(f'Flowchart --> Function: {get_function_name()}')
+    logger_flowchart = logging.getLogger("flowchart")
+    logger_flowchart.debug(f"Flowchart --> Function: {get_function_name()}")
 
     try:
-        type_check(list_of_strings, list)
+        type_check(value=list_of_strings, required_type=list)
         if grouping_value:
-            type_check(grouping_value, [str, int])
-        type_check(grouping_option, int)
-        type_check(case_insensitive, bool)
+            type_check(value=grouping_value, required_type=(str, int))
+        type_check(value=grouping_option, required_type=int)
+        type_check(value=case_insensitive, required_type=bool)
     except FTypeError:
         raise
 
-    formatted_list_of_strings = '  - list_of_strings (list):' + str('\n        - ' + '\n        - '.join(map(str, list_of_strings)))
+    formatted_list_of_strings = "  - list_of_strings (list):" + str(
+        "\n        - " + "\n        - ".join(map(str, list_of_strings))
+    )
     if grouping_value:
-        formatted_grouping_value = f'  - grouping_value (str or int or None):\n        - {grouping_value}'
+        formatted_grouping_value = f"  - grouping_value (str or int or None):\n        - {grouping_value}"
     else:
-        formatted_grouping_value = f'  - grouping_value (str or int or None):\n        - None'
+        formatted_grouping_value = f"  - grouping_value (str or int or None):\n        - None"
 
     logger.debug(
-        'Passing parameters:\n'
-        f'{formatted_list_of_strings}\n'
-        f'{formatted_grouping_value}\n'
-        f'  - grouping_option (int):\n        - {grouping_option}\n'
-        f'  - case_insensitive (bool):\n        - {case_insensitive}\n'
+        "Passing parameters:\n"
+        f"{formatted_list_of_strings}\n"
+        f"{formatted_grouping_value}\n"
+        f"  - grouping_option (int):\n        - {grouping_option}\n"
+        f"  - case_insensitive (bool):\n        - {case_insensitive}\n"
     )
 
-    logger.debug(f'Starting string grouping with the following list of strings: {list_of_strings}')
+    logger.debug(f"Starting string grouping with the following list of strings: {list_of_strings}")
 
     try:
         # Checks if any "None" entries exist.
         if None in list_of_strings:
-            logger.debug(f'The list of strings contains \"None\" string entries. The \"None\" entries have been removed')
+            logger.debug(f'The list of strings contains "None" string entries. The "None" entries have been removed')
             # Removes any "None" entries from the list.
             list_of_strings = list(filter(None, list_of_strings))
         # Make sure that the list is greater than or equal to 2.
@@ -853,7 +886,7 @@ def string_grouper(list_of_strings: list, grouping_value: Union[str, int, None],
                 lower_count = 0
                 # Loops through every string in the list to check for common case (ex: A or a) to determine sort.
                 for string in list_of_strings:
-                    # Checks case and increases count.
+                    # Checks the case and increases count.
                     if string.isupper():
                         upper_count += 1
                     elif string.islower():
@@ -873,146 +906,226 @@ def string_grouper(list_of_strings: list, grouping_value: Union[str, int, None],
             else:
                 list_of_strings.sort()
 
-            # Groups based on the users group option.
+            # Groups based on the user's group option.
             if grouping_option == 1:
-                # This section groups based on a character. If the string is "Testing-1" and the matching character was -, the grouping values would match on "Testing".
+                # This section will group based on a character. If the string is "Testing-1" and the matching character was -, the grouping values would match on "Testing".
                 # Checks that the grouping_value is a string.
                 if isinstance(grouping_value, str):
                     # Loops through a list of strings and splits based on the split number. The split number will create a grouping, and provide the split output for each grouping.
                     if case_upper:
-                        for j, i in groupby(list_of_strings, lambda a_string: a_string.upper().split(grouping_value)[0]):
+                        for j, i in groupby(
+                            list_of_strings, lambda a_string: a_string.upper().split(grouping_value)[0]
+                        ):
                             # Appends the grouping from groupby to the list in in dictionary format.
-                            grouping.append({'group_identifier': j, 'grouping': list(i)})
+                            grouping.append({"group_identifier": j, "grouping": list(i)})
                     elif case_lower:
-                        for j, i in groupby(list_of_strings, lambda a_string: a_string.lower().split(grouping_value)[0]):
+                        for j, i in groupby(
+                            list_of_strings, lambda a_string: a_string.lower().split(grouping_value)[0]
+                        ):
                             # Appends the grouping from groupby to the list in in dictionary format.
-                            grouping.append({'group_identifier': j, 'grouping': list(i)})
+                            grouping.append({"group_identifier": j, "grouping": list(i)})
                     else:
                         for j, i in groupby(list_of_strings, lambda a_string: a_string.split(grouping_value)[0]):
                             # Appends the grouping from groupby to the list in in dictionary format.
-                            grouping.append({'group_identifier': j, 'grouping': list(i)})
+                            grouping.append({"group_identifier": j, "grouping": list(i)})
                 else:
                     exc_args = {
-                        'main_message': 'The grouping_value sent for the grouping is not a string.',
-                        'expected_result': """<class 'str'>""",
-                        'returned_result': type(grouping_value),
+                        "main_message": "The grouping_value sent for the grouping is not a string.",
+                        "expected_result": """<class 'str'>""",
+                        "returned_result": type(grouping_value),
                     }
                     raise FTypeError(exc_args)
             elif grouping_option == 2:
                 # This section groups based on a character number. If the string is "Testing" and the number was 3, the grouping values would match on "Tes".
                 # Checks that the grouping_value is a number.
                 if isinstance(grouping_value, int):
+                    group_number: int = grouping_value
                     if case_upper:
                         # Loops through a list of strings and splits based on the split number. The split number will create a grouping, and provide the split output for each grouping.
-                        for j, i in groupby(list_of_strings, lambda a_string: [a_string[index: index + grouping_value].upper() for index in range(0, len(a_string), grouping_value)][0]):
+                        for j, i in groupby(
+                            list_of_strings,
+                            lambda a_string: [
+                                str(a_string[index : index + group_number]).upper()
+                                for index in range(0, len(a_string), group_number)
+                            ][0],
+                        ):
                             # Appends the grouping from groupby to the list in in dictionary format.
-                            grouping.append({'group_identifier': j, 'grouping': list(i)})
+                            grouping.append({"group_identifier": j, "grouping": list(i)})
                     elif case_lower:
                         # Loops through a list of strings and splits based on the split number. The split number will create a grouping, and provide the split output for each grouping.
-                        for j, i in groupby(list_of_strings, lambda a_string: [a_string[index: index + grouping_value].lower() for index in range(0, len(a_string), grouping_value)][0]):
+                        for j, i in groupby(
+                            list_of_strings,
+                            lambda a_string: [
+                                str(a_string[index : index + group_number]).lower()
+                                for index in range(0, len(a_string), group_number)
+                            ][0],
+                        ):
                             # Appends the grouping from groupby to the list in in dictionary format.
-                            grouping.append({'group_identifier': j, 'grouping': list(i)})
+                            grouping.append({"group_identifier": j, "grouping": list(i)})
                     else:
                         # Loops through a list of strings and splits based on the split number. The split number will create a grouping, and provide the split output for each grouping.
-                        for j, i in groupby(list_of_strings, lambda a_string: [a_string[index: index + grouping_value] for index in range(0, len(a_string), grouping_value)][0]):
+                        for j, i in groupby(
+                            list_of_strings,
+                            lambda a_string: [
+                                str(a_string[index : index + group_number])
+                                for index in range(0, len(a_string), group_number)
+                            ][0],
+                        ):
                             # Appends the grouping from groupby to the list in in dictionary format.
-                            grouping.append({'group_identifier': j, 'grouping': list(i)})
+                            grouping.append({"group_identifier": j, "grouping": list(i)})
                 else:
                     exc_args = {
-                        'main_message': 'The grouping_value sent for the grouping is not a int.',
-                        'expected_result': """<class 'int'>""",
-                        'returned_result': type(grouping_value),
+                        "main_message": "The grouping_value sent for the grouping is not a int.",
+                        "expected_result": """<class 'int'>""",
+                        "returned_result": type(grouping_value),
                     }
                     raise FTypeError(exc_args)
             elif grouping_option == 3:
-                # This compare can have some complex checks because it has to check previous entries and make choices based on previous and current groupings.
-                # The section of code is split by two different loops. The primary loop goes through each string. The sub-string loops and checks character by character between the previous string and current string.
-                # All processing is done with the mindset that the current entry is always compared with the previous entry. The compare is based on alphabetical order.
+                # This comparison can have some complex checks because it has to check previous entries and make choices based on previous and current groupings.
+                # The section of code is split into two different loops. The primary loop goes through each string. The sub-string loops and checks character by character
+                # between the previous string and current string.
+                # All processing is done with the mindset that the current entry is always compared with the previous entry. The comparison is based on alphabetical order.
                 # Loops through all raw string imports to compare.
                 for raw_string_loop_tracker, string in enumerate(list_of_strings):
-                    # Checks if the length of the raw string is equal to the raw_string_loop_tracker + 1. This allows a clean exit without the list going out of index.
+                    # Checks if the length of the raw string is equal to the raw_string_loop_tracker + 1. This allows a clean exit without the list going out of the index.
                     if len(list_of_strings) != raw_string_loop_tracker + 1:
-                        logger.debug(f'Comparing \"{string}\" with \"{list_of_strings[raw_string_loop_tracker + 1]}\"')
+                        logger.debug(f'Comparing "{string}" with "{list_of_strings[raw_string_loop_tracker + 1]}"')
                         # Loops through each character in the main string entry.
                         for character_loop_tracker, character in enumerate(string):
-                            logger.debug(f'Checking character position {character_loop_tracker}')
+                            logger.debug(f"Checking character position {character_loop_tracker}")
                             # Checks if the character from the main entry matches the character in the next raw string in the list.
                             # + 1 so the first string entry will compare with this starting entry.
                             if character == list_of_strings[raw_string_loop_tracker + 1][character_loop_tracker]:
-                                logger.debug(f'Match at character position {character_loop_tracker}')
+                                logger.debug(f"Match at character position {character_loop_tracker}")
                             # No match
                             elif character != list_of_strings[raw_string_loop_tracker + 1][character_loop_tracker]:
-                                logger.debug(f'No Match at character position {character_loop_tracker}')
+                                logger.debug(f"No Match at character position {character_loop_tracker}")
                                 # Gets matching characters. Character get starts at 1, so need to -1.
                                 match_characters = string[0:character_loop_tracker]
-                                logger.debug(f'Matched characters = {match_characters}')
+                                logger.debug(f"Matched characters = {match_characters}")
                                 if match_characters:
                                     # Checks if no groupings have been added.
                                     if not grouping:
                                         # Adds the initial grouping.
-                                        grouping.append({'group_identifier': match_characters, 'grouping': [string, list_of_strings[raw_string_loop_tracker + 1]]})
+                                        grouping.append(
+                                            {
+                                                "group_identifier": match_characters,
+                                                "grouping": [string, list_of_strings[raw_string_loop_tracker + 1]],
+                                            }
+                                        )
                                     else:
                                         # Gets the previous grouping identifier.
-                                        previous_group_identifier = grouping[-1].get('group_identifier')
+                                        previous_group_identifier = grouping[-1].get("group_identifier")
                                         # Checks if the previous grouping identifier is the same, so the string can be joined into the same group entry.
                                         if match_characters == previous_group_identifier:
-                                            logger.debug(f'Previous grouping matches. {previous_group_identifier} = {match_characters}')
+                                            logger.debug(
+                                                f"Previous grouping matches. {previous_group_identifier} = {match_characters}"
+                                            )
                                             # Inserts the compared string to the previous grouping because it has the same matching group identifier.
-                                            grouping[-1].get('grouping').insert(len(grouping) + 1, list_of_strings[raw_string_loop_tracker + 1])
+                                            grouping[-1].get("grouping").insert(
+                                                len(grouping) + 1, list_of_strings[raw_string_loop_tracker + 1]
+                                            )
                                         else:
                                             # Checks if a single string entry. This is required because a single string entry will have the same group_identifier name as the string until the next entry is matched.
-                                            if len(grouping[-1].get('grouping')) == 1:
-                                                logger.debug(f'Previous grouping is a single entry and has matching characters. \"{match_characters}\" in \"{previous_group_identifier}\"')
+                                            if len(grouping[-1].get("grouping")) == 1:
+                                                logger.debug(
+                                                    f'Previous grouping is a single entry and has matching characters. "{match_characters}" in "{previous_group_identifier}"'
+                                                )
                                                 # Checks if the current match_characters are in the previous_group_identifiers name.
                                                 # Note: The previous_group_identifiers name will be the full name of the string, so the match has to be the other way for detection.
                                                 if match_characters in previous_group_identifier:
-                                                    logger.debug('Merging previous entry with the current entry')
-                                                    # Remove previous entry and insert the grouping from the previous entry with the current string group.
+                                                    logger.debug("Merging previous entry with the current entry")
+                                                    # Remove the previous entry and insert the grouping from the previous entry with the current string group.
                                                     #
                                                     #
                                                     # Gets the previous grouping string. Removes the list brackets and quotes.
-                                                    previous_group_string = str(grouping[-1].get('grouping')).strip('][').strip("'")
+                                                    previous_group_string = (
+                                                        str(grouping[-1].get("grouping")).strip("][").strip("'")
+                                                    )
 
                                                     # Removes the previous group entry because it will not be merged with the current string group.
                                                     grouping.remove(grouping[-1])
                                                     # Adds the new grouping to the list with the previous group added as well.
-                                                    grouping.append({'group_identifier': match_characters, 'grouping': [previous_group_string, list_of_strings[raw_string_loop_tracker + 1]]})
+                                                    grouping.append(
+                                                        {
+                                                            "group_identifier": match_characters,
+                                                            "grouping": [
+                                                                previous_group_string,
+                                                                list_of_strings[raw_string_loop_tracker + 1],
+                                                            ],
+                                                        }
+                                                    )
                                                 else:
-                                                    logger.debug(f'Previous grouping do not match. {previous_group_identifier} != {match_characters}')
+                                                    logger.debug(
+                                                        f"Previous grouping do not match. {previous_group_identifier} != {match_characters}"
+                                                    )
                                                     # Adds the new grouping to the list.
-                                                    grouping.append({'group_identifier': match_characters, 'grouping': [list_of_strings[raw_string_loop_tracker + 1]]})
+                                                    grouping.append(
+                                                        {
+                                                            "group_identifier": match_characters,
+                                                            "grouping": [list_of_strings[raw_string_loop_tracker + 1]],
+                                                        }
+                                                    )
                                             # Compares the previous group to the match to make sure the groupings are the same. The previous_grouping_identifier could contain more characters than the current match, so this flow is required.
                                             elif previous_group_identifier in match_characters:
-                                                logger.debug(f'Previous grouping has multiple strings grouped and the group_identifier has the same characters as the match group. \"{match_characters}\" in \"{previous_group_identifier}\"')
+                                                logger.debug(
+                                                    f'Previous grouping has multiple strings grouped and the group_identifier has the same characters as the match group. "{match_characters}" in "{previous_group_identifier}"'
+                                                )
                                                 # Inserts the compared string to the previous grouping because it has the same matching group identifier.
-                                                grouping[-1].get('grouping').insert(len(grouping) + 1, list_of_strings[raw_string_loop_tracker + 1])
+                                                grouping[-1].get("grouping").insert(
+                                                    len(grouping) + 1, list_of_strings[raw_string_loop_tracker + 1]
+                                                )
                                             else:
-                                                logger.debug(f'Previous grouping do not match. {previous_group_identifier} != {match_characters}')
-                                                # No match occurred with the previous entry, which means this entry is a completely new entry, so the "group_identifier" will be the name of the string. This will adjust if the next string has a match.
+                                                logger.debug(
+                                                    f"Previous grouping do not match. {previous_group_identifier} != {match_characters}"
+                                                )
+                                                # No match occurred with the previous entry, which means this entry is completely new, so the "group_identifier" will be the name of the string. This will adjust if the next string has a match.
                                                 # Note: If no match is made the group_identifier will always be the name of the string because it had nothing to compare itself against.
                                                 # Adds the new grouping to the list.
-                                                grouping.append({'group_identifier': list_of_strings[raw_string_loop_tracker + 1], 'grouping': [list_of_strings[raw_string_loop_tracker + 1]]})
+                                                grouping.append(
+                                                    {
+                                                        "group_identifier": list_of_strings[
+                                                            raw_string_loop_tracker + 1
+                                                        ],
+                                                        "grouping": [list_of_strings[raw_string_loop_tracker + 1]],
+                                                    }
+                                                )
                                 else:
-                                    logger.debug('No Matching Characters Found')
+                                    logger.debug("No Matching Characters Found")
 
-                                    # Checks if entries have been added to the list. No entries means the starting entry needs added.
+                                    # Checks if entries have been added to the list. No entries mean the starting entry needs to be added.
                                     if not grouping:
                                         # Adds the starting entry and the next entry because neither of these entries matched on startup.
-                                        grouping.append({'group_identifier': string, 'grouping': [string]})
-                                        grouping.append({'group_identifier': list_of_strings[raw_string_loop_tracker + 1], 'grouping': [list_of_strings[raw_string_loop_tracker + 1]]})
+                                        grouping.append({"group_identifier": string, "grouping": [string]})
+                                        grouping.append(
+                                            {
+                                                "group_identifier": list_of_strings[raw_string_loop_tracker + 1],
+                                                "grouping": [list_of_strings[raw_string_loop_tracker + 1]],
+                                            }
+                                        )
                                     else:
                                         # Note: If no match is made the group_identifier will always be the name of the string because it had nothing to compare itself against.
                                         # Adds the new grouping to the list.
-                                        grouping.append({'group_identifier': list_of_strings[raw_string_loop_tracker + 1], 'grouping': [list_of_strings[raw_string_loop_tracker + 1]]})
+                                        grouping.append(
+                                            {
+                                                "group_identifier": list_of_strings[raw_string_loop_tracker + 1],
+                                                "grouping": [list_of_strings[raw_string_loop_tracker + 1]],
+                                            }
+                                        )
 
                                 # Breaks the lop because no additional characters match.
                                 break
 
                             # Checks if the main string is shorter than the main string. This means no match occurred, so the group_identifier for this entry is main entry.
                             if character_loop_tracker == len(string) - 1:
-                                logger.debug('Compare string is longer than the main string')
-                                grouping.append({'group_identifier': string, 'grouping': [string]})
-                                grouping.append({'group_identifier': list_of_strings[raw_string_loop_tracker + 1], 'grouping': [list_of_strings[raw_string_loop_tracker + 1]]})
+                                logger.debug("Compare string is longer than the main string")
+                                grouping.append({"group_identifier": string, "grouping": [string]})
+                                grouping.append(
+                                    {
+                                        "group_identifier": list_of_strings[raw_string_loop_tracker + 1],
+                                        "grouping": [list_of_strings[raw_string_loop_tracker + 1]],
+                                    }
+                                )
 
             # Returns the list of dictionaries.
             # Return Example: grouping = [{'group_identifier': 'JJ-MDF-9200-1_2', 'grouping': ['JJ-MDF-9200-1_2']},
@@ -1023,18 +1136,18 @@ def string_grouper(list_of_strings: list, grouping_value: Union[str, int, None],
             return grouping
         else:
             # Only one entry was sent. Returning the single entry.
-            return [{'group_identifier': list_of_strings[0], 'grouping': [list_of_strings[0]]}]
-    except FTypeError as exc:
+            return [{"group_identifier": list_of_strings[0], "grouping": [list_of_strings[0]]}]
+    except FTypeError as exc:  # pragma: no cover
         raise
-    except Exception as exc:
+    except Exception as exc:  # pragma: no cover
         exc_args = {
-            'main_message': 'A general failure occurred while grouping the strings.',
-            'original_exception': exc,
+            "main_message": "A general failure occurred while grouping the strings.",
+            "original_exception": exc,
         }
         raise FGeneralError(exc_args)
 
 
-def find_longest_common_substring(string1: str, string2: str) -> str:
+def find_longest_common_substring(string1: str, string2: str) -> Union[str, None]:
     """
     This function finds the longest substring between two different strings.
 
@@ -1046,9 +1159,9 @@ def find_longest_common_substring(string1: str, string2: str) -> str:
 
     Raises:
         FTypeError (fexception):
-        \t\\- The value '{string1}' is not in <class 'str'> format.
+        \t\\- The object value '{string1}' is not an instance of the required class(es) or subclass(es).
         FTypeError (fexception):
-        \t\\- The value '{string2}' is not in <class 'str'> format.
+        \t\\- The object value '{string2}'' is not an instance of the required class(es) or subclass(es).
         FGeneralError (fexception):
         \t\\- A general exception occurred interating the two strings.
 
@@ -1057,22 +1170,22 @@ def find_longest_common_substring(string1: str, string2: str) -> str:
         \t\\- returns the string up to the point the characters no longer match.
     """
     logger = logging.getLogger(__name__)
-    logger.debug(f'=' * 20 + get_function_name() + '=' * 20)
+    logger.debug(f"=" * 20 + get_function_name() + "=" * 20)
     # Custom flowchart tracking. This is ideal for large projects that move a lot.
     # For any third-party modules, set the flow before making the function call.
-    logger_flowchart = logging.getLogger('flowchart')
-    logger_flowchart.debug(f'Flowchart --> Function: {get_function_name()}')
+    logger_flowchart = logging.getLogger("flowchart")
+    logger_flowchart.debug(f"Flowchart --> Function: {get_function_name()}")
 
     try:
-        type_check(string1, str)
-        type_check(string2, str)
+        type_check(value=string1, required_type=str)
+        type_check(value=string2, required_type=str)
     except FTypeError:
         raise
 
     logger.debug(
-        'Passing parameters:\n'
-        f'  - string1 (str):\n        - {string1}\n'
-        f'  - string2 (str):\n        - {string2}\n'
+        "Passing parameters:\n"
+        f"  - string1 (str):\n        - {string1}\n"
+        f"  - string2 (str):\n        - {string2}\n"
     )
 
     def _iter():
@@ -1083,14 +1196,14 @@ def find_longest_common_substring(string1: str, string2: str) -> str:
                 return
 
     try:
-        if ''.join(_iter()):
-            substring = ''.join(_iter())
+        if "".join(_iter()):
+            substring = "".join(_iter())
         else:
             substring = None
-    except Exception as exc:
+    except Exception as exc:  # pragma: no cover
         exc_args = {
-            'main_message': 'A general exception occurred interating the two strings.',
-            'original_exception': exc,
+            "main_message": "A general exception occurred interating the two strings.",
+            "original_exception": exc,
         }
         raise FGeneralError(exc_args)
     else:
@@ -1099,7 +1212,7 @@ def find_longest_common_substring(string1: str, string2: str) -> str:
 
 def user_choice_character_grouping(list_of_strings: list) -> list:
     """
-    Groups a list of characters based on the users choices.
+    Groups a list of characters based on the user's choices.
 
     This is a user interaction function.
 
@@ -1111,7 +1224,7 @@ def user_choice_character_grouping(list_of_strings: list) -> list:
 
     Raises:
         FTypeError (fexception):
-        \t\\- The value '{list_of_strings}' is not in <class 'list'> format.
+        \t\\- The object value '{list_of_strings}' is not an instance of the required class(es) or subclass(es).
         FGeneralError (fexception):
         \t\\- A general exception occurred when getting the user choice character grouping.
 
@@ -1120,24 +1233,25 @@ def user_choice_character_grouping(list_of_strings: list) -> list:
         \t\\- A list of grouped characters.
     """
     logger = logging.getLogger(__name__)
-    logger.debug(f'=' * 20 + get_function_name() + '=' * 20)
+    logger.debug(f"=" * 20 + get_function_name() + "=" * 20)
     # Custom flowchart tracking. This is ideal for large projects that move a lot.
     # For any third-party modules, set the flow before making the function call.
-    logger_flowchart = logging.getLogger('flowchart')
-    logger_flowchart.debug(f'Flowchart --> Function: {get_function_name()}')
+    logger_flowchart = logging.getLogger("flowchart")
+    logger_flowchart.debug(f"Flowchart --> Function: {get_function_name()}")
 
     try:
-        type_check(list_of_strings, list)
+        type_check(value=list_of_strings, required_type=list)
     except FTypeError:
         raise
 
-    formatted_list_of_strings = '  - list_of_strings (list):' + str('\n        - ' + '\n        - '.join(map(str, list_of_strings)))
-    logger.debug(
-        'Passing parameters:\n'
-        f'{formatted_list_of_strings}\n'
+    formatted_list_of_strings = "  - list_of_strings (list):" + str(
+        "\n        - " + "\n        - ".join(map(str, list_of_strings))
     )
+    logger.debug("Passing parameters:\n" f"{formatted_list_of_strings}\n")
 
-    logger.debug(f'Passing parameters [list_of_strings] (list):' + '\n    - ' + '\n    - '.join(map(str, list_of_strings)))
+    logger.debug(
+        f"Passing parameters [list_of_strings] (list):" + "\n    - " + "\n    - ".join(map(str, list_of_strings))
+    )
 
     # Sets grouping value to None to prevent any reference errors on a retry.
     groupings = None
@@ -1147,33 +1261,37 @@ def user_choice_character_grouping(list_of_strings: list) -> list:
             # ############################################################
             # ###########Requests Options and Gets Groupings##############
             # ############################################################
-            print('')
-            print('A hostname comparison is about to take place to group devices based on similar naming into the IP Network Design spreadsheets. Please continue to select how many character positions you would like to search.')
-            continue_choice = input('Are you ready to continue? \n \n1 - Yes \n2 - No \n \nEnter Selection Number: ')
+            print("")
+            print(
+                "A hostname comparison is about to take place to group devices based on similar naming into the IP Network Design spreadsheets. Please continue to select how many character positions you would like to search."
+            )
+            continue_choice = input("Are you ready to continue? \n \n1 - Yes \n2 - No \n \nEnter Selection Number: ")
             # Adds console blank lines.
-            print('')
-            print('')
+            print("")
+            print("")
             if int(continue_choice) == 1:
-                character_choice = input('Do you wish to group based on a character position number or a similar separator? \n \n1 - Similar Separator \n2 - Character Position Number  \n \nEnter Select Number: ')
+                character_choice = input(
+                    "Do you wish to group based on a character position number or a similar separator? \n \n1 - Similar Separator \n2 - Character Position Number  \n \nEnter Select Number: "
+                )
                 if int(character_choice) == 1:
-                    character_separater = str(input('Enter the similar separater character: '))
+                    character_separater = str(input("Enter the similar separater character: "))
                     # Adds console blank lines.
-                    print('')
-                    print('')
+                    print("")
+                    print("")
                     # Checks the the user entered a number.
                     if isinstance(character_separater, str):
                         # Calls function to group the list of strings.
                         groupings = string_grouper(list_of_strings, character_separater, 1, True)
                     else:
-                        print('Error: You did not enter a string. Please retry again.')
-                        print('')
-                        print('')
+                        print("Error: You did not enter a string. Please retry again.")
+                        print("")
+                        print("")
                         # Continues to top of loop to prompt user again
                 elif int(character_choice) == 2:
-                    character_search_number = input('Enter the character position grouping number: ')
+                    character_search_number = input("Enter the character position grouping number: ")
                     # Adds console blank lines.
-                    print('')
-                    print('')
+                    print("")
+                    print("")
                     # Checks the the user entered a number.
                     if character_search_number.isdigit():
                         # Converts string to int.
@@ -1181,53 +1299,59 @@ def user_choice_character_grouping(list_of_strings: list) -> list:
                         # Calls function to group the list of strings.
                         groupings = string_grouper(list_of_strings, character_search_number, 2, True)
                     else:
-                        print('Error: You did not enter a number. Please retry again.')
-                        print('')
-                        print('')
+                        print("Error: You did not enter a number. Please retry again.")
+                        print("")
+                        print("")
                         # Continues to top of loop to prompt user again
             elif int(continue_choice) == 2:
-                print('You choose not to continue the hostname comparison. Exiting....')
+                print("You choose not to continue the hostname comparison. Exiting....")
                 exit()
 
             # ############################################################
             # #################Offers Grouping Overview###################
             # ############################################################
             # Checks if groupings exist before continuing.
-            # No grouping means the user choose to retry.
+            # No grouping means the user chooses to retry.
             if groupings:
-                character_grouping_overview = input('Would you like to see the new names before continuing? \n \n1 - Yes \n2 - No  \n \nEnter Select Number: ')
+                character_grouping_overview = input(
+                    "Would you like to see the new names before continuing? \n \n1 - Yes \n2 - No  \n \nEnter Select Number: "
+                )
                 if int(character_grouping_overview) == 1:
-                    print('The grouping output will show the grouping identifier and the grouped devices. The grouping identifier will be used for the IP Network Design spreadsheet.')
-                    print('')
-                    print('')
-                    # Loops through output to show the user the results
+                    print(
+                        "The grouping output will show the grouping identifier and the grouped devices. The grouping identifier will be used for the IP Network Design spreadsheet."
+                    )
+                    print("")
+                    print("")
+                    # Loops through the output to show the user the results
                     for grouping in groupings:
                         # Sets variables for easier usage.
-                        group_identifier = grouping.get('group_identifier')
-                        grouping = grouping.get('grouping')
-                        print(f'Grouping Identifier = {group_identifier} >>>>> Grouping = {grouping}')
+                        group_identifier = grouping.get("group_identifier")
+                        grouping = grouping.get("grouping")
+                        print(f"Grouping Identifier = {group_identifier} >>>>> Grouping = {grouping}")
 
-                    print('')
-                    print('')
-                    grouping_acceptance = input('Are you satisfied with the new names that will use for the IP Network Design spreadsheet? \n \n1 - Yes \n2 - No \n3 - Quit  \n \nEnter Select Number: ')
-                    print('')
-                    print('')
+                    print("")
+                    print("")
+                    grouping_acceptance = input(
+                        "Are you satisfied with the new names that will use for the IP Network Design spreadsheet? \n \n1 - Yes \n2 - No \n3 - Quit  \n \nEnter Select Number: "
+                    )
+                    print("")
+                    print("")
                     if int(grouping_acceptance) == 1:
                         # Returns the groupings
                         return groupings
                     elif int(grouping_acceptance) == 2:
-                        print('User choose to retry character group position')
+                        print("User choose to retry character group position")
                         # Continues to top of loop to prompt user again
                     elif int(grouping_acceptance) == 3:
-                        print('You choose to quit. Exiting....')
+                        print("You choose to quit. Exiting....")
                         exit()
                 elif int(character_grouping_overview) == 2:
                     # Returns the groupings
                     return groupings
-    except Exception as exc:
+    except Exception as exc:  # pragma: no cover
         exc_args = {
-            'main_message': 'A general exception occurred when getting the user choice character grouping.',
-            'original_exception': exc,
+            "main_message": "A general exception occurred when getting the user choice character grouping.",
+            "original_exception": exc,
         }
         raise FGeneralError(exc_args)
 
@@ -1244,7 +1368,7 @@ def clean_non_word_characters(string: str) -> str:
 
     Raises:
         FTypeError (fexception):
-        \t\\- The value '{string}' is not in <class 'str'> format.
+        \t\\- The object value '{string}' is not an instance of the required class(es) or subclass(es).
         FValueError (fexception):
         \t\\- The string ({string}) with non-word characters did not clean.
 
@@ -1253,21 +1377,18 @@ def clean_non_word_characters(string: str) -> str:
         \t\\- A cleaned string with valid only words.
     """
     logger = logging.getLogger(__name__)
-    logger.debug(f'=' * 20 + get_function_name() + '=' * 20)
+    logger.debug(f"=" * 20 + get_function_name() + "=" * 20)
     # Custom flowchart tracking. This is ideal for large projects that move a lot.
     # For any third-party modules, set the flow before making the function call.
-    logger_flowchart = logging.getLogger('flowchart')
-    logger_flowchart.debug(f'Flowchart --> Function: {get_function_name()}')
+    logger_flowchart = logging.getLogger("flowchart")
+    logger_flowchart.debug(f"Flowchart --> Function: {get_function_name()}")
 
     try:
-        type_check(string, str)
+        type_check(value=string, required_type=str)
     except FTypeError:
         raise
 
-    logger.debug(
-        'Passing parameters:\n'
-        f'  - string (str):\n        - {string}\n'
-    )
+    logger.debug("Passing parameters:\n" f"  - string (str):\n        - {string}\n")
 
     # Some Python returned information will return with trailing hex characters (non-words). These are unescaped control characters, which is what Python displays using hexadecimal notation.
     # This expression will remove the hex characters. It can be written with either [^\x20-\x7e] or [^ -~].*
@@ -1275,21 +1396,23 @@ def clean_non_word_characters(string: str) -> str:
     # Example1:
     #   - Input: BTW-N5K\x06
     #   - Output: BTW-N5K
-    cleaned_string = re.sub(r'[^ -~].*', '', string)
-    encoded_string = cleaned_string.encode('ascii', 'ignore')
-    if '\\x' in str(encoded_string):
+    cleaned_string = re.sub(r"[^ -~].*", "", string)
+    encoded_string = cleaned_string.encode("ascii", "ignore")
+    if "\\x" in str(encoded_string):
         exc_args = {
-            'main_message': f'The string ({string}) with non-word characters did not clean.',
-            'expected_result': 'The string should not have contained any hex characters.',
-            'returned_result': encoded_string,
+            "main_message": f"The string ({string}) with non-word characters did not clean.",
+            "expected_result": "The string should not have contained any hex characters.",
+            "returned_result": encoded_string,
         }
         raise FValueError(exc_args)
     else:
         # Checks if the lengths are different from the parameter string and cleaned string to know if the string contained non-word values.
         if len(string) > len(cleaned_string):
-            logger.debug(f'The string was cleaned of all non-word characters. Set Value (str):\n    - Original Value: {string}\n    - Cleaned Value: {cleaned_string}')
+            logger.debug(
+                f"The string was cleaned of all non-word characters. Set Value (str):\n    - Original Value: {string}\n    - Cleaned Value: {cleaned_string}"
+            )
         else:
-            logger.debug(f'The string did not contain any non-word characters. No change required.')
+            logger.debug(f"The string did not contain any non-word characters. No change required.")
         return cleaned_string
 
 
@@ -1314,11 +1437,11 @@ def str_to_list(value: Union[str, list], sep: str) -> list:
         \t\\- The string getting split.
         \t\\- A list will forward through.
         sep (str):
-        \t\\- The delimeter that will split the string.
+        \t\\- The delimiter that will split the string.
 
     Raises:
         FTypeError (fexception):
-        \t\\- The value '{value}' is not in [<class 'str'>, <class 'list'>] format.
+        \t\\- The object value '{value}' is not an instance of the required class(es) or subclass(es).
         FGeneralError:
         \t\\- A general failure occurred while converting the string to list.
         FValueError:
@@ -1326,29 +1449,26 @@ def str_to_list(value: Union[str, list], sep: str) -> list:
 
     Returns:
         list:
-        \t\\- A converted string to list or forwarded list.
+        \t\\- A converted string to a list or the forwarded list.
     """
     logger = logging.getLogger(__name__)
-    logger.debug(f'=' * 20 + get_function_name() + '=' * 20)
+    logger.debug(f"=" * 20 + get_function_name() + "=" * 20)
     # Custom flowchart tracking. This is ideal for large projects that move a lot.
     # For any third-party modules, set the flow before making the function call.
-    logger_flowchart = logging.getLogger('flowchart')
-    logger_flowchart.debug(f'Flowchart --> Function: {get_function_name()}')
+    logger_flowchart = logging.getLogger("flowchart")
+    logger_flowchart.debug(f"Flowchart --> Function: {get_function_name()}")
 
     try:
-        type_check(value, [str, list])
+        type_check(value=value, required_type=(str, list))
     except FTypeError:
         raise
 
     if isinstance(value, str):
-        formatted_value = f'  - string (str):\n        - {value}\n'
+        formatted_value = f"  - string (str):\n        - {value}\n"
     else:
-        formatted_value = '  - value (list):' + str('\n        - ' + '\n        - '.join(map(str, value)))
-    logger.debug(
-        'Passing parameters:\n'
-        f'{formatted_value}\n'
-    )
-    
+        formatted_value = "  - value (list):" + str("\n        - " + "\n        - ".join(map(str, value)))
+    logger.debug("Passing parameters:\n" f"{formatted_value}\n")
+
     try:
         new_list: list = []
         if isinstance(value, str):
@@ -1359,12 +1479,12 @@ def str_to_list(value: Union[str, list], sep: str) -> list:
                 new_list.append(value.strip())
         else:
             new_list = value
-    except FTypeError as exc:
+    except FTypeError as exc:  # pragma: no cover
         raise
-    except Exception as exc:
+    except Exception as exc:  # pragma: no cover
         exc_args = {
-            'main_message': 'A general failure occurred while converting the string to list.',
-            'original_exception': exc,
+            "main_message": "A general failure occurred while converting the string to list.",
+            "original_exception": exc,
         }
         raise FGeneralError(exc_args)
     else:
@@ -1372,7 +1492,6 @@ def str_to_list(value: Union[str, list], sep: str) -> list:
             return new_list
         else:
             exc_args = {
-            'main_message': f'The value ({value}) did not convert to a list.',
-            'original_exception': exc,
-        }
+                "main_message": f"The value ({value}) did not convert to a list.",
+            }
         raise FValueError(exc_args)

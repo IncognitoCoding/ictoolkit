@@ -6,11 +6,10 @@ import threading
 import sys
 import queue
 import time
-import traceback
 import logging
 
 # Libraries
-from fchecker import type_check
+from fchecker.type import type_check
 
 # Local Functions
 from ..helpers.py_helper import get_function_name
@@ -18,24 +17,25 @@ from ..helpers.py_helper import get_function_name
 # Exceptions
 from fexception import FTypeError, FCustomException
 
-__author__ = 'IncognitoCoding'
-__copyright__ = 'Copyright 2022, thread_director'
-__credits__ = ['IncognitoCoding']
-__license__ = 'MIT'
-__version__ = '3.2'
-__maintainer__ = 'IncognitoCoding'
-__status__ = 'Production'
+__author__ = "IncognitoCoding"
+__copyright__ = "Copyright 2022, thread_director"
+__credits__ = ["IncognitoCoding"]
+__license__ = "MIT"
+__version__ = "3.3"
+__maintainer__ = "IncognitoCoding"
+__status__ = "Production"
 
 
 class ThreadStartFailure(Exception):
     """Exception raised for the thread start failure."""
-    __module__ = 'builtins'
+
+    __module__ = "builtins"
     pass
 
 
 def start_function_thread(passing_program_function, program_function_name: str, infinite_loop_option: bool) -> None:
     """
-    This function is used to start any other function inside it's own thread.
+    This function is used to start any other function inside its thread.
 
     This is ideal if you need to have part of the program sleep and another part of the program\\
     always active. (ex: Web Interface = Always Active & Log Checking = 10 Minute Sleep)
@@ -43,7 +43,7 @@ def start_function_thread(passing_program_function, program_function_name: str, 
     Thread exception capturing offers a challenge because the initialized child thread is in its dedicated\\
     context with its dedicated stack. When an exception is thrown in, the child thread can potentially never\\
     report to the parent function. The only time the messages can be present is during the initial call to the\\
-    child thread. A message bucket is used to hold any potential exception messages, and a 2 minutes sleep is\\
+    child thread. A message bucket is used to hold any potential exception messages, and a 2 minutes of sleep is\\
     set to give time for the thread to either start or fail. If neither occurs after 1 minute, the thread\\
     will end and throw a value error.
 
@@ -66,31 +66,31 @@ def start_function_thread(passing_program_function, program_function_name: str, 
 
     Raises:
         FTypeError (fexception):
-        \t\\- The value '{program_function_name}' is not in <class 'str'> format.
+        \t\\- The object value '{program_function_name}' is not an instance of the required class(es) or subclass(es).
         FTypeError (fexception):
-        \t\\- The value '{infinite_loop_option}' is not in <class 'bool'> format.
+        \t\\- The object value '{infinite_loop_option}' is not an instance of the required class(es) or subclass(es).
         ThreadStartFailure:
         \t\\- A failure occurred while staring the function thread.
         ThreadStartFailure:
         \t\\- The thread ({program_function_name}) timeout has reached its threshold of 1 minute.
     """
     logger = logging.getLogger(__name__)
-    logger.debug(f'=' * 20 + get_function_name() + '=' * 20)
+    logger.debug(f"=" * 20 + get_function_name() + "=" * 20)
     # Custom flowchart tracking. This is ideal for large projects that move a lot.
     # For any third-party modules, set the flow before making the function call.
-    logger_flowchart = logging.getLogger('flowchart')
-    logger_flowchart.debug(f'Flowchart --> Function: {get_function_name()}')
+    logger_flowchart = logging.getLogger("flowchart")
+    logger_flowchart.debug(f"Flowchart --> Function: {get_function_name()}")
 
     try:
-        type_check(program_function_name, str)
-        type_check(infinite_loop_option, bool)
+        type_check(value=program_function_name, required_type=str)
+        type_check(value=infinite_loop_option, required_type=bool)
     except FTypeError:
         raise
 
     logger.debug(
-        'Passing parameters:\n'
-        f'  - program_function_name (str):\n        - {program_function_name}\n'
-        f'  - infinite_loop_option (bool):\n        - {infinite_loop_option}\n'
+        "Passing parameters:\n"
+        f"  - program_function_name (str):\n        - {program_function_name}\n"
+        f"  - infinite_loop_option (bool):\n        - {infinite_loop_option}\n"
     )
 
     # Creates a dedicated thread class to run the companion decryptor.
@@ -118,7 +118,7 @@ def start_function_thread(passing_program_function, program_function_name: str, 
                     while True:
                         # Starts the function in a loop.
                         passing_program_function()
-                        # Sleeps 1 seconds to keep system resources from spiking when called without a sleep inside the calling entry.
+                        # Sleeps 1 second to keep system resources from spiking when called without a sleep inside the calling entry.
                         time.sleep(1)
                 else:
                     # Starts the function once.
@@ -148,7 +148,7 @@ def start_function_thread(passing_program_function, program_function_name: str, 
         try:
             # Gets the bucket values
             exc = bucket.get(block=False)
-        except queue.Empty:
+        except queue.Empty:  # pragma: no cover
             pass
         else:
             # Sets the bucket values from the exceptions
@@ -156,9 +156,9 @@ def start_function_thread(passing_program_function, program_function_name: str, 
 
             # Passes the calling functions error output as the original error.
             exc_args = {
-                'main_message': 'A failure occurred while staring the function thread.',
-                'custom_type': ThreadStartFailure,
-                'original_exception': exc_obj,
+                "main_message": "A failure occurred while staring the function thread.",
+                "custom_type": ThreadStartFailure,
+                "original_exception": exc_obj,
             }
             raise ThreadStartFailure(FCustomException(exc_args))
 
@@ -168,8 +168,8 @@ def start_function_thread(passing_program_function, program_function_name: str, 
 
         if time.time() > timeout:
             exc_args = {
-                'main_message': f'The thread ({program_function_name}) timeout has reached its threshold of 1 minute.',
-                'custom_type': ThreadStartFailure,
-                'suggested_resolution': 'Manual intervention is required for this thread to start.',
+                "main_message": f"The thread ({program_function_name}) timeout has reached its threshold of 1 minute.",
+                "custom_type": ThreadStartFailure,
+                "suggested_resolution": "Manual intervention is required for this thread to start.",
             }
             raise ThreadStartFailure(FCustomException(exc_args))

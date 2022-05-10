@@ -1,5 +1,5 @@
 """
-This module is designed to assist with email-related actions. The module has the ability to send emails encrypted or unencrypted.
+This module is designed to assist with email-related actions. The module can send emails encrypted or unencrypted.
 """
 # Built-in/Generic Imports
 import os
@@ -9,11 +9,11 @@ import smtplib
 import re
 from email.message import EmailMessage
 import mimetypes
-from typing import Optional
+from typing import Optional, Dict, Any, Match, Union
 
 # Libraries
 from jinja2 import Environment, PackageLoader, select_autoescape
-from fchecker import type_check
+from fchecker.type import type_check
 
 # Local Functions
 from ..directors.encryption_director import encrypt_info
@@ -23,28 +23,32 @@ from ..helpers.py_helper import get_function_name
 from ..directors.encryption_director import EncryptionFailure
 from fexception import FGeneralError, FTypeError, FCustomException
 
-__author__ = 'IncognitoCoding'
-__copyright__ = 'Copyright 2022, email_director'
-__credits__ = ['IncognitoCoding', 'Monoloch']
-__license__ = 'MIT'
-__version__ = '3.2'
-__maintainer__ = 'IncognitoCoding'
-__status__ = 'Production'
+__author__ = "IncognitoCoding"
+__copyright__ = "Copyright 2022, email_director"
+__credits__ = ["IncognitoCoding", "Monoloch"]
+__license__ = "MIT"
+__version__ = "3.3"
+__maintainer__ = "IncognitoCoding"
+__status__ = "Production"
 
 
 class CreateTemplateFailure(Exception):
     """Exception raised for the template creation failure."""
-    __module__ = 'builtins'
+
+    __module__ = "builtins"
     pass
 
 
 class EmailSendFailure(Exception):
     """Exception raised for an email send failure."""
-    __module__ = 'builtins'
+
+    __module__ = "builtins"
     pass
 
 
-def create_template_email(email_template_name: str, email_template_path: str, **template_args: Optional[dict]) -> str:
+def create_template_email(
+    email_template_name: str, email_template_path: str, **template_args: Optional[Dict[str, Any]]
+) -> str:
     """
     Uses the jinja2 module to create a template with users passing email template arguments.
 
@@ -53,16 +57,16 @@ def create_template_email(email_template_name: str, email_template_path: str, **
         \t\\- The name of the template.
         email_template_path (str):
         \t\\- The full path to the templates directory.
-        **template_args(dict, optional):
+        **template_args(Dict[str, Any], optional):
         \t\\- The template arguments are used to populate the HTML template variables. Defaults to None.
 
     Raises:
         FTypeError (fexception):
-        \t\\- The value '{email_template_name}' is not in <class 'str'> format.
+        \t\\- The object value '{email_template_name}' is not an instance of the required class(es) or subclass(es).
         FTypeError (fexception):
-        \t\\- The value '{email_template_path}' is not in <class 'str'> format.
+        \t\\- The object value '{email_template_path}' is not an instance of the required class(es) or subclass(es).
         FTypeError (fexception):
-        \t\\- The value '{template_args}' is not in <class 'dict'> format.
+        \t\\- The object value '{template_args}' is not an instance of the required class(es) or subclass(es).
         CreateTemplateFailure:
         \t\\- The email HTML template path does not exist.
         FGeneralError (fexception):
@@ -73,41 +77,42 @@ def create_template_email(email_template_name: str, email_template_path: str, **
         \t\\- A formatted HTML email template with all the arguments updated.
     """
     logger = logging.getLogger(__name__)
-    logger.debug(f'=' * 20 + get_function_name() + '=' * 20)
+    logger.debug(f"=" * 20 + get_function_name() + "=" * 20)
     # Custom flowchart tracking. This is ideal for large projects that move a lot.
     # For any third-party modules, set the flow before making the function call.
-    logger_flowchart = logging.getLogger('flowchart')
-    logger_flowchart.debug(f'Flowchart --> Function: {get_function_name()}')
+    logger_flowchart = logging.getLogger("flowchart")
+    logger_flowchart.debug(f"Flowchart --> Function: {get_function_name()}")
 
     try:
-        type_check(email_template_name, str)
-        type_check(email_template_path, str)
+        type_check(value=email_template_name, required_type=str)
+        type_check(value=email_template_path, required_type=str)
         if template_args:
-            type_check(template_args, dict)
+            type_check(value=template_args, required_type=dict)
     except FTypeError:
         raise
 
     if template_args:
-        formatted_template_args = ('  - template_args (dict):\n        - '
-                                   + '\n        - '.join(': '.join((key, str(val))) for (key, val) in template_args.items()))
+        formatted_template_args = "  - template_args (dict):\n        - " + "\n        - ".join(
+            ": ".join((key, str(val))) for (key, val) in template_args.items()
+        )
     else:
-        formatted_template_args = '  - template_args (dict):\n        - None'
+        formatted_template_args = "  - template_args (dict):\n        - None"
 
     logger.debug(
-        'Passing parameters:\n'
-        f'  - email_template_name (str):\n        - {email_template_name}\n'
-        f'  - email_template_path (str):\n        - {email_template_path}\n'
-        f'{formatted_template_args}\n'
+        "Passing parameters:\n"
+        f"  - email_template_name (str):\n        - {email_template_name}\n"
+        f"  - email_template_path (str):\n        - {email_template_path}\n"
+        f"{formatted_template_args}\n"
     )
 
     # Checks if the email_template_path exists.
     if not os.path.exists(email_template_path):
         exc_args = {
-            'main_message': 'The email HTML template path does not exist.',
-            'custom_type': CreateTemplateFailure,
-            'expected_result': 'A valid email template path.',
-            'returned_result': email_template_path,
-            'suggested_resolution': 'Please verify you have set the correct path and try again.',
+            "main_message": "The email HTML template path does not exist.",
+            "custom_type": CreateTemplateFailure,
+            "expected_result": "A valid email template path.",
+            "returned_result": email_template_path,
+            "suggested_resolution": "Please verify you have set the correct path and try again.",
         }
         raise CreateTemplateFailure(FCustomException(exc_args))
 
@@ -117,27 +122,28 @@ def create_template_email(email_template_name: str, email_template_path: str, **
         main_module_file_path = os.path.realpath(sys.argv[0]) if sys.argv[0] else None
         # Gets the main program base name.
         # Output Example: smtpredirect.py
-        module_base_name = os.path.basename(main_module_file_path)
+        module_base_name = os.path.basename(main_module_file_path)  # type: ignore
         # Gets the main program name.
         # Output Example: smtpredirect
         module_name = os.path.splitext(module_base_name)[0]
 
         env = Environment(
-            loader=PackageLoader(module_name, email_template_path),
-            autoescape=select_autoescape(['html', 'xml'])
+            loader=PackageLoader(module_name, email_template_path), autoescape=select_autoescape(["html", "xml"])
         )
         template = env.get_template(email_template_name)
     except Exception as exc:
         exc_args = {
-            'main_message': 'A general exception occurred while rendering the HTML template.',
-            'original_exception': exc,
+            "main_message": "A general exception occurred while rendering the HTML template.",
+            "original_exception": exc,
         }
         raise FGeneralError(exc_args)
     else:
         return template.render(**template_args)
 
 
-def send_email(email_settings: dict, subject: str, body: str = None, template_args: dict = None) -> None:
+def send_email(
+    email_settings: dict, subject: str, body: Optional[str] = None, template_args: Optional[dict] = None
+) -> None:
     """
     This function offers many customized options when sending an email.
 
@@ -159,7 +165,7 @@ def send_email(email_settings: dict, subject: str, body: str = None, template_ar
     \t the string section identified as needing to be encrypted.
 
     \t Any string section starting with @START-ENCRYPT@ and ending with @END-ENCRYPT@ will have that code section\\
-    \t get encrypted and supported for the body or **template_args parameters.
+    \t get encrypted and support for the body or **template_args parameters.
 
     \t Encryption Requirements:
     \t\t\\- The encrypt_info function is required when enabling message encryption.\\
@@ -230,15 +236,17 @@ def send_email(email_settings: dict, subject: str, body: str = None, template_ar
 
     Raises:
         FTypeError (fexception):
-        \t\\- The value '{email_settings}' is not in <class 'dict'> format.
+        \t\\- The object value '{email_settings}' is not an instance of the required class(es) or subclass(es).
         FTypeError (fexception):
-        \t\\- The value '{subject}' is not in <class 'str'> format.
+        \t\\- The object value '{subject}' is not an instance of the required class(es) or subclass(es).
         FTypeError (fexception):
-        \t\\- The value '{body}' is not in <class 'str'> format.
+        \t\\- The object value '{body}' is not an instance of the required class(es) or subclass(es).
         FTypeError (fexception):
-        \t\\- The value '{template_args}' is not in <class 'dict'> format.
+        \t\\- The object value '{template_args}' is not an instance of the required class(es) or subclass(es).
         EmailSendFailure:
         \t\\- An error occurred while sending the email.
+        EmailSendFailure:
+        \t\\- The email body unencrypted string was not found.
         CreateTemplateFailure:
         \t\\- The email HTML template path does not exist.
         EncryptionFailure:
@@ -247,6 +255,8 @@ def send_email(email_settings: dict, subject: str, body: str = None, template_ar
         \t\\- A general exception occurred while creating the email message body.
         EmailSendFailure:
         \t\\- The attachment path for the email message does not exist.
+        EmailSendFailure:
+        \t\\- The mime type of the message could not be determined.
         FGeneralError (fexception):
         \t\\- A general exception occurred while preparing the email message structure.
         EmailSendFailure:
@@ -265,7 +275,7 @@ def send_email(email_settings: dict, subject: str, body: str = None, template_ar
         \t\\- SMTP server authentication failed.
         EmailSendFailure:
         \t\\- Incorrect username and/or password or authentication_required is not enabled\\
-        \t  or Less Secure Apps needs enabled in your gmail settings.
+        \t  or Less Secure Apps needs to be enabled in your Gmail settings.
         EmailSendFailure:
         \t\\- Incorrect username and/or password or the authentication_required setting is not enabled.
         FGeneralError (fexception):
@@ -276,186 +286,204 @@ def send_email(email_settings: dict, subject: str, body: str = None, template_ar
         \t\\- A general exception occurred while terminating the SMTP object.
     """
     logger = logging.getLogger(__name__)
-    logger.debug(f'=' * 20 + get_function_name() + '=' * 20)
+    logger.debug(f"=" * 20 + get_function_name() + "=" * 20)
     # Custom flowchart tracking. This is ideal for large projects that move a lot.
     # For any third-party modules, set the flow before making the function call.
-    logger_flowchart = logging.getLogger('flowchart')
-    logger_flowchart.debug(f'Flowchart --> Function: {get_function_name()}')
+    logger_flowchart = logging.getLogger("flowchart")
+    logger_flowchart.debug(f"Flowchart --> Function: {get_function_name()}")
 
     try:
-        type_check(email_settings, dict)
-        type_check(subject, str)
+        type_check(value=email_settings, required_type=dict)
+        type_check(value=subject, required_type=str)
         if body:
-            type_check(body, str)
+            type_check(value=body, required_type=str)
         if template_args:
-            type_check(template_args, dict)
+            type_check(value=template_args, required_type=dict)
     except FTypeError:
         raise
 
-    formatted_email_settings = ('  - email_settings (dict):\n        - '
-                                + '\n        - '.join(': '.join((key, str(val))) for (key, val) in email_settings.items()))
+    formatted_email_settings = "  - email_settings (dict):\n        - " + "\n        - ".join(
+        ": ".join((key, str(val))) for (key, val) in email_settings.items()
+    )
     if body:
-        formatted_body = f'- email_template_name (str):\n        - {body}'
+        formatted_body = f"- email_template_name (str):\n        - {body}"
     else:
-        formatted_body = f'- email_template_name (str):\n        - None'
+        formatted_body = f"- email_template_name (str):\n        - None"
     if template_args:
-        formatted_template_args = ('  - template_args (dict):\n        - '
-                                   + '\n        - '.join(': '.join((key, str(val))) for (key, val) in template_args.items()))
+        formatted_template_args = "  - template_args (dict):\n        - " + "\n        - ".join(
+            ": ".join((key, str(val))) for (key, val) in template_args.items()
+        )
     else:
-        formatted_template_args = '  - template_args (dict):\n        - None'
+        formatted_template_args = "  - template_args (dict):\n        - None"
 
     logger.debug(
-        'Passing parameters:\n'
-        f'{formatted_email_settings}\n'
-        f'  - subject (str):\n        - {subject}\n'
-        f'{formatted_body}\n'
-        f'{formatted_template_args}\n'
+        "Passing parameters:\n"
+        f"{formatted_email_settings}\n"
+        f"  - subject (str):\n        - {subject}\n"
+        f"{formatted_body}\n"
+        f"{formatted_template_args}\n"
     )
 
-    logger.debug(f'Starting to send an email message')
+    logger.debug(f"Starting to send an email message")
 
     try:
-        logger.debug(f'Checking if the email is sending non-HTML or HTML')
+        logger.debug(f"Checking if the email is sending non-HTML or HTML")
         # Gets send_email_template option.
-        send_email_template = email_settings.get('send_email_template')
+        send_email_template = email_settings.get("send_email_template")
         # Checks if the email is template or non-HTML.
-        if (
-            send_email_template is True
-            and template_args
-        ):
-            logger.debug(f'Sending HTML templated email')
-            email_template_name = email_settings.get('email_template_name')
-            email_template_path = email_settings.get('email_template_path')
+        if send_email_template is True and template_args:
+            logger.debug(f"Sending HTML templated email")
+            email_template_name = email_settings.get("email_template_name")
+            email_template_path = email_settings.get("email_template_path")
 
             # Creates the email template.
             email_body = create_template_email(email_template_name, email_template_path, **template_args)
         elif body:
-            logger.debug(f'Sending non-HTML email')
+            logger.debug(f"Sending non-HTML email")
             email_body = body
         else:
             exc_args = {
-                'main_message': 'An error occurred while sending the email.',
-                'custom_type': EmailSendFailure,
-                'expected_result': 'Body or HTML Template',
-                'returned_result': 'No body or template was sent.',
-                'suggested_resolution': 'Ensure the body or template is being passed to the email_director module functions.',
+                "main_message": "An error occurred while sending the email.",
+                "custom_type": EmailSendFailure,
+                "expected_result": "Body or HTML Template",
+                "returned_result": "No body or template was sent.",
+                "suggested_resolution": "Ensure the body or template is being passed to the email_director module functions.",
             }
             raise EmailSendFailure(FCustomException(exc_args))
         # Holds the updating email body lines.
         updating_body = []
         # Checks the email for any encryption identifiers.
         # Splits the email into individual lines that can be looped through.
-        adjusted_body = email_body.split('\n')
-        logger.debug(f'Looping through each line of the email to check for any encryption identifiers')
+        adjusted_body = email_body.split("\n")
+        logger.debug(f"Looping through each line of the email to check for any encryption identifiers")
         for email_line in adjusted_body:
             # Checks if the body contains any encryption identifiers.
-            if (
-                '@START-ENCRYPT@' in email_line
-                and '@END-ENCRYPT@' in email_line
-            ):
-                logger.debug(f'Encryption identifiers found. Encrypting this section of the output.')
+            if "@START-ENCRYPT@" in email_line and "@END-ENCRYPT@" in email_line:
+                logger.debug(f"Encryption identifiers found. Encrypting this section of the output.")
                 # Original String: <p>     Decryption Code: @START-ENCRYPT@This is my original string@END-ENCRYPT@</p>
                 # Matched String: This is my original string
-                unencrypted_string = (re.search('@START-ENCRYPT@(.*)@END-ENCRYPT@', email_line)).group(1)
-                logger.debug('Converting unencrypted message string into bytes')
-                password = email_settings.get('message_encryption_password')
-                salt = email_settings.get('message_encryption_random_salt')
+                match_object: Union[Match[str], None] = re.search("@START-ENCRYPT@(.*)@END-ENCRYPT@", email_line)
+                if match_object:
+                    unencrypted_string = match_object.group(1)
+                else:
+                    exc_args = {
+                        "main_message": "The email body unencrypted string was not found.",
+                        "custom_type": EmailSendFailure,
+                        "expected_result": "The unencrypted string between @START-ENCRYPT@ and @END-ENCRYPT@",
+                        "returned_result": email_line,
+                    }
+                    raise EmailSendFailure(FCustomException(exc_args))
+                logger.debug("Converting unencrypted message string into bytes")
+                password = email_settings.get("message_encryption_password")
+                salt = email_settings.get("message_encryption_random_salt")
                 # Calls function to sends unencrypted message for encryption.
                 # Return Example: <encrypted message>
                 encrypted_info = encrypt_info(unencrypted_string, password, salt)
                 # Removes the encryption string identifiers and sets encryption on the string.
-                updating_body.append(email_line.replace('@START-ENCRYPT@', '').replace('@END-ENCRYPT@', '').replace(unencrypted_string, str(encrypted_info)))
+                updating_body.append(
+                    email_line.replace("@START-ENCRYPT@", "")
+                    .replace("@END-ENCRYPT@", "")
+                    .replace(unencrypted_string, str(encrypted_info))
+                )
             else:
                 # Adds the non-encrypted line to the list.
                 updating_body.append(email_line)
 
-        logger.debug(f'Setting the updated email body')
+        logger.debug(f"Setting the updated email body")
         # Converts the list back into a string with new lines for each entry.
         updated_body = "\n".join(updating_body)
-    except CreateTemplateFailure:
+    except CreateTemplateFailure:  # pragma: no cover
         raise
-    except EmailSendFailure:
+    except EmailSendFailure:  # pragma: no cover
         raise
-    except EncryptionFailure:
+    except EncryptionFailure:  # pragma: no cover
         raise
-    except Exception as exc:
+    except Exception as exc:  # pragma: no cover
         exc_args = {
-            'main_message': 'A general exception occurred while creating the email message body.',
-            'original_exception': exc,
+            "main_message": "A general exception occurred while creating the email message body.",
+            "original_exception": exc,
         }
         raise FGeneralError(exc_args)
 
     try:
-        logger.debug('Preparing the email message structure')
+        logger.debug("Preparing the email message structure")
         # Preparing email message structure.
         message = EmailMessage()
-        message['Subject'] = subject
-        message['From'] = email_settings.get('from_email')
-        message['To'] = [email_settings.get('to_email')]
+        message["Subject"] = subject
+        message["From"] = email_settings.get("from_email")
+        message["To"] = [email_settings.get("to_email")]
         # Sets header based on HTML or text be passed to the function.
-        if (
-            send_email_template is True
-            and template_args
-        ):
+        if send_email_template is True and template_args:
             # Sets header for text and html. Required to allow html template.
-            message.add_header('Content-Type', 'text/html')
+            message.add_header("Content-Type", "text/html")
         elif body:
             # Sets header for text only. Required to allow new lines.
-            message.add_header('Content-Type', 'text')
-        logger.debug('Setting payload to HTML')
+            message.add_header("Content-Type", "text")
+        logger.debug("Setting payload to HTML")
         # Setting email body payload.
         message.set_payload(updated_body)
         # Attaches file if a path is sent.
-        if email_settings.get('attachment_path'):
+        if email_settings.get("attachment_path"):
             # Checks that the attachment file exists.
-            attachment_path = os.path.abspath(email_settings.get('attachment_path'))
+            attachment_path = os.path.abspath(email_settings.get("attachment_path"))
             if not os.path.exists(attachment_path):
                 exc_args = {
-                    'main_message': 'The attachment path for the email message does not exist.',
-                    'custom_type': EmailSendFailure,
-                    'expected_result': 'A valid email attachment path.',
-                    'returned_result': attachment_path,
-                    'suggested_resolution': 'Please verify you have set the correct path and try again.',
+                    "main_message": "The attachment path for the email message does not exist.",
+                    "custom_type": EmailSendFailure,
+                    "expected_result": "A valid email attachment path.",
+                    "returned_result": attachment_path,
+                    "suggested_resolution": "Please verify you have set the correct path and try again.",
                 }
                 raise EmailSendFailure(FCustomException(exc_args))
             # Gets the mime type to determine the type of message being sent.
             mime_type, _ = mimetypes.guess_type(attachment_path)
-            # Gets the MIME type and subtype.
-            mime_type, mime_subtype = mime_type.split('/', 1)
+            if mime_type:
+                # Gets the MIME type and subtype.
+                mime_type, mime_subtype = mime_type.split("/", 1)
+            else:
+                exc_args = {
+                    "main_message": "The mime type of the message could not be determined.",
+                    "custom_type": EmailSendFailure,
+                    "expected_result": "MIME type",
+                    "returned_result": None,
+                }
+                raise EmailSendFailure(FCustomException(exc_args))
             # Attaches the attachment to the message.
-            with open(attachment_path, 'rb') as ap:
-                message.add_attachment(ap.read(), maintype=mime_type, subtype=mime_subtype, filename=os.path.basename(attachment_path))
-    except EmailSendFailure:
+            with open(attachment_path, "rb") as ap:
+                message.add_attachment(
+                    ap.read(), maintype=mime_type, subtype=mime_subtype, filename=os.path.basename(attachment_path)
+                )
+    except EmailSendFailure:  # pragma: no cover
         raise
-    except Exception as exc:
+    except Exception as exc:  # pragma: no cover
         exc_args = {
-            'main_message': 'A general exception occurred while preparing the email message structure.',
-            'original_exception': exc,
+            "main_message": "A general exception occurred while preparing the email message structure.",
+            "original_exception": exc,
         }
         raise FGeneralError(exc_args)
 
     try:
-        logger.debug('Setting up SMTP object')
+        logger.debug("Setting up SMTP object")
         # Setting up SMTP object.
-        if email_settings.get('use_tls') is True:
-            logger.debug('Opening connection to SMTP server on port 587 for TLS')
-            smtp_Object = smtplib.SMTP(email_settings.get('smtp'), 587)
+        if email_settings.get("use_tls") is True:
+            logger.debug("Opening connection to SMTP server on port 587 for TLS")
+            smtp_Object = smtplib.SMTP(email_settings.get("smtp"), 587)
 
             try:
                 smtp_Object.ehlo()
-                logger.debug('Sending StartTLS message')
+                logger.debug("Sending StartTLS message")
                 smtp_Object.starttls()
             except Exception as exc:
                 exc_args = {
-                    'main_message': 'Failed to initialize SMTP connection using TLS.',
-                    'custom_type': EmailSendFailure,
-                    'original_exception': exc
+                    "main_message": "Failed to initialize SMTP connection using TLS.",
+                    "custom_type": EmailSendFailure,
+                    "original_exception": exc,
                 }
                 raise EmailSendFailure(FCustomException(exc_args))
         else:
-            logger.debug('Opening connection to SMTP server on port 25')
-            smtp_Object = smtplib.SMTP(email_settings.get('smtp'), 25)
-    except EmailSendFailure:
+            logger.debug("Opening connection to SMTP server on port 25")
+            smtp_Object = smtplib.SMTP(email_settings.get("smtp"), 25)
+    except EmailSendFailure:  # pragma: no cover
         raise
     except Exception as exc:
         if (
@@ -464,74 +492,76 @@ def send_email(email_settings: dict, subject: str, body: str = None, template_ar
             or "getaddrinfo failed" in str(exc)
         ):
             exc_args = {
-                'main_message': 'Failed to send the email message. Connection to SMTP server failed.',
-                'custom_type': EmailSendFailure,
-                'suggested_resolution': 'Ensure the server address and TLS options are set correctly.',
-                'original_exception': exc
+                "main_message": "Failed to send the email message. Connection to SMTP server failed.",
+                "custom_type": EmailSendFailure,
+                "suggested_resolution": "Ensure the server address and TLS options are set correctly.",
+                "original_exception": exc,
             }
             raise EmailSendFailure(FCustomException(exc_args))
-        elif 'Connection unexpectedly closed' in str(exc):
+        elif "Connection unexpectedly closed" in str(exc):
             exc_args = {
-                'main_message': 'Failed to reach the SMTP server.',
-                'custom_type': EmailSendFailure,
-                'suggested_resolution': 'Ensure SMTP is reachable.',
-                'original_exception': exc
+                "main_message": "Failed to reach the SMTP server.",
+                "custom_type": EmailSendFailure,
+                "suggested_resolution": "Ensure SMTP is reachable.",
+                "original_exception": exc,
             }
             raise EmailSendFailure(FCustomException(exc_args))
         else:
             exc_args = {
-                'main_message': 'A general exception occurred while sending the email message.',
-                'original_exception': exc,
+                "main_message": "A general exception occurred while sending the email message.",
+                "original_exception": exc,
             }
             raise FGeneralError(exc_args)
 
     # Sends email.
     try:
-        # If authentication required, log in to mail server with credentials.
-        if email_settings.get('authentication_required') is True:
-            logger.debug('SMTP server authentication required, logging into server')
-            smtp_Object.login(email_settings.get('username'), email_settings.get('password'))
-            logger.debug('Sending the email')
+        # Checks if authentication is required to login into the mail server with credentials.
+        if email_settings.get("authentication_required") is True:
+            logger.debug("SMTP server authentication required, logging into server")
+            smtp_Object.login(email_settings.get("username"), email_settings.get("password"))
+            logger.debug("Sending the email")
 
-        smtp_Object.sendmail(email_settings.get('from_email'), email_settings.get('to_email'), str(message).encode('utf-8').strip())
+        smtp_Object.sendmail(
+            email_settings.get("from_email"), email_settings.get("to_email"), str(message).encode("utf-8").strip()
+        )
     except Exception as exc:
         if "SMTP AUTH extension not supported" in str(exc):
             exc_args = {
-                'main_message': 'SMTP authentication is set to required but it is not supported by the server.',
-                'custom_type': EmailSendFailure,
-                'suggested_resolution': 'Try changing the INI [email] AuthenticationRequired value to False',
-                'original_exception': exc
+                "main_message": "SMTP authentication is set to required but it is not supported by the server.",
+                "custom_type": EmailSendFailure,
+                "suggested_resolution": "Try changing the INI [email] AuthenticationRequired value to False",
+                "original_exception": exc,
             }
         elif "Client host rejected: Access denied" in str(exc):
             exc_args = {
-                'main_message': 'The SMTP server rejected the connection.',
-                'custom_type': EmailSendFailure,
-                'suggested_resolution': 'Authentication may be required, ensure the INI [email] AuthenticationRequired is set correctly.',
-                'original_exception': exc
+                "main_message": "The SMTP server rejected the connection.",
+                "custom_type": EmailSendFailure,
+                "suggested_resolution": "Authentication may be required, ensure the INI [email] AuthenticationRequired is set correctly.",
+                "original_exception": exc,
             }
         elif "authentication failed" in str(exc):
             exc_args = {
-                'main_message': 'SMTP server authentication failed.',
-                'custom_type': EmailSendFailure,
-                'suggested_resolution': 'Ensure the INI [email] Username and Password are set correctly.',
-                'original_exception': exc
+                "main_message": "SMTP server authentication failed.",
+                "custom_type": EmailSendFailure,
+                "suggested_resolution": "Ensure the INI [email] Username and Password are set correctly.",
+                "original_exception": exc,
             }
         elif " Authentication Required. Learn more at\n5.7.0  HTMLs://support.google.com" in str(exc):
             exc_args = {
-                'main_message': 'Incorrect username and/or password or authentication_required is not enabled or Less Secure Apps needs enabled in your gmail settings.',
-                'custom_type': EmailSendFailure,
-                'original_exception': exc
+                "main_message": "Incorrect username and/or password or authentication_required is not enabled or Less Secure Apps needs enabled in your gmail settings.",
+                "custom_type": EmailSendFailure,
+                "original_exception": exc,
             }
         elif "Authentication Required" in str(exc):
             exc_args = {
-                'main_message': 'Incorrect username and/or password or the authentication_required setting is not enabled.',
-                'custom_type': EmailSendFailure,
-                'original_exception': exc
+                "main_message": "Incorrect username and/or password or the authentication_required setting is not enabled.",
+                "custom_type": EmailSendFailure,
+                "original_exception": exc,
             }
         else:
             exc_args = {
-                'main_message': 'A general exception occurred while sending the email.',
-                'original_exception': exc,
+                "main_message": "A general exception occurred while sending the email.",
+                "original_exception": exc,
             }
             raise FGeneralError(exc_args)
 
@@ -540,20 +570,20 @@ def send_email(email_settings: dict, subject: str, body: str = None, template_ar
     finally:
 
         try:
-            logger.debug(f'Terminating SMTP object')
+            logger.debug(f"Terminating SMTP object")
             # Terminating SMTP object.
             smtp_Object.quit()
         except Exception as exc:
-            if 'Failed to send message' in str(exc):
+            if "Failed to send message" in str(exc):
                 exc_args = {
-                    'main_message': 'Failed to send message. SMTP terminatation error occurred.',
-                    'custom_type': EmailSendFailure,
-                    'original_exception': exc
+                    "main_message": "Failed to send the message. SMTP terminatation error occurred.",
+                    "custom_type": EmailSendFailure,
+                    "original_exception": exc,
                 }
                 raise EmailSendFailure(FCustomException(exc_args))
             else:
                 exc_args = {
-                    'main_message': 'A general exception occurred while terminating the SMTP object.',
-                    'original_exception': exc,
+                    "main_message": "A general exception occurred while terminating the SMTP object.",
+                    "original_exception": exc,
                 }
                 raise FGeneralError(exc_args)
