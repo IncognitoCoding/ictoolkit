@@ -13,7 +13,7 @@ from fchecker.type import type_check
 from fchecker.file import file_check
 
 # Local Functions
-from ..directors.data_structure_director import remove_duplicate_dict_values_in_list
+from ..data_structure.list import remove_duplicate_dict_values_in_list
 from ..helpers.py_helper import get_function_name
 
 # Exceptions
