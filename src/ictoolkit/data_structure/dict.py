@@ -2,6 +2,7 @@
 import logging
 from itertools import groupby
 from typing import Union, Any
+from collections import OrderedDict
 
 # Libraries
 from fchecker.type import type_check
@@ -19,7 +20,7 @@ __author__ = "IncognitoCoding"
 __copyright__ = "Copyright 2022, dict"
 __credits__ = ["IncognitoCoding"]
 __license__ = "MIT"
-__version__ = "0.2"
+__version__ = "0.3"
 __maintainer__ = "IncognitoCoding"
 __status__ = "Production"
 
@@ -529,7 +530,7 @@ def move_dict_value(
         if sort:
             if dest_list:
                 # Checks to determine the type of sort that can be performed.
-                # Sort is suported on int/str or int only.
+                # List sort is supported on int/str or int only.
                 int_only: bool = True
                 int_str_only: bool = True
                 for value in dest_list:
@@ -559,6 +560,10 @@ def move_dict_value(
 
         # Updates the destination dictionary value.
         my_dict[dest_key] = dest_list
+
+        # Final sort based on the keys.
+        if sort:
+            my_dict = OrderedDict(sorted(my_dict.items()))
     except Exception as exc:  # pragma: no cover
         exc_args = {
             "main_message": "A general failure occurred while moving dictionary values.",
