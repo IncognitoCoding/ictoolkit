@@ -19,7 +19,7 @@ __author__ = "IncognitoCoding"
 __copyright__ = "Copyright 2022, dict"
 __credits__ = ["IncognitoCoding"]
 __license__ = "MIT"
-__version__ = "0.1"
+__version__ = "0.2"
 __maintainer__ = "IncognitoCoding"
 __status__ = "Production"
 
@@ -29,7 +29,7 @@ def string_grouper(
     grouping_option: int,
     grouping_value: Union[str, int, None] = None,
     case_insensitive: bool = False,
-) -> dict[Union[str, int, float, bool], Any]:
+) -> dict[str, list[str]]:
     """
     String grouper will group a list of strings using three different options.
 
@@ -95,7 +95,7 @@ def string_grouper(
         \t\\- A general failure occurred while grouping the strings.
 
     Returns:
-        dict[Union[str, int, float, bool], Any]:\\
+        dict[str, list[str]]:\\
         \t\\- A list of grouped strings.
 
     Return Example:\\

@@ -18,12 +18,12 @@ __author__ = "IncognitoCoding"
 __copyright__ = "Copyright 2022, choice"
 __credits__ = ["IncognitoCoding"]
 __license__ = "MIT"
-__version__ = "0.1"
+__version__ = "0.2"
 __maintainer__ = "IncognitoCoding"
 __status__ = "Production"
 
 
-def user_choice_character_grouping(list_of_strings: list) -> dict[Union[str, int, float, bool], Any]:
+def user_choice_character_grouping(list_of_strings: list) -> dict[str, list[str]]:
     """
     Groups a list of characters based on the user's choices.
 
@@ -44,8 +44,8 @@ def user_choice_character_grouping(list_of_strings: list) -> dict[Union[str, int
         \t\\- A general exception occurred when getting the user choice character grouping.
 
     Returns:
-        list:\\
-        \t\\- A list of grouped characters.
+        dict[str, list[str]]:\\
+        \t\\- A dictionary of grouped characters.
     """
     logger = logging.getLogger(__name__)
     logger.debug(f"=" * 20 + get_function_name() + "=" * 20)
@@ -65,7 +65,7 @@ def user_choice_character_grouping(list_of_strings: list) -> dict[Union[str, int
     logger.debug("Passing parameters:\n" f"{formatted_list_of_strings}\n")
 
     # Sets grouping value to None to prevent any reference errors on a retry.
-    groupings: dict[Union[str, int, float, bool], Any] = {}
+    groupings: dict[str, list[str]] = {}
 
     try:
         while True:
@@ -264,20 +264,20 @@ def user_choice_character_grouping(list_of_strings: list) -> dict[Union[str, int
                             if len(wildcard_key_value) >= 1:
                                 for key, group in wildcard_key_value.items():
                                     for entry in group:
-                                        groupings: dict[Union[str, int, float, bool], Any] = move_dict_value(
+                                        groupings = move_dict_value(
                                             my_dict=groupings,
                                             src_key=key,
                                             dest_key=dest_group_key_choice,
                                             value=entry,
-                                        )
+                                        )  # type: ignore
                         else:
                             # Moves the dictionary values based on the user's input.
-                            groupings: dict[Union[str, int, float, bool], Any] = move_dict_value(
+                            groupings = move_dict_value(
                                 my_dict=groupings,
                                 src_key=src_group_key,
                                 dest_key=dest_group_key_choice,
                                 value=dest_group_value_choice,
-                            )
+                            )  # type: ignore
 
                         print("\nBelow are your revised edits:")
                         # Loops through the output to show the user the results
