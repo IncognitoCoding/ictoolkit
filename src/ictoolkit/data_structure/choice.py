@@ -18,7 +18,7 @@ __author__ = "IncognitoCoding"
 __copyright__ = "Copyright 2022, choice"
 __credits__ = ["IncognitoCoding"]
 __license__ = "MIT"
-__version__ = "0.2"
+__version__ = "0.3"
 __maintainer__ = "IncognitoCoding"
 __status__ = "Production"
 
@@ -170,7 +170,7 @@ def user_choice_character_grouping(list_of_strings: list) -> dict[str, list[str]
                                     "Please enter the name of the string value you want to move (wildcard: *): "
                                 )
                                 if isinstance(choice, str) and choice != "":
-                                    dest_group_value_choice = choice
+                                    dest_group_value_choice: str = choice
                                     break
 
                             # Single key/value variables.
@@ -185,6 +185,7 @@ def user_choice_character_grouping(list_of_strings: list) -> dict[str, list[str]
                                     # Removes any characters after the wildcard character.
                                     dest_group_value_choice = dest_group_value_choice.split("*")[0] + "*"
 
+                            wildcard_value: list[str] = []
                             # Checks if the string value exists.
                             for key, group in groupings.items():
                                 # Checks if the string value exists.
@@ -192,6 +193,7 @@ def user_choice_character_grouping(list_of_strings: list) -> dict[str, list[str]
                                     wildcard_value = [
                                         value for value in group if dest_group_value_choice.replace("*", "") in value
                                     ]
+
                                     if len(wildcard_value) >= 1:
                                         if isinstance(key, str):
                                             wildcard_key_value.update({key: wildcard_value})
@@ -217,12 +219,17 @@ def user_choice_character_grouping(list_of_strings: list) -> dict[str, list[str]
                                         raise FTypeError(exc_args)
                                     break
 
-                            if single_match_value or "*" in dest_group_value_choice:
+                            if single_match_value or len(wildcard_key_value) >= 1:
                                 break
                             else:
-                                print(
-                                    f"\nThe string value you entered '{dest_group_value_choice}' does not match any value in the existing groups. Please try again.\n"
-                                )
+                                if "*" in dest_group_value_choice:
+                                    print(
+                                        f"\nThe wildcard string value you entered '{dest_group_value_choice}' does not match any value in the existing groups. Please try again.\n"
+                                    )
+                                else:
+                                    print(
+                                        f"\nThe string value you entered '{dest_group_value_choice}' does not match any value in the existing groups. Please try again.\n"
+                                    )
 
                         # Gets the string value to move.
                         while True:
