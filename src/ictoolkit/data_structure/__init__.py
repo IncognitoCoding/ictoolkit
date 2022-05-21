@@ -9,10 +9,10 @@ from ..data_structure.common import (
 from ..data_structure.dataclass import create_dataclass
 from ..data_structure.dict import string_grouper, move_dict_value
 
-from .exceptions import InputFailure, RequirementFailure
+from .exceptions import InputFailure, RequirementFailure, RemoveSectionFailure
 from ..data_structure.list import (
     remove_duplicate_dict_values_in_list,
     get_list_of_dicts_duplicates,
     get_list_duplicates,
 )
-from ..data_structure.str import find_longest_common_substring, clean_non_word_characters
+from ..data_structure.str import find_longest_common_substring, clean_non_word_characters, remove_section

@@ -2,10 +2,7 @@
 import pytest
 
 # Local Functions
-from ictoolkit.data_structure.str import (
-    find_longest_common_substring,
-    clean_non_word_characters,
-)
+from ictoolkit.data_structure.str import find_longest_common_substring, clean_non_word_characters, remove_section
 
 # Exceptions
 from fexception import FValueError
@@ -15,106 +12,329 @@ __author__ = "IncognitoCoding"
 __copyright__ = "Copyright 2022, test_str"
 __credits__ = ["IncognitoCoding"]
 __license__ = "MIT"
-__version__ = "0.1"
+__version__ = "0.2"
 __maintainer__ = "IncognitoCoding"
 __status__ = "Production"
 
 
-def test_find_longest_common_substring():
-    """
-    Tests finding a common grouping substring.
+# ############################################################
+# ######Section Test Part 1 (Successful Value Checking)#######
+# ############################################################
 
-    Raises:
-        ValueError: A failure occurred in section 1.0 while testing the function \'find_longest_common_substring\'. The test did return the correct common substring.
-        ValueError: A failure occurred in section 2.0 while testing the function \'find_longest_common_substring\'. The test did not fail when sending a non-string parameter.
-    """
-    print("")
-    print("-" * 65)
-    print("-" * 65)
-    print("Testing Function: find_longest_common_substring")
-    print("-" * 65)
-    print("-" * 65)
-    print("")
 
-    # ############################################################
-    # ######Section Test Part 1 (Successful Value Checking)#######
-    # ############################################################
-    # ========Tests for a successful output return.========
+def test_1_find_longest_common_substring():
+    """Tests getting a common substring"""
     common_substring = find_longest_common_substring("mysamplechangeshere", "mysampleneverchanges")
-    # Checks if the return substring is not equal the expected result.
-    if not common_substring == "mysample":
-        exc_args = {
-            "main_message": "A failure occurred in section 1.0 while testing the function 'find_longest_common_substring'. The test did return the correct common substring.",
-            "expected_result": "mysample",
-            "returned_result": common_substring,
-        }
-        raise FValueError(exc_args)
-
-    # ############################################################
-    # ######Section Test Part 2 (Error/Catch Value Checking)######
-    # ############################################################
-    # ========Tests for an incorrectly sent config format.========
-    try:
-
-        common_substring = find_longest_common_substring("mysamplechangeshere", ["INCORRECT or EMPTY DATA TEST"])
-    except Exception as error:
-        if (
-            """The object value '['INCORRECT or EMPTY DATA TEST']' is not an instance of the required class(es) or subclass(es)."""
-            not in str(error)
-        ):
-            exc_args = {
-                "main_message": "A failure occurred in section 2.0 while testing the function 'find_longest_common_substring'. The test did not fail when sending a non-string parameter.",
-                "expected_result": "non-string parameter error",
-                "returned_result": error,
-            }
-            raise FValueError(exc_args)
+    assert "mysample" == common_substring
 
 
-def test_clean_non_word_characters():
+def test_1_clean_non_word_characters():
+    """Tests cleaning non-word characters."""
+    cleaned_string = clean_non_word_characters("BT-NNAK\x06")
+    assert "BT-NNAK" == cleaned_string
+
+
+def test_1_1_clean_non_word_characters():
+    """Tests cleaning word characters. The original value should return with no change."""
+    cleaned_string = clean_non_word_characters("BT-NNAK")
+    assert "BT-NNAK" == cleaned_string
+
+
+def test_1_remove_section():
     """
-    Tests cleaning non-word characters.
-
-    Raises:
-        ValueError: A failure occurred in section 1.0 while testing the function \'clean_non_word_characters\'. The test did return the correct cleaned substring.
-        ValueError: A failure occurred in section 2.0 while testing the function \'clean_non_word_characters\'. The test did not fail when sending a non-string parameter.
+    This function tests removing the domain from the string.
     """
-    print("")
-    print("-" * 65)
-    print("-" * 65)
-    print("Testing Function: clean_non_word_characters")
-    print("-" * 65)
-    print("-" * 65)
-    print("")
+    my_value: str = "mydevice.sample.org"
+    removal_values: tuple[str, ...] = ("badsample.org", "sample.org")
+    stripped_value = remove_section(orig_value=my_value, removal_values=removal_values, sep=".")
+    assert "mydevice" == stripped_value
 
-    # ############################################################
-    # ######Section Test Part 1 (Successful Value Checking)#######
-    # ############################################################
-    # ========Tests for a successful output return.========
-    cleaned_string = clean_non_word_characters("BTW-N5K\x06")
-    # Checks if the return substring is not equal the expected result.
-    if not cleaned_string == "BTW-N5K":
-        exc_args = {
-            "main_message": "A failure occurred in section 1.0 while testing the function 'clean_non_word_characters'. The test did return the correct cleaned substring.",
-            "expected_result": "BTW-N5K",
-            "returned_result": cleaned_string,
-        }
-        raise FValueError(exc_args)
 
-    # ############################################################
-    # ######Section Test Part 2 (Error/Catch Value Checking)######
-    # ############################################################
-    # ========Tests for an incorrectly sent config format.========
-    try:
+def test_1_2_remove_section():
+    """
+    This function tests removing the folder path from the string with 100% match.
+    """
+    my_value: str = "C:\\Windows\\Temp\\myprogram"
+    removal_values: tuple[str, ...] = ("Temp\\myprogram", "Temp\\myprogram1", "Temp\\myprogram2")
+    stripped_value = remove_section(orig_value=my_value, removal_values=removal_values, sep="\\", percent=80)
+    assert "C:\\Windows" == stripped_value
 
-        cleaned_string = clean_non_word_characters(["INCORRECT or EMPTY DATA TEST"])
-    except Exception as error:
-        if (
-            """The object value '['INCORRECT or EMPTY DATA TEST']' is not an instance of the required class(es) or subclass(es)."""
-            not in str(error)
-        ):
-            exc_args = {
-                "main_message": "A failure occurred in section 2.0 while testing the function 'clean_non_word_characters'. The test did not fail when sending a non-string parameter.",
-                "expected_result": "non-string parameter error",
-                "returned_result": error,
-            }
-            raise FValueError(exc_args)
+
+def test_1_3_remove_section():
+    """
+    This function tests removing the folder path from the string with 90% match.
+    """
+    my_value: str = "C:\\Windows\\Temp\\myprogram"
+    removal_values: tuple[str, ...] = ("Temp\\myprogram1", "Temp\\myprogram2")
+    stripped_value = remove_section(orig_value=my_value, removal_values=removal_values, sep="\\", percent=80)
+    assert "C:\\Windows" == stripped_value
+
+
+def test_1_4_remove_section():
+    """
+    This function tests the domain not matching any name at 100% match.
+
+    The original value will return.
+    """
+    # my_value: str = "mydevice.sample.org"
+    my_value: str = "aaaa.abc1.ds3a.d3gs"
+    removal_values: tuple[str, ...] = ("badsample.org", "sample.o1rg")
+    stripped_value = remove_section(orig_value=my_value, removal_values=removal_values, sep=".")
+    assert "aaaa.abc1.ds3a.d3gs" == stripped_value
+
+
+def test_1_5_remove_section(caplog):
+    """
+    This function tests the domain not matching any name at 100% match.
+
+    The original value will return with a warning.
+    """
+    # my_value: str = "mydevice.sample.org"
+    my_value: str = "aaaa.abc1.ds3a.d3gs"
+    removal_values: tuple[str, ...] = ("badsample.org", "sample.o1rg")
+    # Tests user warning.
+    with pytest.warns(UserWarning):
+        stripped_value = remove_section(orig_value=my_value, removal_values=removal_values, sep=".", percent=50)
+    assert (
+        "The processing orig_value (aaaa.abc1.ds3a.d3gs) contains a '.' but has no removal_value(s) match"
+    ) in caplog.text
+    assert "removal_values = badsample.org, sample.o1rg" in caplog.text
+    assert (
+        "If some orig_value entries have the potential to not match, please verify the orig_value is a value needing to be stripped."
+    ) in caplog.text
+    assert "aaaa.abc1.ds3a.d3gs" == stripped_value
+
+
+def test_1_6_remove_section():
+    """
+    This function tests the value not matching an empty tuple.
+    """
+    my_value: str = "mydevice.sample.org"
+    removal_values: tuple[str, ...] = ()
+    stripped_value = remove_section(orig_value=my_value, removal_values=removal_values, sep=".")
+    assert "mydevice.sample.org" == stripped_value
+
+
+def test_1_7_remove_section():
+    """
+    This function tests two data sets.
+    \t\\- 1st: The domain names with sub-domains is sorted by the sub-domains first,\\
+    followed by the main domain.
+    \t\\- 2nd: Removing the domain from the string based on the sorted domain names.
+    """
+    my_value: str = "mydevice.sim.redcolor.org"
+    removal_values: tuple[str, ...] = (
+        "sample.org",
+        "home.sample.org",
+        "redcolor.org",
+        "home.redcolor.org",
+        "sim.redcolor.org",
+        "amp.redcolor.org",
+    )
+    stripped_value = remove_section(orig_value=my_value, removal_values=removal_values, sep=".")
+    assert "mydevice" == stripped_value
+
+
+def test_1_8_remove_section():
+    """
+    Tests a percent domain name match/strip.
+    """
+    # my_value: str = "mydevice.sim.randombluerandom"
+    my_value: str = "mydevice.sim.randombluerandom"
+    removal_values: str = "sim.randombluerandomredrandomgreen.org"
+    stripped_value = remove_section(orig_value=my_value, removal_values=removal_values, sep=".", percent=45)
+    assert "mydevice" == stripped_value
+
+
+def test_1_9_remove_section():
+    """
+    Tests removal value with a dot separator and percent disabled.
+
+    No match should be found.
+    """
+    # my_value: str = "mydevice.sim.randombluerandom"
+    my_value: str = "mydevice.sim.randombluerandom"
+    removal_values: tuple[str, ...] = ("randombluerandomredrandomgreen", "Sample")
+    stripped_value = remove_section(orig_value=my_value, removal_values=removal_values, sep=".")
+    assert my_value == stripped_value
+
+
+def test_1_10_remove_section():
+    """
+    Tests removal value with a dot separator and percent enabled.
+    """
+    # my_value: str = "mydevice.sim.randombluerandom"
+    my_value: str = "mydevice.sim.randombluerandom"
+    removal_values: str = "randombluerandomredrandomgreen"
+    stripped_value = remove_section(orig_value=my_value, removal_values=removal_values, sep=".", percent=40)
+    assert "mydevice.sim" == stripped_value
+
+
+def test_1_11_remove_section():
+    """
+    Tests removal values with a blank space separator.
+    """
+    my_value: str = "can you find me"
+    removal_values: tuple[str, ...] = (
+        "smith" "red",
+        "blue",
+        "home red",
+        "sim blue",
+        "find",
+    )
+    stripped_value = remove_section(orig_value=my_value, removal_values=removal_values, sep=" ", percent=50)
+    assert "can you" == stripped_value
+
+
+def test_1_12_remove_section():
+    """
+    Tests removal value with a dot separator with 99% match.
+
+    This will return the original string because the match will be too high.
+    """
+    # my_value: str = "mydevice.sim.randombluerandom"
+    my_value: str = "mydevice.sim.randombluerandom"
+    removal_values: str = "randombluerandomredrandomgreen"
+    stripped_value = remove_section(orig_value=my_value, removal_values=removal_values, sep=".", percent=99)
+    assert "mydevice.sim.randombluerandom" == stripped_value
+
+
+def test_1_13_remove_section():
+    """
+    Tests removal value with a dash separator and no dashes in the orig_value.
+
+    This will return the original string.
+    """
+    # my_value: str = "mydevice.sim.randombluerandom"
+    my_value: str = "mydevice.sim.randombluerandom"
+    removal_values: str = "randombluerandomredrandomgreen"
+    stripped_value = remove_section(orig_value=my_value, removal_values=removal_values, sep="-")
+    assert "mydevice.sim.randombluerandom" == stripped_value
+
+
+# ############################################################
+# ######Section Test Part 2 (Error/Catch Value Checking)######
+# ############################################################
+
+
+def test_2_find_longest_common_substring():
+    """
+    Tests sending an invalid string1 string type.
+    """
+    with pytest.raises(Exception) as excinfo:
+        find_longest_common_substring(string1={"invalid Type"}, string2="mysamplechangeshere")
+    assert (
+        """The object value '{'invalid Type'}' is not an instance of the required class(es) or subclass(es)."""
+        in str(excinfo.value)
+    )
+    assert """<class 'str'>""" in str(excinfo.value)
+    assert """<class 'set'>""" in str(excinfo.value)
+
+
+def test_2_1_find_longest_common_substring():
+    """
+    Tests sending an invalid string2 string type.
+    """
+    with pytest.raises(Exception) as excinfo:
+        find_longest_common_substring(string1="mysamplechangeshere", string2={"invalid Type"})
+    assert (
+        """The object value '{'invalid Type'}' is not an instance of the required class(es) or subclass(es)."""
+        in str(excinfo.value)
+    )
+    assert """<class 'str'>""" in str(excinfo.value)
+    assert """<class 'set'>""" in str(excinfo.value)
+
+
+def test_2_clean_non_word_characters():
+    """
+    Tests sending an invalid string2 string type.
+    """
+    with pytest.raises(Exception) as excinfo:
+        clean_non_word_characters(string={"invalid Type"})
+    assert (
+        """The object value '{'invalid Type'}' is not an instance of the required class(es) or subclass(es)."""
+        in str(excinfo.value)
+    )
+    assert """<class 'str'>""" in str(excinfo.value)
+    assert """<class 'set'>""" in str(excinfo.value)
+
+
+def test_2_remove_section():
+    """
+    Tests sending an invalid orig_value string type.
+    """
+    with pytest.raises(Exception) as excinfo:
+        remove_section(orig_value={"invalid Type"}, removal_values=[""], sep=" ")
+    assert (
+        """The object value '{'invalid Type'}' is not an instance of the required class(es) or subclass(es)."""
+        in str(excinfo.value)
+    )
+    assert """<class 'str'>""" in str(excinfo.value)
+    assert """<class 'set'>""" in str(excinfo.value)
+
+
+def test_2_1_remove_section():
+    """
+    Tests sending an invalid removal_values tuple type.
+    """
+    with pytest.raises(Exception) as excinfo:
+        remove_section(orig_value="sampleswitch", removal_values={"invalid Type"}, sep=" ")
+    assert (
+        """The object value '{'invalid Type'}' is not an instance of the required class(es) or subclass(es)."""
+        in str(excinfo.value)
+    )
+    assert """<class 'str'> | <class 'tuple'>""" in str(excinfo.value)
+    assert """<class 'set'>""" in str(excinfo.value)
+
+
+def test_2_2_remove_section():
+    """
+    Tests sending an invalid removal_values tuple value type.
+    """
+    with pytest.raises(Exception) as excinfo:
+        remove_section(orig_value="sampleswitch", removal_values=({"invalid Type"}, {"invalid Type"}), sep=" ")
+    assert """Invalid tuple value type. The removal_values arg requires a tuple of strings.""" in str(excinfo.value)
+    assert """<class 'str'>""" in str(excinfo.value)
+    assert """<class 'set'>""" in str(excinfo.value)
+
+
+def test_2_3_remove_section():
+    """
+    Tests sending an invalid sep string type.
+    """
+    """
+    Tests sending an invalid sep string type.
+    """
+    with pytest.raises(Exception) as excinfo:
+        remove_section(orig_value="sampleswitch", removal_values="sample", sep="")
+    assert """The value '' sent is not an accepted input.""" in str(excinfo.value)
+    assert """Any value other than None or an empty string""" in str(excinfo.value)
+    assert """<class 'str'>""" in str(excinfo.value)
+
+
+def test_2_4_remove_section():
+    """
+    Tests sending an invalid sep string type.
+    """
+    with pytest.raises(Exception) as excinfo:
+        remove_section(orig_value="sampleswitch", removal_values="sample", sep={"invalid Type"})
+    assert (
+        """The object value '{'invalid Type'}' is not an instance of the required class(es) or subclass(es)."""
+        in str(excinfo.value)
+    )
+    assert """<class 'str'>""" in str(excinfo.value)
+    assert """<class 'set'>""" in str(excinfo.value)
+
+
+def test_2_5_remove_section():
+    """
+    Tests sending an invalid sep string type.
+    """
+    with pytest.raises(Exception) as excinfo:
+        remove_section(orig_value="sampleswitch", removal_values="sample", sep=" ", percent={"invalid Type"})
+    assert (
+        """The object value '{'invalid Type'}' is not an instance of the required class(es) or subclass(es)."""
+        in str(excinfo.value)
+    )
+    assert """<class 'int'>""" in str(excinfo.value)
+    assert """<class 'set'>""" in str(excinfo.value)

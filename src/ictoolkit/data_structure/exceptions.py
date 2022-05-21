@@ -10,3 +10,10 @@ class RequirementFailure(Exception):
 
     __module__ = "builtins"
     pass
+
+
+class RemoveSectionFailure(Exception):
+    """Exception raised for a removal section exception message."""
+
+    __module__ = "builtins"
+    pass
