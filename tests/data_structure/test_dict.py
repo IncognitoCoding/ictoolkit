@@ -2,16 +2,63 @@
 import pytest
 
 # Local Functions
-from ictoolkit.data_structure.dict import string_grouper
+from ictoolkit.data_structure.dict import string_grouper, sort_dict
 
 
 __author__ = "IncognitoCoding"
 __copyright__ = "Copyright 2022, test_dict"
 __credits__ = ["IncognitoCoding"]
 __license__ = "MIT"
-__version__ = "0.1"
+__version__ = "0.2"
 __maintainer__ = "IncognitoCoding"
 __status__ = "Production"
+
+
+def test_1_sort_dict():
+    """Tests sorting keys"""
+    my_dict = {
+        "TB": [50, "sample5", "sample6"],
+        "BB": [85, "sample28"],
+        "CC": "sample15",
+    }
+    my_dict = sort_dict(my_dict=my_dict, sort="key")
+    assert {"BB": [85, "sample28"], "CC": "sample15", "TB": [50, "sample5", "sample6"]} == my_dict
+
+
+def test_1_1_sort_dict():
+    """Tests sorting values"""
+    my_dict = {
+        "ZZ": "zipzip14",
+        "TB": [50, "sample8", "sample6"],
+        "BB": [85, "sample28"],
+        "CC": "sample15",
+    }
+    my_dict = sort_dict(my_dict=my_dict, sort="key", sort_values=True)
+    assert {"BB": [85, "sample28"], "CC": "sample15", "TB": [50, "sample6", "sample8"], "ZZ": "zipzip14"} == my_dict
+
+
+def test_1_2_sort_dict():
+    """Tests sorting values"""
+    my_dict = {
+        "ZZ": "zipzip14",
+        "TB": [50, "sample8", "sample6"],
+        "BB": [85, "sample28"],
+        "CC": "sample15",
+    }
+    my_dict = sort_dict(my_dict=my_dict, sort="value")
+    assert {"TB": [50, "sample8", "sample6"], "BB": [85, "sample28"], "CC": "sample15", "ZZ": "zipzip14"} == my_dict
+
+
+def test_1_3_sort_dict():
+    """Tests sorting values"""
+    my_dict = {
+        "ZZ": "zipzip14",
+        "TB": [50, "sample8", "sample6"],
+        "BB": [85, "sample28"],
+        "CC": "sample15",
+    }
+    my_dict = sort_dict(my_dict=my_dict, sort="value", sort_values=True)
+    assert {"TB": [50, "sample6", "sample8"], "BB": [85, "sample28"], "CC": "sample15", "ZZ": "zipzip14"} == my_dict
 
 
 def test_1_string_grouper():

@@ -17,3 +17,10 @@ class RemoveSectionFailure(Exception):
 
     __module__ = "builtins"
     pass
+
+
+class DictStructureFailure(Exception):
+    """Exception raised for a dictionary structure exception message."""
+
+    __module__ = "builtins"
+    pass

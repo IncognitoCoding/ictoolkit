@@ -1,7 +1,7 @@
 # Built-in/Generic Imports
 import logging
 from itertools import groupby
-from typing import Union, Any
+from typing import Literal, Union, Any
 from collections import OrderedDict
 
 # Libraries
@@ -11,18 +11,136 @@ from fchecker.type import type_check
 from ..data_structure.common import common_case_isupper, common_case_islower, dict_keys_upper, dict_keys_lower
 from ..helpers.py_helper import get_function_name
 from ..helpers.sort_helper import str_int_key
+from ..data_structure.list import sort_list
+
+# Local Exceptions:
+from ..data_structure.exceptions import DictStructureFailure
 
 # Exceptions
-from fexception import FGeneralError, FTypeError
+from fexception import FGeneralError, FTypeError, FCustomException
 
 
 __author__ = "IncognitoCoding"
 __copyright__ = "Copyright 2022, dict"
 __credits__ = ["IncognitoCoding"]
 __license__ = "MIT"
-__version__ = "0.3"
+__version__ = "0.4"
 __maintainer__ = "IncognitoCoding"
 __status__ = "Production"
+
+
+def sort_dict(my_dict: dict[Any, Any], sort: Literal["key", "value"], sort_values: bool = False) -> dict[Any, Any]:
+    """
+    Sorts a dictionary based on the sort options.
+
+    Sorting is based on converting a type to a string value before sorting. Types such as Bool will sort alphabetically.
+
+    Args:
+        my_dict (dict[Any, Any]):
+        \t\\- The dictionary needing sorted.
+        sort (str):
+        \t\\- The section of the dictionary needing sorted.\\
+        \t\\- Choose "key" or "value".
+        sort_values (bool, optional):
+        \t\\- Sorts any list values of the dictionary.
+        \t\\- Defaults to False.
+
+    Raises:
+        FTypeError (fexception):
+        \t\\- The object value '{my_dict}' is not an instance of the required class(es) or subclass(es).
+        FTypeError (fexception):
+        \t\\- The object value '{sort}' is not an instance of the required class(es) or subclass(es).
+        FTypeError (fexception):
+        \t\\- The object value '{sort_values}' is not an instance of the required class(es) or subclass(es).
+        DictStructureFailure:
+        \t\\- Invalid sort value.
+        FGeneralError:
+        \t\\- A general failure occurred while sorting the dictionary.
+
+    Returns:
+        dict[Any, Any]:
+        \t\\- A sorted dictionary.
+    """
+    logger = logging.getLogger(__name__)
+    logger.debug(f"=" * 20 + get_function_name() + "=" * 20)
+    # Custom flowchart tracking. This is ideal for large projects that move a lot.
+    # For any third-party modules, set the flow before making the function call.
+    logger_flowchart = logging.getLogger("flowchart")
+    logger_flowchart.debug(f"Flowchart --> Function: {get_function_name()}")
+
+    try:
+        type_check(value=my_dict, required_type=dict)
+        type_check(value=sort, required_type=str)
+        type_check(value=sort_values, required_type=bool)
+    except FTypeError:
+        raise
+
+    formatted_my_dict = "  - my_dict (dict):\n        - " + "\n        - ".join(
+        ": ".join((str(key), str(val))) for (key, val) in my_dict.items()
+    )
+
+    logger.debug(
+        "Passing parameters:\n"
+        f"{formatted_my_dict}\n"
+        f"  - sort (str):\n        - {sort}\n"
+        f"  - sort_values (bool):\n        - {sort_values}\n"
+    )
+
+    try:
+        # Checks if the values of each dictionary entry need to be sorted.
+        new_dict: dict[Any, Any] = {}
+        # Sorts values within the dictionary.
+        if sort_values:
+            for key, value in my_dict.items():
+                # Sorts the value if a list.
+                if isinstance(value, list):
+                    new_dict.update({key: sort_list(my_list=value)})
+                else:
+                    new_dict.update({key: value})
+        else:
+            new_dict = my_dict
+
+        # Sports based on the key or value sort choice.
+        sorted_dict: dict[Any, Any] = {}
+        if sort == "key":
+            # This section converts mixed int values to a string to sort.
+            converted_keys: list[Any] = sort_list(my_list=list(new_dict.keys()))
+
+            for key in converted_keys:
+                # Adds the dictionary to the sorted list
+                # based on the sorted key.
+                sorted_dict.update({key: new_dict[key]})
+        elif sort == "value":
+            # Converts the list values (no mater type) to a string to sort alphabetically.
+            converted_values: list[Any] = sort_list(my_list=list(new_dict.values()))
+
+            # Loops through each sorted dictionary value.
+            for converted_value in converted_values:
+                # Loops through the original dictionary list.
+                for key, orig_value in new_dict.items():
+                    # Check if the values match, to resort based on the order of the values.
+                    if converted_value == orig_value:
+                        sorted_dict.update({key: orig_value})
+                        break
+
+        else:
+            exc_args: dict = {
+                "main_message": "Invalid sort value.",
+                "custom_type": DictStructureFailure,
+                "expected_result": """Literal["key", "value"]""",
+                "returned_result": sort,
+            }
+            raise DictStructureFailure(FCustomException(exc_args))
+    except DictStructureFailure:  # pragma: no cover
+        raise
+    except Exception as exc:  # pragma: no cover
+        exc_args = {
+            "main_message": "A general failure occurred while sorting the dictionary.",
+            "original_exception": exc,
+        }
+        raise FGeneralError(exc_args)
+    else:
+        return sorted_dict
 
 
 def string_grouper(
@@ -451,7 +569,8 @@ def move_dict_value(
     """
     This function moves dictionary values from one key to another key.
 
-    Sorting will perform on values types (str) or (int). String numbers are supported.
+    Sorting will perform on values types (str) or (int). String numbers are supported.\\
+    Sorting of types (Bool, Tuple, etc.) will sort based on the string equivalent.
 
     Single source grouping value entries will get removed.
 
@@ -467,6 +586,11 @@ def move_dict_value(
         \t\\- The value needing moved.
         sort (bool, optional):
         \t\\- Sorts the destination dictionary values.\\
+        \t\\- Notes:
+        \t\t\\- The dictionary key will only sort if a new key is created during\\
+        \t\t   the move. This is to attempt to keep the keys in the original place.\\
+        \t\t\\- The dictionary values (list) will only change if a value\\
+        \t\t   is merged to another key's values (list).\\
         \t\\- Defaults to True.
 
     Raises:
@@ -529,26 +653,8 @@ def move_dict_value(
         dest_list.append(value)
         if sort:
             if dest_list:
-                # Checks to determine the type of sort that can be performed.
-                # List sort is supported on int/str or int only.
-                int_only: bool = True
-                int_str_only: bool = True
-                for value in dest_list:
-                    # Checks if any values are not int.
-                    if not isinstance(value, int):
-                        int_only = False
-                    # Checks if a value is int only.
-                    if isinstance(value, int):
-                        int_str_only = False
-                    # Checks if any values are not int or str.
-                    if not "str" in str(type(value)) and not "int" in str(type(value)):
-                        int_str_only = False
-
-                # Sorts if the values approved.
-                if int_str_only:
-                    dest_list.sort(key=str_int_key)
-                elif int_only:
-                    dest_list.sort(key=int)
+                # Sorts the list based on the list type.
+                dest_list = sort_list(my_list=dest_list)
 
         # Removes the source dictionary entry if the list is empty.
         if len(src_list) == 0:
@@ -562,8 +668,9 @@ def move_dict_value(
         my_dict[dest_key] = dest_list
 
         # Final sort based on the keys.
+        # The original list (no move) will remain the same no matter if sorted or not.
         if sort:
-            my_dict = OrderedDict(sorted(my_dict.items()))
+            my_dict = sort_dict(my_dict=my_dict, sort="key")
     except Exception as exc:  # pragma: no cover
         exc_args = {
             "main_message": "A general failure occurred while moving dictionary values.",

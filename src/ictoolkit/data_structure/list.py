@@ -5,8 +5,11 @@ from typing import Union, List, Any, Optional
 # Libraries
 from fchecker.type import type_check
 
+from ictoolkit.data_structure.common import str_to_list
+
 # Local Functions
 from ..helpers.py_helper import get_function_name
+from ..helpers.sort_helper import str_int_key
 
 # Exceptions
 from fexception import FGeneralError, FKeyError, FTypeError
@@ -16,7 +19,7 @@ __author__ = "IncognitoCoding"
 __copyright__ = "Copyright 2022, list"
 __credits__ = ["IncognitoCoding"]
 __license__ = "MIT"
-__version__ = "0.1"
+__version__ = "0.2"
 __maintainer__ = "IncognitoCoding"
 __status__ = "Production"
 
@@ -558,3 +561,102 @@ def get_list_duplicates(
                 return duplicate_list_dictionary
         else:
             return None
+
+
+def sort_list(my_list: list[Any]) -> list[Any]:
+    """
+    Mixed types (ex: int, str) can not be sorted together by default.
+
+    This function sorts a list of any value based on the string equivalent.
+
+    Strings and Integers will sort nicely. Other values like\\
+    Bool will sort alphabetically.
+
+    Examples:
+    \t\\- 1 = "1"\\
+    \t\\- True = "True"\\
+    \t\\- Bool = "Bool"
+
+    Args:
+        my_list (list[Any]):
+        \t\\- The list needing sorted.
+
+    Raises:
+        FTypeError (fexception):
+        \t\\- The object value '{my_list}' is not an instance of the required class(es) or subclass(es).
+        FGeneralError:
+        \t\\- A general exception occurred while sorting the list.
+    Returns:
+        list[Any]:
+        \t\\- A sorted list based on the string equivalent.
+    """
+    logger = logging.getLogger(__name__)
+    logger.debug(f"=" * 20 + get_function_name() + "=" * 20)
+    # Custom flowchart tracking. This is ideal for large projects that move a lot.
+    # For any third-party modules, set the flow before making the function call.
+    logger_flowchart = logging.getLogger("flowchart")
+    logger_flowchart.debug(f"Flowchart --> Function: {get_function_name()}")
+
+    try:
+        type_check(value=my_list, required_type=list)
+    except FTypeError:
+        raise
+
+    formatted_my_list = "  - my_list (list):" + str("\n        - " + "\n        - ".join(map(str, my_list)))
+
+    logger.debug("Passing parameters:\n" f"{formatted_my_list}\n")
+
+    try:
+        # Stores the original type, so it can be converted back.
+        orig_type: dict[Any, Any] = {}
+        converted_list: list[str] = []
+
+        # Checks if the values are all int or a mix.
+        all_int = all(str(value).isdigit() for value in my_list)
+
+        if all_int:
+            my_list.sort()
+            sorted_list = my_list
+        else:
+            contains_int: bool = False
+            contains_str: bool = False
+            # Gets the original type and sets the converted list.
+            for value in my_list:
+                orig_type.update({str(value): type(value)})
+
+                # Tracks value type for sorting.
+                if isinstance(value, int):
+                    contains_int = True
+                elif isinstance(value, str):
+                    contains_str = True
+
+                converted_list.append(str(value))
+
+            # Converts the int, int/str or str list.
+            # Checks which type to cut down on processing time.
+            if contains_int and not contains_str:
+                converted_list.sort(key=int)
+            elif contains_int and contains_str:
+                converted_list.sort(key=str_int_key)
+            else:
+                converted_list.sort()
+
+            # Re-converts the values back to the original type.
+            sorted_list: list[Any] = []
+            for value in converted_list:
+                # Checks if the value was a list to reconstruct the list.
+                if "<class 'list'>" in str(orig_type[value]):
+                    # Uses eval to convert the str[list] back to the original list.
+                    sorted_list.append(eval(value))
+                else:
+                    # Looks up original type in the dictionary and adds the value
+                    # with the original type to the sorted list.
+                    sorted_list.append(orig_type[value](value))
+    except Exception as exc:  # pragma: no cover
+        exc_args = {
+            "main_message": "A general exception occurred while sorting the list.",
+            "original_exception": exc,
+        }
+        raise FGeneralError(exc_args)
+    else:
+        return sorted_list

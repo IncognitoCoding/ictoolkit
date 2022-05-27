@@ -16,12 +16,12 @@ __author__ = "IncognitoCoding"
 __copyright__ = "Copyright 2022, common"
 __credits__ = ["IncognitoCoding"]
 __license__ = "MIT"
-__version__ = "0.1"
+__version__ = "0.2"
 __maintainer__ = "IncognitoCoding"
 __status__ = "Production"
 
 
-def str_to_list(value: Union[str, list], sep: str) -> list:
+def str_to_list(value: Union[str, list], sep: str) -> list[Any]:
     """
     Take any string and converts it based on the separator.\\
     The difference between this function and .split() is this function\\
@@ -49,12 +49,11 @@ def str_to_list(value: Union[str, list], sep: str) -> list:
         \t\\- The object value '{value}' is not an instance of the required class(es) or subclass(es).
         FGeneralError:
         \t\\- A general failure occurred while converting the string to list.
-        FValueError:
-        \t\\- The value ({value}) did not convert to a list.
 
     Returns:
-        list:
-        \t\\- A converted string to a list or the forwarded list.
+        list[Any]:
+        \t\\- A converted string to a list or the original forwarded list.
+        \t\\- Empty lists can pass through.
     """
     logger = logging.getLogger(__name__)
     logger.debug(f"=" * 20 + get_function_name() + "=" * 20)
@@ -77,7 +76,7 @@ def str_to_list(value: Union[str, list], sep: str) -> list:
     try:
         new_list: list = []
         if isinstance(value, str):
-            # Converts if the delimeter is in the value.
+            # Converts if the delimiter is in the value.
             if sep in str(value):
                 new_list = str(value.strip()).split(sep)
             else:
@@ -93,13 +92,7 @@ def str_to_list(value: Union[str, list], sep: str) -> list:
         }
         raise FGeneralError(exc_args)
     else:
-        if new_list:
-            return new_list
-        else:
-            exc_args = {
-                "main_message": f"The value ({value}) did not convert to a list.",
-            }
-        raise FValueError(exc_args)
+        return new_list
 
 
 def common_case_isupper(list_of_strings: list[str]) -> bool:
