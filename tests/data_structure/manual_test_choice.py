@@ -30,7 +30,7 @@ def test_1_user_choice_character_grouping():
     """
     This function tests getting the users character grouping.
     """
-    sample_list = ["TI-MyTest1", "TI-MyTest2", "KV-MyTest1", "KV-MyTest2", "WZ-MyTest1"]
+    sample_list = ["TI-MyTest1", "TI-MyTest2", "KV1-MyTest1", "KV1-MyTest2", "WZ-MyTest1", "kv1-MyTest3", "kv2-MyTest1"]
     print("Manual run instructions")
     print("")
     print("Select 'Yes' to continue, Character Position Number, Enter 2 for the character position")

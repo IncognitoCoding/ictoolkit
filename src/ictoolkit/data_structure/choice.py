@@ -18,7 +18,7 @@ __author__ = "IncognitoCoding"
 __copyright__ = "Copyright 2022, choice"
 __credits__ = ["IncognitoCoding"]
 __license__ = "MIT"
-__version__ = "0.4"
+__version__ = "0.5"
 __maintainer__ = "IncognitoCoding"
 __status__ = "Production"
 
@@ -250,11 +250,29 @@ def user_choice_character_grouping(list_of_strings: list) -> dict[str, list[str]
                                     # Verifies the moving values are not part of the same
                                     # destination group.
                                     for current_group_value in groupings[key]:
-                                        for dest_group_value in group:
-                                            if current_group_value == dest_group_value:
+                                        # Checks current values against the users choice.
+                                        if "*" in dest_group_value_choice:
+                                            if len(wildcard_key_value) >= 1:
+                                                # Loops through wildcard groupings (One per matching key).
+                                                for key, group in wildcard_key_value.items():
+                                                    # Loops through each entry in the matching wildcard key based group.
+                                                    for dest_group_value in group:
+                                                        if current_group_value == dest_group_value:
+                                                            print(
+                                                                f"\nThe current group value '{current_group_value}' matches one of the destination "
+                                                                f"moving values '{groupings[key]}'. Skipping the group edit"
+                                                            )
+                                                            existing_dest_group = True
+                                                            break
+                                                    if existing_dest_group:
+                                                        break
+                                                if existing_dest_group:
+                                                    break
+                                        else:
+                                            if current_group_value == dest_group_value_choice:
                                                 print(
                                                     f"\nThe current group value '{current_group_value}' matches the destination "
-                                                    f"moving value '{dest_group_value}'. Skipping the group edit"
+                                                    f"moving value '{dest_group_value_choice}'. Skipping the group edit"
                                                 )
                                                 existing_dest_group = True
                                                 break
