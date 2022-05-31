@@ -46,6 +46,8 @@ def test_1_user_choice_character_grouping():
     # ('TI', ['TI-MyTest1', 'TI-MyTest2'])
     # ('WZ', ['WZ-MyTest1'])
 
+    # Test moving the same values back to the same group.
+
 
 # ############################################################
 # ######Section Test Part 2 (Error/Catch Value Checking)######

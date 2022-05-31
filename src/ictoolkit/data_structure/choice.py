@@ -18,7 +18,7 @@ __author__ = "IncognitoCoding"
 __copyright__ = "Copyright 2022, choice"
 __credits__ = ["IncognitoCoding"]
 __license__ = "MIT"
-__version__ = "0.3"
+__version__ = "0.4"
 __maintainer__ = "IncognitoCoding"
 __status__ = "Production"
 
@@ -231,6 +231,7 @@ def user_choice_character_grouping(list_of_strings: list) -> dict[str, list[str]
                                         f"\nThe string value you entered '{dest_group_value_choice}' does not match any value in the existing groups. Please try again.\n"
                                     )
 
+                        existing_dest_group: bool = False
                         # Gets the string value to move.
                         while True:
                             while True:
@@ -246,10 +247,27 @@ def user_choice_character_grouping(list_of_strings: list) -> dict[str, list[str]
                             for key, group in groupings.items():
                                 # Checks if the string value exists.
                                 if dest_group_key_choice == key:
-                                    single_match_value = True
+                                    # Verifies the moving values are not part of the same
+                                    # destination group.
+                                    for current_group_value in groupings[key]:
+                                        for dest_group_value in group:
+                                            if current_group_value == dest_group_value:
+                                                print(
+                                                    f"\nThe current group value '{current_group_value}' matches the destination "
+                                                    f"moving value '{dest_group_value}'. Skipping the group edit"
+                                                )
+                                                existing_dest_group = True
+                                                break
+                                        if existing_dest_group:
+                                            break
+
+                                    if existing_dest_group:
+                                        break
+                                    else:
+                                        single_match_value = True
                                 if single_match_value:
                                     break
-                            if single_match_value:
+                            if existing_dest_group or single_match_value:
                                 break
                             else:
                                 continue_choice: int = 0
@@ -266,31 +284,38 @@ def user_choice_character_grouping(list_of_strings: list) -> dict[str, list[str]
                                 if continue_choice == 1:
                                     break
 
-                        # Moves the dictionary value based on the destination group value.
-                        if "*" in dest_group_value_choice:
-                            if len(wildcard_key_value) >= 1:
-                                for key, group in wildcard_key_value.items():
-                                    for entry in group:
-                                        groupings = move_dict_value(
-                                            my_dict=groupings,
-                                            src_key=key,
-                                            dest_key=dest_group_key_choice,
-                                            value=entry,
-                                        )  # type: ignore
+                        if existing_dest_group:
+                            print("\nBelow are your current grouping edits:")
+                            # Loops through the output to show the user the results
+                            for key, group in groupings.items():
+                                # Sets variables for easier usage.
+                                print(f"Grouping Key = {key} >>>>> Grouping = {group}")
                         else:
-                            # Moves the dictionary values based on the user's input.
-                            groupings = move_dict_value(
-                                my_dict=groupings,
-                                src_key=src_group_key,
-                                dest_key=dest_group_key_choice,
-                                value=dest_group_value_choice,
-                            )  # type: ignore
+                            # Moves the dictionary value based on the destination group value.
+                            if "*" in dest_group_value_choice:
+                                if len(wildcard_key_value) >= 1:
+                                    for key, group in wildcard_key_value.items():
+                                        for entry in group:
+                                            groupings = move_dict_value(
+                                                my_dict=groupings,
+                                                src_key=key,
+                                                dest_key=dest_group_key_choice,
+                                                value=entry,
+                                            )  # type: ignore
+                            else:
+                                # Moves the dictionary values based on the user's input.
+                                groupings = move_dict_value(
+                                    my_dict=groupings,
+                                    src_key=src_group_key,
+                                    dest_key=dest_group_key_choice,
+                                    value=dest_group_value_choice,
+                                )  # type: ignore
 
-                        print("\nBelow are your revised edits:")
-                        # Loops through the output to show the user the results
-                        for key, group in groupings.items():
-                            # Sets variables for easier usage.
-                            print(f"Grouping Key = {key} >>>>> Grouping = {group}")
+                            print("\nBelow are your revised edits:")
+                            # Loops through the output to show the user the results
+                            for key, group in groupings.items():
+                                # Sets variables for easier usage.
+                                print(f"Grouping Key = {key} >>>>> Grouping = {group}")
 
                         while True:
                             choice = input(
