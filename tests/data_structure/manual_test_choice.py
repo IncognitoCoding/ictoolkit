@@ -16,7 +16,7 @@ __author__ = "IncognitoCoding"
 __copyright__ = "Copyright 2022, test_choice"
 __credits__ = ["IncognitoCoding"]
 __license__ = "MIT"
-__version__ = "0.1"
+__version__ = "0.2"
 __maintainer__ = "IncognitoCoding"
 __status__ = "Production"
 
@@ -47,6 +47,30 @@ def test_1_user_choice_character_grouping():
     # ('WZ', ['WZ-MyTest1'])
 
     # Test moving the same values back to the same group.
+
+
+def test_1_1_user_choice_character_grouping():
+    """
+    This function tests getting the users character grouping.
+    """
+    sample_list = ["GenetecSandSW01", "Sandburg", "sand-idf02-01", "sandburg-idf01-stack01"]
+    print("Manual run instructions")
+    print("")
+    print("Select 'Yes' to continue, Character Position Number, Enter 2 for the character position")
+    grouped_characters = user_choice_character_grouping(sample_list)
+
+    group_count = len(list(grouped_characters.keys()))
+    print(group_count)
+    for group in grouped_characters.items():
+        print(group)
+    # Need To Add Pytest Instructions.
+    # Expected Return Example:
+    # ('KV', ['KV-MyTest1', 'KV-MyTest2'])
+    # ('TI', ['TI-MyTest1', 'TI-MyTest2'])
+    # ('WZ', ['WZ-MyTest1'])
+
+    # Test moving the same values back to the same group.
+    # Test wildcard *value, value*, and *value*
 
 
 # ############################################################

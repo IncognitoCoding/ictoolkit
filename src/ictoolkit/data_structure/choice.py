@@ -18,7 +18,7 @@ __author__ = "IncognitoCoding"
 __copyright__ = "Copyright 2022, choice"
 __credits__ = ["IncognitoCoding"]
 __license__ = "MIT"
-__version__ = "0.5"
+__version__ = "0.6"
 __maintainer__ = "IncognitoCoding"
 __status__ = "Production"
 
@@ -180,16 +180,58 @@ def user_choice_character_grouping(list_of_strings: list) -> dict[str, list[str]
                             wildcard_key_value: dict[str, list[str]] = {}
 
                             # Strips any character after the wildcard character.
-                            if "*" in dest_group_value_choice:
+                            if "*" in dest_group_value_choice[-1:] and "*" not in dest_group_value_choice[:1]:
                                 if "*" != dest_group_value_choice.split()[-1]:
-                                    # Removes any characters after the wildcard character.
+                                    # Removes any characters after the end wildcard character.
                                     dest_group_value_choice = dest_group_value_choice.split("*")[0] + "*"
+                            elif "*" not in dest_group_value_choice[-1:] and "*" in dest_group_value_choice[:1]:
+                                if "*" != dest_group_value_choice.split()[:1]:
+                                    # Removes any characters after the start wildcard character.
+                                    dest_group_value_choice = "*" + dest_group_value_choice.split("*")[1]
+                            elif "*" in dest_group_value_choice[-1:] and "*" in dest_group_value_choice[:1]:
+                                if "*" != dest_group_value_choice.split()[:1]:
+                                    # Removes any characters after the start wildcard character.
+                                    dest_group_value_choice = "*" + dest_group_value_choice.split("*")[1] + "*"
 
                             wildcard_value: list[str] = []
                             # Checks if the string value exists.
                             for key, group in groupings.items():
                                 # Checks if the string value exists.
-                                if "*" in dest_group_value_choice:
+                                if "*" in dest_group_value_choice[-1:] and "*" not in dest_group_value_choice[:1]:
+                                    wildcard_value = [
+                                        value
+                                        for value in group
+                                        if value.startswith(dest_group_value_choice.replace("*", ""))
+                                    ]
+
+                                    if len(wildcard_value) >= 1:
+                                        if isinstance(key, str):
+                                            wildcard_key_value.update({key: wildcard_value})
+                                        else:
+                                            exc_args = {
+                                                "main_message": "The string grouper key is not the correct type.",
+                                                "expected_result": "<class 'str'>",
+                                                "returned_result": f"{type(key)}",
+                                            }
+                                            raise FTypeError(exc_args)
+                                elif "*" not in dest_group_value_choice[-1:] and "*" in dest_group_value_choice[:1]:
+                                    wildcard_value = [
+                                        value
+                                        for value in group
+                                        if value.endswith(dest_group_value_choice.replace("*", ""))
+                                    ]
+
+                                    if len(wildcard_value) >= 1:
+                                        if isinstance(key, str):
+                                            wildcard_key_value.update({key: wildcard_value})
+                                        else:
+                                            exc_args = {
+                                                "main_message": "The string grouper key is not the correct type.",
+                                                "expected_result": "<class 'str'>",
+                                                "returned_result": f"{type(key)}",
+                                            }
+                                            raise FTypeError(exc_args)
+                                elif "*" in dest_group_value_choice[-1:] and "*" in dest_group_value_choice[:1]:
                                     wildcard_value = [
                                         value for value in group if dest_group_value_choice.replace("*", "") in value
                                     ]
@@ -232,6 +274,7 @@ def user_choice_character_grouping(list_of_strings: list) -> dict[str, list[str]
                                     )
 
                         existing_dest_group: bool = False
+                        existing_dest_values: list[str] = []
                         # Gets the string value to move.
                         while True:
                             while True:
@@ -260,14 +303,10 @@ def user_choice_character_grouping(list_of_strings: list) -> dict[str, list[str]
                                                         if current_group_value == dest_group_value:
                                                             print(
                                                                 f"\nThe current group value '{current_group_value}' matches one of the destination "
-                                                                f"moving values '{groupings[key]}'. Skipping the group edit"
+                                                                f"moving values '{groupings[key]}'. Skipping this value"
                                                             )
-                                                            existing_dest_group = True
-                                                            break
-                                                    if existing_dest_group:
-                                                        break
-                                                if existing_dest_group:
-                                                    break
+                                                            # Adds values to the list to be existed during the move.
+                                                            existing_dest_values.append(current_group_value)
                                         else:
                                             if current_group_value == dest_group_value_choice:
                                                 print(
@@ -314,12 +353,18 @@ def user_choice_character_grouping(list_of_strings: list) -> dict[str, list[str]
                                 if len(wildcard_key_value) >= 1:
                                     for key, group in wildcard_key_value.items():
                                         for entry in group:
-                                            groupings = move_dict_value(
-                                                my_dict=groupings,
-                                                src_key=key,
-                                                dest_key=dest_group_key_choice,
-                                                value=entry,
-                                            )  # type: ignore
+                                            # Checks if the entry is an existing entry.
+                                            existing_dest_group = any(
+                                                value for value in existing_dest_values if entry == value
+                                            )
+                                            # Moves if the value is not an existing value.
+                                            if not existing_dest_group:
+                                                groupings = move_dict_value(
+                                                    my_dict=groupings,
+                                                    src_key=key,
+                                                    dest_key=dest_group_key_choice,
+                                                    value=entry,
+                                                )  # type: ignore
                             else:
                                 # Moves the dictionary values based on the user's input.
                                 groupings = move_dict_value(
