@@ -20,14 +20,13 @@ from ..directors.encryption_director import encrypt_info
 from ..helpers.py_helper import get_function_name
 
 # Exceptions
-from ..directors.encryption_director import EncryptionFailure
-from fexception import FGeneralError, FTypeError, FCustomException
+from fexception import FCustomException
 
 __author__ = "IncognitoCoding"
 __copyright__ = "Copyright 2022, email_director"
 __credits__ = ["IncognitoCoding", "Monoloch"]
 __license__ = "MIT"
-__version__ = "3.3"
+__version__ = "3.4"
 __maintainer__ = "IncognitoCoding"
 __status__ = "Production"
 
@@ -69,8 +68,6 @@ def create_template_email(
         \t\\- The object value '{template_args}' is not an instance of the required class(es) or subclass(es).
         CreateTemplateFailure:
         \t\\- The email HTML template path does not exist.
-        FGeneralError (fexception):
-        \t\\- A general exception occurred while rendering the HTML template.
 
     Returns:
         str:
@@ -83,13 +80,10 @@ def create_template_email(
     logger_flowchart = logging.getLogger("flowchart")
     logger_flowchart.debug(f"Flowchart --> Function: {get_function_name()}")
 
-    try:
-        type_check(value=email_template_name, required_type=str)
-        type_check(value=email_template_path, required_type=str)
-        if template_args:
-            type_check(value=template_args, required_type=dict)
-    except FTypeError:
-        raise
+    type_check(value=email_template_name, required_type=str, tb_remove_name="create_template_email")
+    type_check(value=email_template_path, required_type=str, tb_remove_name="create_template_email")
+    if template_args:
+        type_check(value=template_args, required_type=dict, tb_remove_name="create_template_email")
 
     if template_args:
         formatted_template_args = "  - template_args (dict):\n        - " + "\n        - ".join(
@@ -116,29 +110,22 @@ def create_template_email(
         }
         raise CreateTemplateFailure(FCustomException(exc_args))
 
-    try:
-        # Gets the main program module name.
-        # Output Example: C:\Repositories\smtpredirect\smtpredirect\smtpredirect.py
-        main_module_file_path = os.path.realpath(sys.argv[0]) if sys.argv[0] else None
-        # Gets the main program base name.
-        # Output Example: smtpredirect.py
-        module_base_name = os.path.basename(main_module_file_path)  # type: ignore
-        # Gets the main program name.
-        # Output Example: smtpredirect
-        module_name = os.path.splitext(module_base_name)[0]
+    # Gets the main program module name.
+    # Output Example: C:\Repositories\smtpredirect\smtpredirect\smtpredirect.py
+    main_module_file_path = os.path.realpath(sys.argv[0]) if sys.argv[0] else None
+    # Gets the main program base name.
+    # Output Example: smtpredirect.py
+    module_base_name = os.path.basename(main_module_file_path)  # type: ignore
+    # Gets the main program name.
+    # Output Example: smtpredirect
+    module_name = os.path.splitext(module_base_name)[0]
 
-        env = Environment(
-            loader=PackageLoader(module_name, email_template_path), autoescape=select_autoescape(["html", "xml"])
-        )
-        template = env.get_template(email_template_name)
-    except Exception as exc:
-        exc_args = {
-            "main_message": "A general exception occurred while rendering the HTML template.",
-            "original_exception": exc,
-        }
-        raise FGeneralError(exc_args)
-    else:
-        return template.render(**template_args)
+    env = Environment(
+        loader=PackageLoader(module_name, email_template_path), autoescape=select_autoescape(["html", "xml"])
+    )
+    template = env.get_template(email_template_name)
+
+    return template.render(**template_args)
 
 
 def send_email(
@@ -251,22 +238,16 @@ def send_email(
         \t\\- The email HTML template path does not exist.
         EncryptionFailure:
         \t\\- A failure occurred while encrypting the message.
-        FGeneralError (fexception):
-        \t\\- A general exception occurred while creating the email message body.
         EmailSendFailure:
         \t\\- The attachment path for the email message does not exist.
         EmailSendFailure:
         \t\\- The mime type of the message could not be determined.
-        FGeneralError (fexception):
-        \t\\- A general exception occurred while preparing the email message structure.
         EmailSendFailure:
         \t\\- Failed to initialize SMTP connection using TLS.
         EmailSendFailure:
         \t\\- Failed to send the email message. Connection to SMTP server failed.
         EmailSendFailure:
         \t\\- Failed to reach the SMTP server.
-        FGeneralError (fexception):
-        \t\\- A general exception occurred while sending the email message.
         EmailSendFailure:
         \t\\- SMTP authentication is set to required but it is not supported by the server.
         EmailSendFailure:
@@ -278,12 +259,8 @@ def send_email(
         \t  or Less Secure Apps needs to be enabled in your Gmail settings.
         EmailSendFailure:
         \t\\- Incorrect username and/or password or the authentication_required setting is not enabled.
-        FGeneralError (fexception):
-        \t\\- A general exception occurred while sending the email.
         EmailSendFailure:
         \t\\- Failed to send message. SMTP terminatation error occurred.
-        FGeneralError (fexception):
-        \t\\- A general exception occurred while terminating the SMTP object.
     """
     logger = logging.getLogger(__name__)
     logger.debug(f"=" * 20 + get_function_name() + "=" * 20)
@@ -292,15 +269,12 @@ def send_email(
     logger_flowchart = logging.getLogger("flowchart")
     logger_flowchart.debug(f"Flowchart --> Function: {get_function_name()}")
 
-    try:
-        type_check(value=email_settings, required_type=dict)
-        type_check(value=subject, required_type=str)
-        if body:
-            type_check(value=body, required_type=str)
-        if template_args:
-            type_check(value=template_args, required_type=dict)
-    except FTypeError:
-        raise
+    type_check(value=email_settings, required_type=dict, tb_remove_name="send_email")
+    type_check(value=subject, required_type=str, tb_remove_name="send_email")
+    if body:
+        type_check(value=body, required_type=str, tb_remove_name="send_email")
+    if template_args:
+        type_check(value=template_args, required_type=dict, tb_remove_name="send_email")
 
     formatted_email_settings = "  - email_settings (dict):\n        - " + "\n        - ".join(
         ": ".join((key, str(val))) for (key, val) in email_settings.items()
@@ -326,142 +300,129 @@ def send_email(
 
     logger.debug(f"Starting to send an email message")
 
-    try:
-        logger.debug(f"Checking if the email is sending non-HTML or HTML")
-        # Gets send_email_template option.
-        send_email_template = email_settings.get("send_email_template")
-        # Checks if the email is template or non-HTML.
-        if send_email_template is True and template_args:
-            logger.debug(f"Sending HTML templated email")
-            email_template_name = email_settings.get("email_template_name")
-            email_template_path = email_settings.get("email_template_path")
+    # #############################################################
+    # #######Checking if the email is sending non-HTML or HTML#####
+    # #############################################################
+    logger.debug(f"Checking if the email is sending non-HTML or HTML")
+    # Gets send_email_template option.
+    send_email_template = email_settings.get("send_email_template")
+    # Checks if the email is template or non-HTML.
+    if send_email_template is True and template_args:
+        logger.debug(f"Sending HTML templated email")
+        email_template_name = email_settings.get("email_template_name")
+        email_template_path = email_settings.get("email_template_path")
 
-            # Creates the email template.
-            email_body = create_template_email(email_template_name, email_template_path, **template_args)
-        elif body:
-            logger.debug(f"Sending non-HTML email")
-            email_body = body
+        # Creates the email template.
+        email_body = create_template_email(email_template_name, email_template_path, **template_args)
+    elif body:
+        logger.debug(f"Sending non-HTML email")
+        email_body = body
+    else:
+        exc_args = {
+            "main_message": "An error occurred while sending the email.",
+            "custom_type": EmailSendFailure,
+            "expected_result": "Body or HTML Template",
+            "returned_result": "No body or template was sent.",
+            "suggested_resolution": "Ensure the body or template is being passed to the email_director module functions.",
+        }
+        raise EmailSendFailure(FCustomException(exc_args))
+    # Holds the updating email body lines.
+    updating_body = []
+    # Checks the email for any encryption identifiers.
+    # Splits the email into individual lines that can be looped through.
+    adjusted_body = email_body.split("\n")
+    logger.debug(f"Looping through each line of the email to check for any encryption identifiers")
+    for email_line in adjusted_body:
+        # Checks if the body contains any encryption identifiers.
+        if "@START-ENCRYPT@" in email_line and "@END-ENCRYPT@" in email_line:
+            logger.debug(f"Encryption identifiers found. Encrypting this section of the output.")
+            # Original String: <p>     Decryption Code: @START-ENCRYPT@This is my original string@END-ENCRYPT@</p>
+            # Matched String: This is my original string
+            match_object: Union[Match[str], None] = re.search("@START-ENCRYPT@(.*)@END-ENCRYPT@", email_line)
+            if match_object:
+                unencrypted_string = match_object.group(1)
+            else:
+                exc_args = {
+                    "main_message": "The email body unencrypted string was not found.",
+                    "custom_type": EmailSendFailure,
+                    "expected_result": "The unencrypted string between @START-ENCRYPT@ and @END-ENCRYPT@",
+                    "returned_result": email_line,
+                }
+                raise EmailSendFailure(FCustomException(exc_args))
+            logger.debug("Converting unencrypted message string into bytes")
+            password = email_settings.get("message_encryption_password")
+            salt = email_settings.get("message_encryption_random_salt")
+            # Calls function to sends unencrypted message for encryption.
+            # Return Example: <encrypted message>
+            encrypted_info = encrypt_info(unencrypted_string, password, salt)
+            # Removes the encryption string identifiers and sets encryption on the string.
+            updating_body.append(
+                email_line.replace("@START-ENCRYPT@", "")
+                .replace("@END-ENCRYPT@", "")
+                .replace(unencrypted_string, str(encrypted_info))
+            )
         else:
+            # Adds the non-encrypted line to the list.
+            updating_body.append(email_line)
+
+    logger.debug(f"Setting the updated email body")
+    # Converts the list back into a string with new lines for each entry.
+    updated_body = "\n".join(updating_body)
+
+    # #############################################################
+    # #############Preparing the email message structure###########
+    # #############################################################
+    logger.debug("Preparing the email message structure")
+    # Preparing email message structure.
+    message = EmailMessage()
+    message["Subject"] = subject
+    message["From"] = email_settings.get("from_email")
+    message["To"] = [email_settings.get("to_email")]
+    # Sets header based on HTML or text be passed to the function.
+    if send_email_template is True and template_args:
+        # Sets header for text and html. Required to allow html template.
+        message.add_header("Content-Type", "text/html")
+    elif body:
+        # Sets header for text only. Required to allow new lines.
+        message.add_header("Content-Type", "text")
+    logger.debug("Setting payload to HTML")
+    # Setting email body payload.
+    message.set_payload(updated_body)
+    # Attaches file if a path is sent.
+    if email_settings.get("attachment_path"):
+        # Checks that the attachment file exists.
+        attachment_path = os.path.abspath(email_settings.get("attachment_path"))
+        if not os.path.exists(attachment_path):
             exc_args = {
-                "main_message": "An error occurred while sending the email.",
+                "main_message": "The attachment path for the email message does not exist.",
                 "custom_type": EmailSendFailure,
-                "expected_result": "Body or HTML Template",
-                "returned_result": "No body or template was sent.",
-                "suggested_resolution": "Ensure the body or template is being passed to the email_director module functions.",
+                "expected_result": "A valid email attachment path.",
+                "returned_result": attachment_path,
+                "suggested_resolution": "Please verify you have set the correct path and try again.",
             }
             raise EmailSendFailure(FCustomException(exc_args))
-        # Holds the updating email body lines.
-        updating_body = []
-        # Checks the email for any encryption identifiers.
-        # Splits the email into individual lines that can be looped through.
-        adjusted_body = email_body.split("\n")
-        logger.debug(f"Looping through each line of the email to check for any encryption identifiers")
-        for email_line in adjusted_body:
-            # Checks if the body contains any encryption identifiers.
-            if "@START-ENCRYPT@" in email_line and "@END-ENCRYPT@" in email_line:
-                logger.debug(f"Encryption identifiers found. Encrypting this section of the output.")
-                # Original String: <p>     Decryption Code: @START-ENCRYPT@This is my original string@END-ENCRYPT@</p>
-                # Matched String: This is my original string
-                match_object: Union[Match[str], None] = re.search("@START-ENCRYPT@(.*)@END-ENCRYPT@", email_line)
-                if match_object:
-                    unencrypted_string = match_object.group(1)
-                else:
-                    exc_args = {
-                        "main_message": "The email body unencrypted string was not found.",
-                        "custom_type": EmailSendFailure,
-                        "expected_result": "The unencrypted string between @START-ENCRYPT@ and @END-ENCRYPT@",
-                        "returned_result": email_line,
-                    }
-                    raise EmailSendFailure(FCustomException(exc_args))
-                logger.debug("Converting unencrypted message string into bytes")
-                password = email_settings.get("message_encryption_password")
-                salt = email_settings.get("message_encryption_random_salt")
-                # Calls function to sends unencrypted message for encryption.
-                # Return Example: <encrypted message>
-                encrypted_info = encrypt_info(unencrypted_string, password, salt)
-                # Removes the encryption string identifiers and sets encryption on the string.
-                updating_body.append(
-                    email_line.replace("@START-ENCRYPT@", "")
-                    .replace("@END-ENCRYPT@", "")
-                    .replace(unencrypted_string, str(encrypted_info))
-                )
-            else:
-                # Adds the non-encrypted line to the list.
-                updating_body.append(email_line)
+        # Gets the mime type to determine the type of message being sent.
+        mime_type, _ = mimetypes.guess_type(attachment_path)
+        if mime_type:
+            # Gets the MIME type and subtype.
+            mime_type, mime_subtype = mime_type.split("/", 1)
+        else:
+            exc_args = {
+                "main_message": "The mime type of the message could not be determined.",
+                "custom_type": EmailSendFailure,
+                "expected_result": "MIME type",
+                "returned_result": None,
+            }
+            raise EmailSendFailure(FCustomException(exc_args))
+        # Attaches the attachment to the message.
+        with open(attachment_path, "rb") as ap:
+            message.add_attachment(
+                ap.read(), maintype=mime_type, subtype=mime_subtype, filename=os.path.basename(attachment_path)
+            )
 
-        logger.debug(f"Setting the updated email body")
-        # Converts the list back into a string with new lines for each entry.
-        updated_body = "\n".join(updating_body)
-    except CreateTemplateFailure:  # pragma: no cover
-        raise
-    except EmailSendFailure:  # pragma: no cover
-        raise
-    except EncryptionFailure:  # pragma: no cover
-        raise
-    except Exception as exc:  # pragma: no cover
-        exc_args = {
-            "main_message": "A general exception occurred while creating the email message body.",
-            "original_exception": exc,
-        }
-        raise FGeneralError(exc_args)
-
-    try:
-        logger.debug("Preparing the email message structure")
-        # Preparing email message structure.
-        message = EmailMessage()
-        message["Subject"] = subject
-        message["From"] = email_settings.get("from_email")
-        message["To"] = [email_settings.get("to_email")]
-        # Sets header based on HTML or text be passed to the function.
-        if send_email_template is True and template_args:
-            # Sets header for text and html. Required to allow html template.
-            message.add_header("Content-Type", "text/html")
-        elif body:
-            # Sets header for text only. Required to allow new lines.
-            message.add_header("Content-Type", "text")
-        logger.debug("Setting payload to HTML")
-        # Setting email body payload.
-        message.set_payload(updated_body)
-        # Attaches file if a path is sent.
-        if email_settings.get("attachment_path"):
-            # Checks that the attachment file exists.
-            attachment_path = os.path.abspath(email_settings.get("attachment_path"))
-            if not os.path.exists(attachment_path):
-                exc_args = {
-                    "main_message": "The attachment path for the email message does not exist.",
-                    "custom_type": EmailSendFailure,
-                    "expected_result": "A valid email attachment path.",
-                    "returned_result": attachment_path,
-                    "suggested_resolution": "Please verify you have set the correct path and try again.",
-                }
-                raise EmailSendFailure(FCustomException(exc_args))
-            # Gets the mime type to determine the type of message being sent.
-            mime_type, _ = mimetypes.guess_type(attachment_path)
-            if mime_type:
-                # Gets the MIME type and subtype.
-                mime_type, mime_subtype = mime_type.split("/", 1)
-            else:
-                exc_args = {
-                    "main_message": "The mime type of the message could not be determined.",
-                    "custom_type": EmailSendFailure,
-                    "expected_result": "MIME type",
-                    "returned_result": None,
-                }
-                raise EmailSendFailure(FCustomException(exc_args))
-            # Attaches the attachment to the message.
-            with open(attachment_path, "rb") as ap:
-                message.add_attachment(
-                    ap.read(), maintype=mime_type, subtype=mime_subtype, filename=os.path.basename(attachment_path)
-                )
-    except EmailSendFailure:  # pragma: no cover
-        raise
-    except Exception as exc:  # pragma: no cover
-        exc_args = {
-            "main_message": "A general exception occurred while preparing the email message structure.",
-            "original_exception": exc,
-        }
-        raise FGeneralError(exc_args)
-
+    # #############################################################
+    # ####################Setting up SMTP object###################
+    # #############################################################
     try:
         logger.debug("Setting up SMTP object")
         # Setting up SMTP object.
@@ -507,12 +468,11 @@ def send_email(
             }
             raise EmailSendFailure(FCustomException(exc_args))
         else:
-            exc_args = {
-                "main_message": "A general exception occurred while sending the email message.",
-                "original_exception": exc,
-            }
-            raise FGeneralError(exc_args)
+            raise exc
 
+    # #############################################################
+    # ##########################Sends email########################
+    # #############################################################
     # Sends email.
     try:
         # Checks if authentication is required to login into the mail server with credentials.
@@ -559,11 +519,7 @@ def send_email(
                 "original_exception": exc,
             }
         else:
-            exc_args = {
-                "main_message": "A general exception occurred while sending the email.",
-                "original_exception": exc,
-            }
-            raise FGeneralError(exc_args)
+            raise exc
 
         raise EmailSendFailure(FCustomException(exc_args))
 
@@ -576,14 +532,10 @@ def send_email(
         except Exception as exc:
             if "Failed to send message" in str(exc):
                 exc_args = {
-                    "main_message": "Failed to send the message. SMTP terminatation error occurred.",
+                    "main_message": "Failed to send the message. SMTP termination error occurred.",
                     "custom_type": EmailSendFailure,
                     "original_exception": exc,
                 }
                 raise EmailSendFailure(FCustomException(exc_args))
             else:
-                exc_args = {
-                    "main_message": "A general exception occurred while terminating the SMTP object.",
-                    "original_exception": exc,
-                }
-                raise FGeneralError(exc_args)
+                raise exc

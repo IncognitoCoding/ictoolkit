@@ -14,13 +14,13 @@ from fchecker.type import type_check
 from ..helpers.py_helper import get_function_name
 
 # Exceptions
-from fexception import FTypeError, FCustomException
+from fexception import FCustomException
 
 __author__ = "IncognitoCoding"
 __copyright__ = "Copyright 2022, subprocess_director"
 __credits__ = ["IncognitoCoding"]
 __license__ = "MIT"
-__version__ = "3.3"
+__version__ = "3.4"
 __maintainer__ = "IncognitoCoding"
 __status__ = "Production"
 
@@ -85,10 +85,7 @@ def start_subprocess(program_arguments: Union[str, list]) -> AttributeDictionary
     logger_flowchart = logging.getLogger("flowchart")
     logger_flowchart.debug(f"Flowchart --> Function: {get_function_name()}")
 
-    try:
-        type_check(value=program_arguments, required_type=(str, list))
-    except FTypeError:
-        raise
+    type_check(value=program_arguments, required_type=(str, list), tb_remove_name="start_subprocess")
 
     if isinstance(program_arguments, list):
         formatted_program_arguments = "  - program_arguments (list):" + str(
@@ -99,36 +96,28 @@ def start_subprocess(program_arguments: Union[str, list]) -> AttributeDictionary
 
     logger.debug("Passing parameters:\n" f"{formatted_program_arguments}\n")
 
-    try:
-        # Runs the subprocess and returns output
-        output: Popen[bytes] = Popen(program_arguments, stdout=PIPE)
+    # Runs the subprocess and returns output
+    output: Popen[bytes] = Popen(program_arguments, stdout=PIPE)
 
-        # Creates an empty list to store standard output.
-        process_output: list[str] = []
+    # Creates an empty list to store standard output.
+    process_output: list[str] = []
 
-        if output.stdout:
-            # Reads through each standard output line.
-            for line in io.TextIOWrapper(output.stdout, encoding="utf-8"):
-                # Adds found line to the list and removes whitespace.
-                process_output.append(line.rstrip())
+    if output.stdout:
+        # Reads through each standard output line.
+        for line in io.TextIOWrapper(output.stdout, encoding="utf-8"):
+            # Adds found line to the list and removes whitespace.
+            process_output.append(line.rstrip())
 
-            # Adds entries into the dictionary using the attribute notation. Attribute notation is used to give a similar return experience.
-            subprocess_output = AttributeDictionary({"args": output.args, "stdout": process_output})
+        # Adds entries into the dictionary using the attribute notation. Attribute notation is used to give a similar return experience.
+        subprocess_output = AttributeDictionary({"args": output.args, "stdout": process_output})
 
-            output.wait()
-            output.kill()
-        else:
-            exc_args = {
-                "main_message": f"No output returned for subprocess ({program_arguments}).",
-                "custom_type": SubprocessStartFailure,
-            }
-            raise SubprocessStartFailure(FCustomException(exc_args))
-    except Exception as exc:  # pragma: no cover
+        output.wait()
+        output.kill()
+    else:
         exc_args = {
-            "main_message": f"An error occurred while running the subprocess ({program_arguments}).",
+            "main_message": f"No output returned for subprocess ({program_arguments}).",
             "custom_type": SubprocessStartFailure,
-            "original_exception": exc,
         }
         raise SubprocessStartFailure(FCustomException(exc_args))
-    else:
-        return subprocess_output
+
+    return subprocess_output

@@ -20,7 +20,7 @@ __author__ = "IncognitoCoding"
 __copyright__ = "Copyright 2022, ini_config_director"
 __credits__ = ["IncognitoCoding"]
 __license__ = "MIT"
-__version__ = "3.2"
+__version__ = "3.3"
 __maintainer__ = "IncognitoCoding"
 __status__ = "Production"
 
@@ -36,8 +36,6 @@ def read_ini_config(ini_file_path: str) -> RawConfigParser:
     Raises:
         FTypeError (fexception):
         \t\\- The object value '{ini_file_path}' is not an instance of the required class(es) or subclass(es).
-        FGeneralError (fexception):
-        \t\\- A general exception occurred while reading the INI configuration file.
 
     Returns:
         ini:
@@ -50,24 +48,13 @@ def read_ini_config(ini_file_path: str) -> RawConfigParser:
     logger_flowchart = logging.getLogger("flowchart")
     logger_flowchart.debug(f"Flowchart --> Function: {get_function_name()}")
 
-    try:
-        type_check(value=ini_file_path, required_type=str)
-    except FTypeError:
-        raise
+    type_check(value=ini_file_path, required_type=str, tb_remove_name="read_ini_config")
 
     logger.debug("Passing parameters:\n" f"  - ini_file_path (str):\n        - {ini_file_path}\n")
 
-    # Checks for issues while reading the ini file.
-    try:
-        # Calls function to pull in ini configuration.
-        # Uses RawConfigParser for special characters.
-        config: RawConfigParser = RawConfigParser()
-        config.read(ini_file_path)
-    except Exception as exc:  # pragma: no cover
-        exc_args = {
-            "main_message": "A general exception occurred while reading the ini configuration file.",
-            "original_exception": exc,
-        }
-        raise FGeneralError(exc_args)
-    else:
-        return config
+    # Calls function to pull in ini configuration.
+    # Uses RawConfigParser for special characters.
+    config: RawConfigParser = RawConfigParser()
+    config.read(ini_file_path)
+
+    return config

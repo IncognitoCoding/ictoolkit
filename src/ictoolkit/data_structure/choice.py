@@ -1,7 +1,6 @@
 # Built-in/Generic Imports
 import re
 import logging
-from typing import Union, Any
 
 # Libraries
 from fchecker.type import type_check
@@ -11,14 +10,14 @@ from .dict import string_grouper, move_dict_value
 from ..helpers.py_helper import get_function_name
 
 # Exceptions
-from fexception import FGeneralError, FTypeError
+from fexception import FTypeError
 
 
 __author__ = "IncognitoCoding"
 __copyright__ = "Copyright 2022, choice"
 __credits__ = ["IncognitoCoding"]
 __license__ = "MIT"
-__version__ = "0.6"
+__version__ = "0.7"
 __maintainer__ = "IncognitoCoding"
 __status__ = "Production"
 
@@ -40,8 +39,6 @@ def user_choice_character_grouping(list_of_strings: list) -> dict[str, list[str]
         \t\\- The object value '{list_of_strings}' is not an instance of the required class(es) or subclass(es).
         FValueError (fexception):
         \t\\- The string grouper key is not the correct type.
-        FGeneralError (fexception):
-        \t\\- A general exception occurred when getting the user choice character grouping.
 
     Returns:
         dict[str, list[str]]:\\
@@ -54,10 +51,7 @@ def user_choice_character_grouping(list_of_strings: list) -> dict[str, list[str]
     logger_flowchart = logging.getLogger("flowchart")
     logger_flowchart.debug(f"Flowchart --> Function: {get_function_name()}")
 
-    try:
-        type_check(value=list_of_strings, required_type=list)
-    except FTypeError:
-        raise
+    type_check(value=list_of_strings, required_type=list, tb_remove_name="user_choice_character_grouping")
 
     formatted_list_of_strings = "  - list_of_strings (list):" + str(
         "\n        - " + "\n        - ".join(map(str, list_of_strings))
@@ -407,9 +401,3 @@ def user_choice_character_grouping(list_of_strings: list) -> dict[str, list[str]
     except EOFError:
         print("Keyboard interruption. Exiting...")
         exit()
-    except Exception as exc:  # pragma: no cover
-        exc_args = {
-            "main_message": "A general exception occurred when getting the user choice character grouping.",
-            "original_exception": exc,
-        }
-        raise FGeneralError(exc_args)

@@ -13,13 +13,13 @@ from fchecker.type import type_check
 from ..helpers.py_helper import get_function_name
 
 # Exceptions
-from fexception import FGeneralError, FTypeError, FValueError
+from fexception import FValueError
 
 __author__ = "IncognitoCoding"
 __copyright__ = "Copyright 2022, html_director"
 __credits__ = ["IncognitoCoding"]
 __license__ = "MIT"
-__version__ = "3.2"
+__version__ = "3.3"
 __maintainer__ = "IncognitoCoding"
 __status__ = "Production"
 
@@ -57,8 +57,6 @@ class HTMLConverter(HTMLParser):
             \t\\- The object value '{convert_option}' is not an instance of the required class(es) or subclass(es).
             FValueError (fexception):
             \t\\- The HTML output could not be converted because the conversion option is not valid.
-            FGeneralError (fexception):
-            \t\\- A general failure occurred while converting HTML to text.
 
         Returns:
             str:
@@ -72,11 +70,8 @@ class HTMLConverter(HTMLParser):
         # Deletes the flowchart log if one already exists.
         logger_flowchart.debug(f"Flowchart --> Function: {get_function_name()}")
 
-        try:
-            type_check(value=html_output, required_type=str)
-            type_check(value=convert_option, required_type=str)
-        except FTypeError:
-            raise
+        type_check(value=html_output, required_type=str, tb_remove_name="feed")
+        type_check(value=convert_option, required_type=str, tb_remove_name="feed")
 
         logger.debug(
             "Passing parameters:\n"
@@ -93,22 +88,15 @@ class HTMLConverter(HTMLParser):
             }
             raise FValueError(exc_args)
 
-        try:
-            self.output = ""
-            super(HTMLConverter, self).feed(html_output)
-            # Supports text conversion, but other conversions such as PDF, image, etc can be added in the future.
-            if convert_option == "text":
-                logging.debug("The HTML was converted to text. Returning the output.")
-                # Removes all html before the last "}". Some HTML can return additional style information with text output.
-                self.output = str(self.output).split("}")[-1].strip()
-        except Exception as exc:  # pragma: no cover
-            exc_args = {
-                "main_message": "A general failure occurred while converting HTML to text.",
-                "original_exception": exc,
-            }
-            raise FGeneralError(exc_args)
-        else:
-            return self.output
+        self.output = ""
+        super(HTMLConverter, self).feed(html_output)
+        # Supports text conversion, but other conversions such as PDF, image, etc can be added in the future.
+        if convert_option == "text":
+            logging.debug("The HTML was converted to text. Returning the output.")
+            # Removes all html before the last "}". Some HTML can return additional style information with text output.
+            self.output = str(self.output).split("}")[-1].strip()
+
+        return self.output
 
     def handle_data(self, data: str):
         logger = logging.getLogger(__name__)

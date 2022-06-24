@@ -27,14 +27,14 @@ from waitress import serve
 from ..helpers.py_helper import get_function_name
 
 # Exceptions
-from fexception import FGeneralError, FTypeError, FCustomException, FFileNotFoundError
+from fexception import FCustomException, FFileNotFoundError
 
 
 __author__ = "IncognitoCoding"
 __copyright__ = "Copyright 2022, encryption_director"
 __credits__ = ["IncognitoCoding"]
 __license__ = "MIT"
-__version__ = "3.3"
+__version__ = "3.4"
 __maintainer__ = "IncognitoCoding"
 __status__ = "Production"
 
@@ -99,12 +99,9 @@ def encrypt_info(
     logger_flowchart = logging.getLogger("flowchart")
     logger_flowchart.debug(f"Flowchart --> Function: {get_function_name()}")
 
-    try:
-        type_check(value=decrypted_info, required_type=str)
-        type_check(value=message_encryption_password, required_type=str)
-        type_check(value=message_encryption_random_salt, required_type=(bytes, str))
-    except FTypeError:
-        raise
+    type_check(value=decrypted_info, required_type=str, tb_remove_name="encrypt_info")
+    type_check(value=message_encryption_password, required_type=str, tb_remove_name="encrypt_info")
+    type_check(value=message_encryption_random_salt, required_type=(bytes, str), tb_remove_name="encrypt_info")
 
     logger.debug(
         "Passing parameters:\n"
@@ -114,72 +111,64 @@ def encrypt_info(
     )
 
     logger.debug(f"Starting to encrypt the info")
-    try:
-        logger.debug("Converting the pre-defined encryption password to bytes")
+    logger.debug("Converting the pre-defined encryption password to bytes")
 
-        # Converts decrypted message string into bytes.
-        encoded_decrypted_info: bytes = decrypted_info.encode()
-        # Converting the pre-defined encryption password to bytes.
-        password = message_encryption_password.encode()
+    # Converts decrypted message string into bytes.
+    encoded_decrypted_info: bytes = decrypted_info.encode()
+    # Converting the pre-defined encryption password to bytes.
+    password = message_encryption_password.encode()
 
-        # Checks if incoming salt is in str format, so the salt can be re-encoded.
-        if isinstance(message_encryption_random_salt, str):
-            if message_encryption_random_salt[:2] == "b'":
-                # Strips the bytes section off the input.
-                # Removes first 2 characters.
-                unconverted_message_encryption_random_salt = message_encryption_random_salt[2:]
-                # Removes last character.
-                unconverted_message_encryption_random_salt = unconverted_message_encryption_random_salt[:-1]
-                # Re-encodes the info.
-                message_encryption_random_salt = (
-                    unconverted_message_encryption_random_salt.encode()
-                    .decode("unicode_escape")
-                    .encode("raw_unicode_escape")
-                )
-
-        logger.debug("Deriving a cryptographic key from a password")
-        if isinstance(message_encryption_random_salt, bytes):
-            # Calling function to derive a cryptographic key from a password.
-            kdf = PBKDF2HMAC(
-                algorithm=hashes.SHA256(),  # An instance of HashAlgorithm
-                length=32,  # The desired length of the derived key in bytes. Maximum is (232 - 1)
-                salt=message_encryption_random_salt,  # Secure values [1] are 128-bits (16 bytes) or longer and randomly generated
-                iterations=100000,  # The number of iterations to perform of the hash function
-                backend=default_backend(),  # An optional instance of PBKDF2HMACBackend
+    # Checks if incoming salt is in str format, so the salt can be re-encoded.
+    if isinstance(message_encryption_random_salt, str):
+        if message_encryption_random_salt[:2] == "b'":
+            # Strips the bytes section off the input.
+            # Removes first 2 characters.
+            unconverted_message_encryption_random_salt = message_encryption_random_salt[2:]
+            # Removes last character.
+            unconverted_message_encryption_random_salt = unconverted_message_encryption_random_salt[:-1]
+            # Re-encodes the info.
+            message_encryption_random_salt = (
+                unconverted_message_encryption_random_salt.encode()
+                .decode("unicode_escape")
+                .encode("raw_unicode_escape")
             )
-        else:
-            exc_args = {
-                "main_message": "The message encryption random salt is not in type bytes.",
-                "custom_type": EncryptionFailure,
-                "expected_result": """<class 'bytes'>""",
-                "returned_result": type(message_encryption_random_salt),
-            }
-            raise EncryptionFailure(FCustomException(exc_args))
-        logger.debug("Returned from imported function (PBKDF2HMAC) to function (encrypt_info)")
-        logger.debug(
-            "Encoding the string using the pre-defined encryption password and the cryptographic key into the binary form"
+
+    logger.debug("Deriving a cryptographic key from a password")
+    if isinstance(message_encryption_random_salt, bytes):
+        # Calling function to derive a cryptographic key from a password.
+        kdf = PBKDF2HMAC(
+            algorithm=hashes.SHA256(),  # An instance of HashAlgorithm
+            length=32,  # The desired length of the derived key in bytes. Maximum is (232 - 1)
+            salt=message_encryption_random_salt,  # Secure values [1] are 128-bits (16 bytes) or longer and randomly generated
+            iterations=100000,  # The number of iterations to perform of the hash function
+            backend=default_backend(),  # An optional instance of PBKDF2HMACBackend
         )
-        # Encoding the string using the pre-defined encryption password and the cryptographic key into the binary form.
-        key = base64.urlsafe_b64encode(kdf.derive(password))
-
-        logger.debug("Creating a symmetric authenticated cryptography (secret key)")
-        # Creating a symmetric authenticated cryptography (secret key).
-        f = Fernet(key)
-
-        logger.debug("Encrypting the info using the secret key to create a Fernet token")
-        # Encrypting the info using the secret key to create a Fernet token.
-        encrypted_info = f.encrypt(encoded_decrypted_info)
-    except Exception as exc:  # pragma: no cover
+    else:
         exc_args = {
-            "main_message": "A failure occurred while encrypting the message.",
+            "main_message": "The message encryption random salt is not in type bytes.",
             "custom_type": EncryptionFailure,
-            "original_exception": exc,
+            "expected_result": """<class 'bytes'>""",
+            "returned_result": type(message_encryption_random_salt),
         }
         raise EncryptionFailure(FCustomException(exc_args))
-    else:
-        logger.debug(f"Returning the encrypted info. encrypted_info = {encrypted_info}")
-        # Returning the encrypted info.
-        return encrypted_info
+    logger.debug("Returned from imported function (PBKDF2HMAC) to function (encrypt_info)")
+    logger.debug(
+        "Encoding the string using the pre-defined encryption password and the cryptographic key into the binary form"
+    )
+    # Encoding the string using the pre-defined encryption password and the cryptographic key into the binary form.
+    key = base64.urlsafe_b64encode(kdf.derive(password))
+
+    logger.debug("Creating a symmetric authenticated cryptography (secret key)")
+    # Creating a symmetric authenticated cryptography (secret key).
+    f = Fernet(key)
+
+    logger.debug("Encrypting the info using the secret key to create a Fernet token")
+    # Encrypting the info using the secret key to create a Fernet token.
+    encrypted_info = f.encrypt(encoded_decrypted_info)
+
+    logger.debug(f"Returning the encrypted info. encrypted_info = {encrypted_info}")
+    # Returning the encrypted info.
+    return encrypted_info
 
 
 def decrypt_info(
@@ -215,8 +204,6 @@ def decrypt_info(
         \t\\- The encrypted message is not in type bytes.
         DecryptionFailure:
         \t\\- An invalid Key failure occurred while decrypting the info.
-        FGeneralError (fexception):
-        \t\\- A general exception occurred while decrypting the info.
 
     Returns:
         bytes:
@@ -229,12 +216,9 @@ def decrypt_info(
     logger_flowchart = logging.getLogger("flowchart")
     logger_flowchart.debug(f"Flowchart --> Function: {get_function_name()}")
 
-    try:
-        type_check(value=encrypted_info, required_type=(bytes, str))
-        type_check(value=message_encryption_password, required_type=str)
-        type_check(value=message_encryption_random_salt, required_type=(bytes, str))
-    except FTypeError:
-        raise
+    type_check(value=encrypted_info, required_type=(bytes, str), tb_remove_name="decrypt_info")
+    type_check(value=message_encryption_password, required_type=str, tb_remove_name="decrypt_info")
+    type_check(value=message_encryption_random_salt, required_type=(bytes, str), tb_remove_name="decrypt_info")
 
     logger.debug(
         "Passing parameters:\n"
@@ -339,11 +323,7 @@ def decrypt_info(
             }
             raise DecryptionFailure(FCustomException(exc_args))
         except Exception as exc:  # pragma: no cover
-            exc_args = {
-                "main_message": "A general exception occurred while decrypting the info.",
-                "original_exception": exc,
-            }
-            raise FGeneralError(exc_args)
+            raise exc
         else:
             # Returning the decrypted info
             return decode_decrypted_info
@@ -393,15 +373,12 @@ def launch_decryptor_website(
     logger_flowchart = logging.getLogger("flowchart")
     logger_flowchart.debug(f"Flowchart --> Function: {get_function_name()}")
 
-    try:
-        type_check(value=encryption_password, required_type=str)
-        type_check(value=random_salt, required_type=(bytes, str))
-        if decryptor_template_path:
-            type_check(value=decryptor_template_path, required_type=str)
-        if port:
-            type_check(value=port, required_type=int)
-    except FTypeError:
-        raise
+    type_check(value=encryption_password, required_type=str, tb_remove_name="launch_decryptor_website")
+    type_check(value=random_salt, required_type=(bytes, str), tb_remove_name="launch_decryptor_website")
+    if decryptor_template_path:
+        type_check(value=decryptor_template_path, required_type=str, tb_remove_name="launch_decryptor_website")
+    if port:
+        type_check(value=port, required_type=int, tb_remove_name="launch_decryptor_website")
 
     if decryptor_template_path:
         formatted_decryptor_template_path = f"  - decryptor_template_path (str):\n        - {decryptor_template_path}"

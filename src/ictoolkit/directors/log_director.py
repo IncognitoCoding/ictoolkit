@@ -20,13 +20,13 @@ from ..helpers.py_helper import get_function_name
 from ..directors.yaml_director import read_yaml_config
 
 # Exceptions
-from fexception import FGeneralError, FTypeError, FKeyError, FCustomException
+from fexception import FKeyError, FCustomException
 
 __author__ = "IncognitoCoding"
 __copyright__ = "Copyright 2022, log_director"
 __credits__ = ["IncognitoCoding"]
 __license__ = "MIT"
-__version__ = "3.3"
+__version__ = "3.4"
 __maintainer__ = "IncognitoCoding"
 __status__ = "Production"
 
@@ -107,8 +107,6 @@ def create_logger(logger_settings: dict) -> logging.Logger:
         \t\\- Incorrect format_option selection.
         LoggerSetupFailure:
         \t\\- Incorrect handler_option selection.
-        FGeneralError (fexception):
-        \t\\- A general issue occurred while create the new logger.
 
     Returns:
         logger:
@@ -125,10 +123,7 @@ def create_logger(logger_settings: dict) -> logging.Logger:
     # Deletes the flowchart log if one already exists.
     logger_flowchart.debug(f"Flowchart --> Function: {get_function_name()}")
 
-    try:
-        type_check(value=logger_settings, required_type=dict)
-    except FTypeError:
-        raise
+    type_check(value=logger_settings, required_type=dict, tb_remove_name="create_logger")
 
     formatted_logger_settings = "  - logger_settings (dict):\n        - " + "\n        - ".join(
         ": ".join((key, str(val))) for (key, val) in logger_settings.items()
@@ -136,52 +131,40 @@ def create_logger(logger_settings: dict) -> logging.Logger:
     logger.debug("Passing parameters:\n" f"{formatted_logger_settings}\n")
 
     # Checks for required dictionary keys.
-    try:
-        # ####################################################################
-        # ###################Dictionary Key Validation########################
-        # ####################################################################
-        # Gets a list of all expected keys.
-        # Return Output: ['save_path', 'logger_name', 'log_name', 'max_bytes', 'file_log_level',
-        #                 'console_log_level', 'backup_count', 'format_option', 'handler_option']
-        logger_settings_keys = list(logger_settings.keys())
-        # Checks if the key words exist in the dictionary.
-        # This validates the correct dictionary keys for the logger settings.
-        if (
-            "save_path" not in str(logger_settings_keys)
-            or "logger_name" not in str(logger_settings_keys)
-            or "log_name" not in str(logger_settings_keys)
-            or "max_bytes" not in str(logger_settings_keys)
-            or "file_log_level" not in str(logger_settings_keys)
-            or "console_log_level" not in str(logger_settings_keys)
-            or "backup_count" not in str(logger_settings_keys)
-            or "format_option" not in str(logger_settings_keys)
-            or "handler_option" not in str(logger_settings_keys)
-        ):
-            exc_args = {
-                "main_message": "The logger settings dictionary is missing keys.",
-                "expected_result": [
-                    "save_path",
-                    "logger_name",
-                    "log_name",
-                    "max_bytes",
-                    "file_log_level",
-                    "console_log_level",
-                    "backup_count",
-                    "format_option",
-                    "handler_option",
-                ],
-                "returned_result": logger_settings_keys,
-                "suggested_resolution": "Please verify you have set all required keys and try again.",
-            }
-            raise FKeyError(exc_args)
-    except FKeyError:
-        raise
-    except Exception as exc:
+    # Gets a list of all expected keys.
+    # Return Output: ['save_path', 'logger_name', 'log_name', 'max_bytes', 'file_log_level',
+    #                 'console_log_level', 'backup_count', 'format_option', 'handler_option']
+    logger_settings_keys = list(logger_settings.keys())
+    # Checks if the key words exist in the dictionary.
+    # This validates the correct dictionary keys for the logger settings.
+    if (
+        "save_path" not in str(logger_settings_keys)
+        or "logger_name" not in str(logger_settings_keys)
+        or "log_name" not in str(logger_settings_keys)
+        or "max_bytes" not in str(logger_settings_keys)
+        or "file_log_level" not in str(logger_settings_keys)
+        or "console_log_level" not in str(logger_settings_keys)
+        or "backup_count" not in str(logger_settings_keys)
+        or "format_option" not in str(logger_settings_keys)
+        or "handler_option" not in str(logger_settings_keys)
+    ):
         exc_args = {
-            "main_message": "A general error occurred while validating the logger dictionary keys.",
-            "original_exception": exc,
+            "main_message": "The logger settings dictionary is missing keys.",
+            "expected_result": [
+                "save_path",
+                "logger_name",
+                "log_name",
+                "max_bytes",
+                "file_log_level",
+                "console_log_level",
+                "backup_count",
+                "format_option",
+                "handler_option",
+            ],
+            "returned_result": logger_settings_keys,
+            "suggested_resolution": "Please verify you have set all required keys and try again.",
         }
-        raise FGeneralError(exc_args)
+        raise FKeyError(exc_args)
 
     save_path = logger_settings.get("save_path")
     logger_name = logger_settings.get("logger_name")
@@ -193,133 +176,120 @@ def create_logger(logger_settings: dict) -> logging.Logger:
     format_option = logger_settings.get("format_option")
     handler_option = logger_settings.get("handler_option")
 
-    try:
-        type_check(value=save_path, required_type=str)
-        type_check(value=logger_name, required_type=str)
-        type_check(value=log_name, required_type=str)
-        type_check(value=max_bytes, required_type=int)
-        type_check(value=file_log_level, required_type=str)
-        type_check(value=console_log_level, required_type=str)
-        type_check(value=backup_count, required_type=int)
-        type_check(value=format_option, required_type=(str, int))
-        type_check(value=handler_option, required_type=int)
-    except FTypeError:
-        raise
+    type_check(value=save_path, required_type=str)
+    type_check(value=logger_name, required_type=str)
+    type_check(value=log_name, required_type=str)
+    type_check(value=max_bytes, required_type=int)
+    type_check(value=file_log_level, required_type=str)
+    type_check(value=console_log_level, required_type=str)
+    type_check(value=backup_count, required_type=int)
+    type_check(value=format_option, required_type=(str, int))
+    type_check(value=handler_option, required_type=int)
 
-    # Creates or returns a logger.
-    try:
-        # Sets the log to save the path using namespace.
-        namespace = {}
-        namespace["base_dir"] = os.path.abspath(save_path)
-        namespace["logfile"] = os.path.join(namespace["base_dir"], log_name)
-        # Sets flag as False to start.
-        existing_logger_flag = False
+    # Sets the log to save the path using namespace.
+    namespace = {}
+    namespace["base_dir"] = os.path.abspath(save_path)
+    namespace["logfile"] = os.path.join(namespace["base_dir"], log_name)
+    # Sets flag as False to start.
+    existing_logger_flag = False
 
-        # Loops through all active loggers
-        for active_logger_names, active_logger_details in logging.Logger.manager.loggerDict.items():
-            # Checks if the logger already exists.
-            if str(logger_name) in str(active_logger_names):
-                existing_logger_flag = True
-                break
-            else:
-                existing_logger_flag = False
-        # Checks if a log handler already exists.
-        # Log handlers can exist when looping. This check will prevent child loggers from being created and having duplicate entries.
-        if existing_logger_flag is False:
-            # Sets logger name.
-            created_logger = logging.getLogger(logger_name)
-            # Sets logger level to Debug to cover all handelers levels that are preset.
-            # Default = Warning and will restrict output to the handlers even if they are set to a lower level.
-            created_logger.setLevel(logging.DEBUG)
-            # Custom level used for supported programs.
-            # Created for use when monitoring logs to show its an alert and not an error.
-            logging.addLevelName(39, "ALERT")
-
-            # Sets the log format based on a number option or manual based on parameter.
-            if format_option == 1 or format_option is None:
-                # Sets custom format and date
-                formatter = logging.Formatter(
-                    fmt="%(asctime)s|%(levelname)s|%(message)s (Module:%(module)s, Function:%(funcName)s,  Line:%(lineno)s)",
-                    datefmt="%Y-%m-%d %H:%M:%S",
-                )
-            elif format_option == 2:
-                # Sets custom format and date.
-                formatter = logging.Formatter(fmt="%(message)s")
-            elif "%" in f"{format_option}":
-                formatter = logging.Formatter(fmt=format_option)
-            else:
-                exc_args = {
-                    "main_message": "Incorrect format_option selection.",
-                    "custom_type": LoggerSetupFailure,
-                    "suggested_resolution": "Please verify you entered a valid format option number or custom format string.",
-                }
-                raise LoggerSetupFailure(FCustomException(exc_args))
-
-            # Sets handler option based on parameter.
-            if handler_option == 1 or handler_option is None:
-                # Sets log rotator.
-                file_rotation_handler = RotatingFileHandler(
-                    namespace["logfile"], maxBytes=max_bytes, backupCount=backup_count
-                )
-                # Sets the level logging entry from a variable.
-                file_level = logging.getLevelName(file_log_level)
-                # Sets the logging level.
-                file_rotation_handler.setLevel(file_level)
-
-                # Sets logging stream handler.
-                console_stream_handler = logging.StreamHandler()
-                # Sets the level logging entry from a variable.
-                console_level = logging.getLevelName(console_log_level)
-                # Sets the logging level.
-                console_stream_handler.setLevel(console_level)
-
-                console_stream_handler.setFormatter(formatter)
-                file_rotation_handler.setFormatter(formatter)
-                created_logger.addHandler(console_stream_handler)
-                created_logger.addHandler(file_rotation_handler)
-            elif handler_option == 2:
-                # Sets log rotator.
-                file_rotation_handler = RotatingFileHandler(
-                    namespace["logfile"], maxBytes=max_bytes, backupCount=backup_count
-                )
-                # Sets the level logging entry from a variable.
-                file_level = logging.getLevelName(file_log_level)
-                # Sets the logging level.
-                file_rotation_handler.setLevel(file_level)
-                file_rotation_handler.setFormatter(formatter)
-                created_logger.addHandler(file_rotation_handler)
-            elif handler_option == 3:
-                # Sets logging stream handler.
-                console_stream_handler = logging.StreamHandler()
-                # Sets the level logging entry from a variable.
-                console_level = logging.getLevelName(console_log_level)
-                # Sets the logging level.
-                console_stream_handler.setLevel(console_level)
-
-                console_stream_handler.setFormatter(formatter)
-                created_logger.addHandler(console_stream_handler)
-            else:
-                exc_args = {
-                    "main_message": "Incorrect handler_option selection.",
-                    "custom_type": LoggerSetupFailure,
-                    "suggested_resolution": "Please verify you entered a valid handler option number.",
-                }
-                raise LoggerSetupFailure(FCustomException(exc_args))
+    # Loops through all active loggers
+    for active_logger_names, active_logger_details in logging.Logger.manager.loggerDict.items():
+        # Checks if the logger already exists.
+        if str(logger_name) in str(active_logger_names):
+            existing_logger_flag = True
+            break
         else:
-            # Setting the existing logger.
-            created_logger = logging.getLogger(logger_name)
+            existing_logger_flag = False
+    # Checks if a log handler already exists.
+    # Log handlers can exist when looping. This check will prevent child loggers from being created and having duplicate entries.
+    if existing_logger_flag is False:
+        # Sets logger name.
+        created_logger = logging.getLogger(logger_name)
+        # Sets logger level to Debug to cover all handelers levels that are preset.
+        # Default = Warning and will restrict output to the handlers even if they are set to a lower level.
+        created_logger.setLevel(logging.DEBUG)
+        # Custom level used for supported programs.
+        # Created for use when monitoring logs to show its an alert and not an error.
+        logging.addLevelName(39, "ALERT")
 
-        logger.debug(f"Returning value(s):\n  - Return = {created_logger}")
-        # Returns logger
-        return created_logger
-    except LoggerSetupFailure:  # pragma: no cover
-        raise
-    except Exception as exc:  # pragma: no cover
-        exc_args = {
-            "main_message": "A general issue occurred while create the new logger.",
-            "original_exception": exc,
-        }
-        raise FGeneralError(exc_args)
+        # Sets the log format based on a number option or manual based on parameter.
+        if format_option == 1 or format_option is None:
+            # Sets custom format and date
+            formatter = logging.Formatter(
+                fmt="%(asctime)s|%(levelname)s|%(message)s (Module:%(module)s, Function:%(funcName)s,  Line:%(lineno)s)",
+                datefmt="%Y-%m-%d %H:%M:%S",
+            )
+        elif format_option == 2:
+            # Sets custom format and date.
+            formatter = logging.Formatter(fmt="%(message)s")
+        elif "%" in f"{format_option}":
+            formatter = logging.Formatter(fmt=format_option)
+        else:
+            exc_args = {
+                "main_message": "Incorrect format_option selection.",
+                "custom_type": LoggerSetupFailure,
+                "suggested_resolution": "Please verify you entered a valid format option number or custom format string.",
+            }
+            raise LoggerSetupFailure(FCustomException(exc_args))
+
+        # Sets handler option based on parameter.
+        if handler_option == 1 or handler_option is None:
+            # Sets log rotator.
+            file_rotation_handler = RotatingFileHandler(
+                namespace["logfile"], maxBytes=max_bytes, backupCount=backup_count
+            )
+            # Sets the level logging entry from a variable.
+            file_level = logging.getLevelName(file_log_level)
+            # Sets the logging level.
+            file_rotation_handler.setLevel(file_level)
+
+            # Sets logging stream handler.
+            console_stream_handler = logging.StreamHandler()
+            # Sets the level logging entry from a variable.
+            console_level = logging.getLevelName(console_log_level)
+            # Sets the logging level.
+            console_stream_handler.setLevel(console_level)
+
+            console_stream_handler.setFormatter(formatter)
+            file_rotation_handler.setFormatter(formatter)
+            created_logger.addHandler(console_stream_handler)
+            created_logger.addHandler(file_rotation_handler)
+        elif handler_option == 2:
+            # Sets log rotator.
+            file_rotation_handler = RotatingFileHandler(
+                namespace["logfile"], maxBytes=max_bytes, backupCount=backup_count
+            )
+            # Sets the level logging entry from a variable.
+            file_level = logging.getLevelName(file_log_level)
+            # Sets the logging level.
+            file_rotation_handler.setLevel(file_level)
+            file_rotation_handler.setFormatter(formatter)
+            created_logger.addHandler(file_rotation_handler)
+        elif handler_option == 3:
+            # Sets logging stream handler.
+            console_stream_handler = logging.StreamHandler()
+            # Sets the level logging entry from a variable.
+            console_level = logging.getLevelName(console_log_level)
+            # Sets the logging level.
+            console_stream_handler.setLevel(console_level)
+
+            console_stream_handler.setFormatter(formatter)
+            created_logger.addHandler(console_stream_handler)
+        else:
+            exc_args = {
+                "main_message": "Incorrect handler_option selection.",
+                "custom_type": LoggerSetupFailure,
+                "suggested_resolution": "Please verify you entered a valid handler option number.",
+            }
+            raise LoggerSetupFailure(FCustomException(exc_args))
+    else:
+        # Setting the existing logger.
+        created_logger = logging.getLogger(logger_name)
+
+    logger.debug(f"Returning value(s):\n  - Return = {created_logger}")
+    # Returns logger
+    return created_logger
 
 
 def setup_logger_yaml(yaml_path: str, separate_default_logs: bool = False, allow_basic: Optional[bool] = None) -> None:
@@ -375,18 +345,13 @@ def setup_logger_yaml(yaml_path: str, separate_default_logs: bool = False, allow
         \t\\- The object value '{allow_basic}' is not an instance of the required class(es) or subclass(es).
         LoggerSetupFailure:
         \t\\- The logging hander failed to create.
-        FGeneralError (fexception):
-        \t\\- A general exception occurred the logger setup.
     """
 
-    try:
-        type_check(value=yaml_path, required_type=str)
-        if separate_default_logs:
-            type_check(value=separate_default_logs, required_type=bool)
-        if allow_basic:
-            type_check(value=allow_basic, required_type=bool)
-    except FTypeError:
-        raise
+    type_check(value=yaml_path, required_type=str)
+    if separate_default_logs:
+        type_check(value=separate_default_logs, required_type=bool)
+    if allow_basic:
+        type_check(value=allow_basic, required_type=bool)
 
     # Sets up the logger based on the YAML.
     try:
@@ -473,8 +438,4 @@ def setup_logger_yaml(yaml_path: str, separate_default_logs: bool = False, allow
                 }
                 raise LoggerSetupFailure(FCustomException(exc_args))
             else:
-                exc_args = {
-                    "main_message": "A general exception occurred the logger setup.",
-                    "original_exception": exc,
-                }
-                raise FGeneralError(exc_args)
+                raise exc

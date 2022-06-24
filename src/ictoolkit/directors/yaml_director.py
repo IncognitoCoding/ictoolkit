@@ -15,13 +15,13 @@ from fchecker.type import type_check
 from ..helpers.py_helper import get_function_name
 
 # Exceptions
-from fexception import FTypeError, FCustomException, FGeneralError
+from fexception import FCustomException
 
 __author__ = "IncognitoCoding"
 __copyright__ = "Copyright 2022, yaml_director"
 __credits__ = ["IncognitoCoding"]
 __license__ = "MIT"
-__version__ = "3.3"
+__version__ = "3.4"
 __maintainer__ = "IncognitoCoding"
 __status__ = "Production"
 
@@ -65,8 +65,6 @@ def read_yaml_config(yaml_file_path: str, loader: str) -> dict[Any, Any]:
         \t\\- Incorrect YAML loader parameter.
         YamlReadFailure:
         \t\\- A failure occurred while reading the YAML file.
-        FGeneralError (fexception):
-        \t\\- A general failure occurred while opening the YAML file.
 
     Returns:
         dict[Any, Any]:
@@ -79,11 +77,8 @@ def read_yaml_config(yaml_file_path: str, loader: str) -> dict[Any, Any]:
     logger_flowchart = logging.getLogger("flowchart")
     logger_flowchart.debug(f"Flowchart --> Function: {get_function_name()}")
 
-    try:
-        type_check(value=yaml_file_path, required_type=str)
-        type_check(value=loader, required_type=str)
-    except FTypeError:
-        raise
+    type_check(value=yaml_file_path, required_type=str, tb_remove_name="read_yaml_config")
+    type_check(value=loader, required_type=str, tb_remove_name="read_yaml_config")
 
     logger.debug(
         "Passing parameters:\n"
@@ -129,12 +124,7 @@ def read_yaml_config(yaml_file_path: str, loader: str) -> dict[Any, Any]:
             }
             raise YamlReadFailure(FCustomException(exc_args))
         else:  # pragma: no cover
-            exc_args = {
-                "main_message": "A general failure occurred while opening the YAML file.",
-                "original_exception": exc,
-            }
-            raise FGeneralError(exc_args)
+            raise exc
     else:
         logger.debug(f"Returning value(s):\n  - Return = {config}")
-        print(type(config))
         return config

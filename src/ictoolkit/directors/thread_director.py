@@ -15,13 +15,13 @@ from fchecker.type import type_check
 from ..helpers.py_helper import get_function_name
 
 # Exceptions
-from fexception import FTypeError, FCustomException
+from fexception import FCustomException
 
 __author__ = "IncognitoCoding"
 __copyright__ = "Copyright 2022, thread_director"
 __credits__ = ["IncognitoCoding"]
 __license__ = "MIT"
-__version__ = "3.3"
+__version__ = "3.4"
 __maintainer__ = "IncognitoCoding"
 __status__ = "Production"
 
@@ -81,11 +81,8 @@ def start_function_thread(passing_program_function, program_function_name: str, 
     logger_flowchart = logging.getLogger("flowchart")
     logger_flowchart.debug(f"Flowchart --> Function: {get_function_name()}")
 
-    try:
-        type_check(value=program_function_name, required_type=str)
-        type_check(value=infinite_loop_option, required_type=bool)
-    except FTypeError:
-        raise
+    type_check(value=program_function_name, required_type=str, tb_remove_name="start_function_thread")
+    type_check(value=infinite_loop_option, required_type=bool, tb_remove_name="start_function_thread")
 
     logger.debug(
         "Passing parameters:\n"

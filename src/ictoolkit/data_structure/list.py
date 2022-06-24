@@ -12,14 +12,14 @@ from ..helpers.py_helper import get_function_name
 from ..helpers.sort_helper import str_int_key
 
 # Exceptions
-from fexception import FGeneralError, FKeyError, FTypeError
+from fexception import FKeyError
 
 
 __author__ = "IncognitoCoding"
 __copyright__ = "Copyright 2022, list"
 __credits__ = ["IncognitoCoding"]
 __license__ = "MIT"
-__version__ = "0.2"
+__version__ = "0.3"
 __maintainer__ = "IncognitoCoding"
 __status__ = "Production"
 
@@ -74,8 +74,6 @@ def remove_duplicate_dict_values_in_list(list_dictionary: List[dict], element_nu
         \t\\- The object value '{list_dictionary}' is not an instance of the required class(es) or subclass(es).
         FTypeError (fexception):
         \t\\- The object value '{element_number}' is not an instance of the required class(es) or subclass(es).
-        FGeneralError (fexception):
-        \t\\- A general failure occurred removing duplicates from the dictionary in the list.
 
     Returns:
         list:\\
@@ -88,12 +86,9 @@ def remove_duplicate_dict_values_in_list(list_dictionary: List[dict], element_nu
     logger_flowchart = logging.getLogger("flowchart")
     logger_flowchart.debug(f"Flowchart --> Function: {get_function_name()}")
 
-    try:
-        type_check(value=list_dictionary, required_type=list)
-        if element_number:
-            type_check(value=element_number, required_type=int)
-    except FTypeError:
-        raise
+    type_check(value=list_dictionary, required_type=list, tb_remove_name="remove_duplicate_dict_values_in_list")
+    if element_number:
+        type_check(value=element_number, required_type=int, tb_remove_name="remove_duplicate_dict_values_in_list")
 
     formatted_list_dictionary = "  - list_dictionary (list):" + str(
         "\n        - " + "\n        - ".join(map(str, list_dictionary))
@@ -109,43 +104,35 @@ def remove_duplicate_dict_values_in_list(list_dictionary: List[dict], element_nu
     # Stores the revised list that does not contain any duplicates.
     revised_list = []
 
-    try:
+    # Loops through each dictionary in the list
+    for dictionary_in_list in list_dictionary:
+        # Checks if section number is being used for matching or a full match is being used.
+        if element_number is None:
+            # Used tuple because it can be hashed, which allows removal using set.
+            # This will convert the dictionaries in the list to tuples that contain the dictionaries.
+            # Sorted is added to help with any possible match issues while adding/removing lots of key history.
+            items_of_dictionary = tuple(sorted(dictionary_in_list.items()))
+            # Checks if dictionary entry matches previous entries.
+            if items_of_dictionary not in element_found:
+                # New element found and adding to set.
+                element_found.add(items_of_dictionary)
 
-        # Loops through each dictionary in the list
-        for dictionary_in_list in list_dictionary:
-            # Checks if section number is being used for matching or a full match is being used.
-            if element_number is None:
-                # Used tuple because it can be hashed, which allows removal using set.
-                # This will convert the dictionaries in the list to tuples that contain the dictionaries.
-                # Sorted is added to help with any possible match issues wien adding/removing lots of key history.
-                items_of_dictionary = tuple(sorted(dictionary_in_list.items()))
-                # Checks if dictionary entry matches previous entries.
-                if items_of_dictionary not in element_found:
-                    # New element found and adding to set.
-                    element_found.add(items_of_dictionary)
+                # Adds the full dictionary_in_list to the list because it is not a duplicate.
+                revised_list.append(dictionary_in_list)
+        elif element_number:
+            # Used tuple because it can be hashed, which allows removal using set.
+            # This will convert the dictionaries in the list to tuples that contain the dictionaries.
+            # No sort is added here because sort will break the element number order.
+            items_of_dictionary = tuple(dictionary_in_list.items())
+            # Checks if dictionary element section does not match previous entries.
+            if items_of_dictionary[element_number] not in element_found:
+                # New element found and adding to set.
+                element_found.add(items_of_dictionary[element_number])
 
-                    # Adds the full dictionary_in_list to the list because it is not a duplicate.
-                    revised_list.append(dictionary_in_list)
-            elif element_number:
-                # Used tuple because it can be hashed, which allows removal using set.
-                # This will convert the dictionaries in the list to tuples that contain the dictionaries.
-                # No sort is added here because sort will break the element number order.
-                items_of_dictionary = tuple(dictionary_in_list.items())
-                # Checks if dictionary element section does not match previous entries.
-                if items_of_dictionary[element_number] not in element_found:
-                    # New element found and adding to set.
-                    element_found.add(items_of_dictionary[element_number])
+                # Adds the full dictionary_in_list to the list because it is not a duplicate.
+                revised_list.append(dictionary_in_list)
 
-                    # Adds the full dictionary_in_list to the list because it is not a duplicate.
-                    revised_list.append(dictionary_in_list)
-    except Exception as exc:  # pragma: no cover
-        exc_args = {
-            "main_message": "A general failure occurred removing duplicates from the dictionary in the list.",
-            "original_exception": exc,
-        }
-        raise FGeneralError(exc_args)
-    else:
-        return revised_list
+    return revised_list
 
 
 def get_list_of_dicts_duplicates(
@@ -189,10 +176,6 @@ def get_list_of_dicts_duplicates(
         \t\\- The object value '{grouped}' is not an instance of the required class(es) or subclass(es).
         FKeyError (fexception):
         \t\\- A failure occurred getting duplicate values the list.
-        FGeneralError (fexception):
-        \t\\- A general failure occurred getting duplicate values from the key ({key}) in the list_dictionary.
-        FGeneralError (fexception):
-        \t\\- A genearl failure occurred grouping duplicate values.
 
     Returns:
         Union[list, dict, None]:
@@ -224,12 +207,9 @@ def get_list_of_dicts_duplicates(
     logger_flowchart = logging.getLogger("flowchart")
     logger_flowchart.debug(f"Flowchart --> Function: {get_function_name()}")
 
-    try:
-        type_check(value=key, required_type=str)
-        type_check(value=list_dictionary, required_type=list)
-        type_check(value=grouped, required_type=bool)
-    except FTypeError:
-        raise
+    type_check(value=key, required_type=str, tb_remove_name="get_list_of_dicts_duplicates")
+    type_check(value=list_dictionary, required_type=list, tb_remove_name="get_list_of_dicts_duplicates")
+    type_check(value=grouped, required_type=bool, tb_remove_name="get_list_of_dicts_duplicates")
 
     formatted_list_dictionary = "  - list_dictionary (list):" + str(
         "\n        - " + "\n        - ".join(map(str, list_dictionary))
@@ -281,35 +261,21 @@ def get_list_of_dicts_duplicates(
             "suggested_resolution": "Please verify you have set all required keys and try again.",
         }
         raise FKeyError(exc_args)
-    except Exception as exc:  # pragma: no cover
-        exc_args = {
-            "main_message": f"A general failure occurred getting duplicate values from the key ({key}) in the list_dictionary.",
-            "original_exception": exc,
-        }
-        raise FGeneralError(exc_args)
     else:
         # Checks that duplicates exist.
         if duplicate_list_dictionary:
             # Checks if the user enabled grouping.
             if grouped:
+                # Stores new grouped entries
+                grouped_entries: dict[str, list[Any]] = {}
+                # Loops through each grouped entry.
+                for entry in duplicate_list_dictionary:
+                    # Gets matching entries based on the "value" key and adds them to the grouped dictionary.
+                    grouped_entries[entry["value"]] = grouped_entries.get(entry["value"], [])
+                    grouped_entries[entry["value"]].append(entry)
 
-                try:
-                    # Stores new grouped entries
-                    grouped_entries: dict[str, list[Any]] = {}
-                    # Loops through each grouped entry.
-                    for entry in duplicate_list_dictionary:
-                        # Gets matching entries based on the "value" key and adds them to the grouped dictionary.
-                        grouped_entries[entry["value"]] = grouped_entries.get(entry["value"], [])
-                        grouped_entries[entry["value"]].append(entry)
-                except Exception as exc:  # pragma: no cover
-                    exc_args = {
-                        "main_message": "A genearl failure occurred grouping duplicate values.",
-                        "original_exception": exc,
-                    }
-                    raise FGeneralError(exc_args)
-                else:
-                    # Returns grouped duplicates.
-                    return grouped_entries
+                # Returns grouped duplicates.
+                return grouped_entries
             else:
                 # Returns un-grouped duplicates.
                 return duplicate_list_dictionary
@@ -366,10 +332,6 @@ def get_list_duplicates(
         \t\\- The object value '{match_index}' is not an instance of the required class(es) or subclass(es).
         FTypeError (fexception):
         \t\\- The object value '{grouped}' is not an instance of the required class(es) or subclass(es).
-        FGeneralError:
-        \t\\- A general failure occurred getting duplicate values in the list.
-        FGeneralError:
-        \t\\- A general failure occurred grouping duplicate values.
 
     Returns:
         Union[list, dict, None]:
@@ -401,13 +363,10 @@ def get_list_duplicates(
     logger_flowchart = logging.getLogger("flowchart")
     logger_flowchart.debug(f"Flowchart --> Function: {get_function_name()}")
 
-    try:
-        type_check(value=duplicates, required_type=list)
-        if match_index:
-            type_check(value=match_index, required_type=int)
-        type_check(value=grouped, required_type=bool)
-    except FTypeError:
-        raise
+    type_check(value=duplicates, required_type=list, tb_remove_name="get_list_duplicates")
+    if match_index:
+        type_check(value=match_index, required_type=int, tb_remove_name="get_list_duplicates")
+    type_check(value=grouped, required_type=bool, tb_remove_name="get_list_duplicates")
 
     formatted_duplicates = "  - duplicates (list):" + str("\n        - " + "\n        - ".join(map(str, duplicates)))
     if match_index:
@@ -421,146 +380,131 @@ def get_list_duplicates(
         f"  - grouped (bool):\n        - {grouped}\n"
     )
 
-    try:
-        # Temporary storage for unique items.
-        temp_unique_items = []
-        # Stores duplicate list entries as dictionaries.
-        # The key is the duplicate from the list and the value is the index.
-        duplicate_list_dictionary = []
+    # Temporary storage for unique items.
+    temp_unique_items = []
+    # Stores duplicate list entries as dictionaries.
+    # The key is the duplicate from the list and the value is the index.
+    duplicate_list_dictionary = []
 
-        for entry in duplicates:
-            # Checks if the entry in the list is another list.
-            # This allows lists to be in a list and be searched.
-            if isinstance(entry, list) or isinstance(entry, tuple):
-                # Checks that a match_index is given to match a specific index in the list entry.
-                if isinstance(match_index, int):
-                    # Checks if the entry from the list exists in the "temp_unique_items" list. If not it gets added to the temp list.
-                    # If the entry exists the entry will hit the elif statement and get all index points for the duplicates.
-                    if entry[match_index] not in temp_unique_items:
-                        # Adds the entry to the list.
-                        temp_unique_items.append(entry[match_index])
-                    # Checks if the duplicate entry already exists in the duplicate_list_dictionary list.
-                    # This has to check if the 'duplicate_list_dictionary' is empty and if the duplicate list does not contain the entry.
-                    # The two different "entry" searches are required in case the key is a string or an INT. A string would have a single quote and an INT would not.
-                    elif (
-                        bool(duplicate_list_dictionary) is False
-                        or f"'value': {entry[match_index]}" not in str(duplicate_list_dictionary)
-                        and f"'value': '{entry[match_index]}'" not in str(duplicate_list_dictionary)
-                    ):
-                        # Loops through all entries in the list.
-                        for index, value in enumerate(duplicates):
-                            # Checks if the value from the list is equal to the discovered duplicate.
-                            if value[match_index] == entry[match_index]:
-                                # Adds the duplicate entry values and index
-                                # The value will be the key and the index will be the value.
-                                # This will allow the ease if finding all index points for a specific value.
-                                duplicate_list_dictionary.append({"index": index, "value": value})
-                # No match_index given, so the entire list entry will be used for matching, so the entry will be converted to a string.
-                else:
-                    # Checks if the entry from the list exists in the "temp_unique_items" list. If not it gets added to the temp list.
-                    # If the entry exists the entry will hit the elif statement and get all index points for the duplicates.
-                    if str(entry) not in temp_unique_items:
-                        # Adds the entry to the list.
-                        temp_unique_items.append(str(entry))
-                    # Checks if the duplicate entry already exists in the duplicate_list_dictionary list.
-                    # This has to check if the 'duplicate_list_dictionary' is empty and if the duplicate list does not contain the entry.
-                    # The two different "entry" searches are required in case the key is a string or an INT. A string would have a single quote and an INT would not.
-                    elif (
-                        bool(duplicate_list_dictionary) is False
-                        or f"'value': {str(entry)}" not in str(duplicate_list_dictionary)
-                        and f"'value': '{str(entry)}'" not in str(duplicate_list_dictionary)
-                    ):
-                        # Loops through all entries in the list.
-                        for index, value in enumerate(duplicates):
-                            # Checks if the value from the list is equal to the discovered duplicate.
-                            if str(value) == str(entry):
-                                # Adds the duplicate entry values and index
-                                # The value will be the key and the index will be the value.
-                                # This will allow the ease if finding all index points for a specific value.
-                                duplicate_list_dictionary.append({"index": index, "value": value})
-            # Standard strings in the list.
-            else:
+    for entry in duplicates:
+        # Checks if the entry in the list is another list.
+        # This allows lists to be in a list and be searched.
+        if isinstance(entry, list) or isinstance(entry, tuple):
+            # Checks that a match_index is given to match a specific index in the list entry.
+            if isinstance(match_index, int):
                 # Checks if the entry from the list exists in the "temp_unique_items" list. If not it gets added to the temp list.
                 # If the entry exists the entry will hit the elif statement and get all index points for the duplicates.
-                if entry not in temp_unique_items:
+                if entry[match_index] not in temp_unique_items:
                     # Adds the entry to the list.
-                    temp_unique_items.append(entry)
+                    temp_unique_items.append(entry[match_index])
                 # Checks if the duplicate entry already exists in the duplicate_list_dictionary list.
                 # This has to check if the 'duplicate_list_dictionary' is empty and if the duplicate list does not contain the entry.
                 # The two different "entry" searches are required in case the key is a string or an INT. A string would have a single quote and an INT would not.
                 elif (
                     bool(duplicate_list_dictionary) is False
-                    or f"'value': {entry}" not in str(duplicate_list_dictionary)
-                    and f"'value': '{entry}'" not in str(duplicate_list_dictionary)
+                    or f"'value': {entry[match_index]}" not in str(duplicate_list_dictionary)
+                    and f"'value': '{entry[match_index]}'" not in str(duplicate_list_dictionary)
                 ):
                     # Loops through all entries in the list.
                     for index, value in enumerate(duplicates):
                         # Checks if the value from the list is equal to the discovered duplicate.
-                        if value == entry:
+                        if value[match_index] == entry[match_index]:
                             # Adds the duplicate entry values and index
                             # The value will be the key and the index will be the value.
                             # This will allow the ease if finding all index points for a specific value.
                             duplicate_list_dictionary.append({"index": index, "value": value})
-    except Exception as exc:  # pragma: no cover
-        exc_args = {
-            "main_message": "A general failure occurred getting duplicate values the list.",
-            "original_exception": exc,
-        }
-        raise FGeneralError(exc_args)
-    else:
-        # Checks that duplicates exist.
-        if duplicate_list_dictionary:
-            # Checks if the user enabled grouping.
-            if grouped:
-
-                try:
-                    # Stores new grouped entries
-                    grouped_entries: dict[str, list[Any]] = {}
-                    # Loops through each grouped entry.
-                    for entry in duplicate_list_dictionary:
-                        # Checks if the match_index is set to match a specific list index in the list entry.
-                        if isinstance(match_index, int):
-                            # Checks if the values being returned are a tuple.
-                            # If tuple the matched_index will be used to set the key.
-                            # This is required because single value will be a string and the index will only pull the first letter.
-                            # Output Example: {'index': 0, 'value': ('ValueA', 'ValueB')}
-                            if isinstance(entry["value"], tuple):
-                                # Gets matching entries based on the "value" key and adds them to the grouped dictionary.
-                                grouped_entries[str(entry["value"][match_index])] = grouped_entries.get(
-                                    str(entry["value"][match_index]), []
-                                )
-                                grouped_entries[str(entry["value"][match_index])].append(entry)
-                            # Means only one entry exists as the value, and the value type is a string.
-                            # Output Example: {'index': 3, 'value': 'ValueB'}
-                            else:
-                                # Gets matching entries based on the "value" key and adds them to the grouped dictionary.
-                                grouped_entries[str(entry["value"])] = grouped_entries.get(str(entry["value"]), [])
-                                grouped_entries[str(entry["value"])].append(entry)
-                        # Checks if no match_index exists, which matches the entire list entry.
-                        # The list entry is converted to a string for the key.
-                        elif not isinstance(match_index, int):
-                            # Gets matching entries based on the "value" key and adds them to the grouped dictionary.
-                            grouped_entries[str(entry["value"])] = grouped_entries.get(str(entry["value"]), [])
-                            grouped_entries[str(entry["value"])].append(entry)
-                        # Standard string element in the list.
-                        else:
-                            # Gets matching entries based on the "value" key and adds them to the grouped dictionary.
-                            grouped_entries[entry["value"]] = grouped_entries.get(entry["value"], [])
-                            grouped_entries[entry["value"]].append(entry)
-                except Exception as exc:  # pragma: no cover
-                    exc_args = {
-                        "main_message": "A general failure occurred grouping duplicate values.",
-                        "original_exception": exc,
-                    }
-                    raise FGeneralError(exc_args)
-                else:
-                    # Returns grouped duplicates.
-                    return grouped_entries
+            # No match_index given, so the entire list entry will be used for matching, so the entry will be converted to a string.
             else:
-                # Returns un-grouped duplicates.
-                return duplicate_list_dictionary
+                # Checks if the entry from the list exists in the "temp_unique_items" list. If not it gets added to the temp list.
+                # If the entry exists the entry will hit the elif statement and get all index points for the duplicates.
+                if str(entry) not in temp_unique_items:
+                    # Adds the entry to the list.
+                    temp_unique_items.append(str(entry))
+                # Checks if the duplicate entry already exists in the duplicate_list_dictionary list.
+                # This has to check if the 'duplicate_list_dictionary' is empty and if the duplicate list does not contain the entry.
+                # The two different "entry" searches are required in case the key is a string or an INT. A string would have a single quote and an INT would not.
+                elif (
+                    bool(duplicate_list_dictionary) is False
+                    or f"'value': {str(entry)}" not in str(duplicate_list_dictionary)
+                    and f"'value': '{str(entry)}'" not in str(duplicate_list_dictionary)
+                ):
+                    # Loops through all entries in the list.
+                    for index, value in enumerate(duplicates):
+                        # Checks if the value from the list is equal to the discovered duplicate.
+                        if str(value) == str(entry):
+                            # Adds the duplicate entry values and index
+                            # The value will be the key and the index will be the value.
+                            # This will allow the ease if finding all index points for a specific value.
+                            duplicate_list_dictionary.append({"index": index, "value": value})
+        # Standard strings in the list.
         else:
-            return None
+            # Checks if the entry from the list exists in the "temp_unique_items" list. If not it gets added to the temp list.
+            # If the entry exists the entry will hit the elif statement and get all index points for the duplicates.
+            if entry not in temp_unique_items:
+                # Adds the entry to the list.
+                temp_unique_items.append(entry)
+            # Checks if the duplicate entry already exists in the duplicate_list_dictionary list.
+            # This has to check if the 'duplicate_list_dictionary' is empty and if the duplicate list does not contain the entry.
+            # The two different "entry" searches are required in case the key is a string or an INT. A string would have a single quote and an INT would not.
+            elif (
+                bool(duplicate_list_dictionary) is False
+                or f"'value': {entry}" not in str(duplicate_list_dictionary)
+                and f"'value': '{entry}'" not in str(duplicate_list_dictionary)
+            ):
+                # Loops through all entries in the list.
+                for index, value in enumerate(duplicates):
+                    # Checks if the value from the list is equal to the discovered duplicate.
+                    if value == entry:
+                        # Adds the duplicate entry values and index
+                        # The value will be the key and the index will be the value.
+                        # This will allow the ease if finding all index points for a specific value.
+                        duplicate_list_dictionary.append({"index": index, "value": value})
+
+    # Checks that duplicates exist.
+    if duplicate_list_dictionary:
+        # Checks if the user enabled grouping.
+        if grouped:
+            # Stores new grouped entries
+            grouped_entries: dict[str, list[Any]] = {}
+            # Loops through each grouped entry.
+            for entry in duplicate_list_dictionary:
+                # Checks if the match_index is set to match a specific list index in the list entry.
+                if isinstance(match_index, int):
+                    # Checks if the values being returned are a tuple.
+                    # If tuple the matched_index will be used to set the key.
+                    # This is required because single value will be a string and the index will only pull the first letter.
+                    # Output Example: {'index': 0, 'value': ('ValueA', 'ValueB')}
+                    if isinstance(entry["value"], tuple):
+                        # Gets matching entries based on the "value" key and adds them to the grouped dictionary.
+                        grouped_entries[str(entry["value"][match_index])] = grouped_entries.get(
+                            str(entry["value"][match_index]), []
+                        )
+                        grouped_entries[str(entry["value"][match_index])].append(entry)
+                    # Means only one entry exists as the value, and the value type is a string.
+                    # Output Example: {'index': 3, 'value': 'ValueB'}
+                    else:
+                        # Gets matching entries based on the "value" key and adds them to the grouped dictionary.
+                        grouped_entries[str(entry["value"])] = grouped_entries.get(str(entry["value"]), [])
+                        grouped_entries[str(entry["value"])].append(entry)
+                # Checks if no match_index exists, which matches the entire list entry.
+                # The list entry is converted to a string for the key.
+                elif not isinstance(match_index, int):
+                    # Gets matching entries based on the "value" key and adds them to the grouped dictionary.
+                    grouped_entries[str(entry["value"])] = grouped_entries.get(str(entry["value"]), [])
+                    grouped_entries[str(entry["value"])].append(entry)
+                # Standard string element in the list.
+                else:
+                    # Gets matching entries based on the "value" key and adds them to the grouped dictionary.
+                    grouped_entries[entry["value"]] = grouped_entries.get(entry["value"], [])
+                    grouped_entries[entry["value"]].append(entry)
+
+            # Returns grouped duplicates.
+            return grouped_entries
+        else:
+            # Returns un-grouped duplicates.
+            return duplicate_list_dictionary
+    else:
+        return None
 
 
 def sort_list(my_list: list[Any]) -> list[Any]:
@@ -584,8 +528,7 @@ def sort_list(my_list: list[Any]) -> list[Any]:
     Raises:
         FTypeError (fexception):
         \t\\- The object value '{my_list}' is not an instance of the required class(es) or subclass(es).
-        FGeneralError:
-        \t\\- A general exception occurred while sorting the list.
+
     Returns:
         list[Any]:
         \t\\- A sorted list based on the string equivalent.
@@ -597,66 +540,56 @@ def sort_list(my_list: list[Any]) -> list[Any]:
     logger_flowchart = logging.getLogger("flowchart")
     logger_flowchart.debug(f"Flowchart --> Function: {get_function_name()}")
 
-    try:
-        type_check(value=my_list, required_type=list)
-    except FTypeError:
-        raise
+    type_check(value=my_list, required_type=list, tb_remove_name="sort_list")
 
     formatted_my_list = "  - my_list (list):" + str("\n        - " + "\n        - ".join(map(str, my_list)))
 
     logger.debug("Passing parameters:\n" f"{formatted_my_list}\n")
 
-    try:
-        # Stores the original type, so it can be converted back.
-        orig_type: dict[Any, Any] = {}
-        converted_list: list[str] = []
+    # Stores the original type, so it can be converted back.
+    orig_type: dict[Any, Any] = {}
+    converted_list: list[str] = []
 
-        # Checks if the values are all int or a mix.
-        all_int = all(str(value).isdigit() for value in my_list)
+    # Checks if the values are all int or a mix.
+    all_int = all(str(value).isdigit() for value in my_list)
 
-        if all_int:
-            my_list.sort()
-            sorted_list = my_list
-        else:
-            contains_int: bool = False
-            contains_str: bool = False
-            # Gets the original type and sets the converted list.
-            for value in my_list:
-                orig_type.update({str(value): type(value)})
-
-                # Tracks value type for sorting.
-                if isinstance(value, int):
-                    contains_int = True
-                elif isinstance(value, str):
-                    contains_str = True
-
-                converted_list.append(str(value))
-
-            # Converts the int, int/str or str list.
-            # Checks which type to cut down on processing time.
-            if contains_int and not contains_str:
-                converted_list.sort(key=int)
-            elif contains_int and contains_str:
-                converted_list.sort(key=str_int_key)
-            else:
-                converted_list.sort()
-
-            # Re-converts the values back to the original type.
-            sorted_list: list[Any] = []
-            for value in converted_list:
-                # Checks if the value was a list to reconstruct the list.
-                if "<class 'list'>" in str(orig_type[value]):
-                    # Uses eval to convert the str[list] back to the original list.
-                    sorted_list.append(eval(value))
-                else:
-                    # Looks up original type in the dictionary and adds the value
-                    # with the original type to the sorted list.
-                    sorted_list.append(orig_type[value](value))
-    except Exception as exc:  # pragma: no cover
-        exc_args = {
-            "main_message": "A general exception occurred while sorting the list.",
-            "original_exception": exc,
-        }
-        raise FGeneralError(exc_args)
+    if all_int:
+        my_list.sort()
+        sorted_list = my_list
     else:
-        return sorted_list
+        contains_int: bool = False
+        contains_str: bool = False
+        # Gets the original type and sets the converted list.
+        for value in my_list:
+            orig_type.update({str(value): type(value)})
+
+            # Tracks value type for sorting.
+            if isinstance(value, int):
+                contains_int = True
+            elif isinstance(value, str):
+                contains_str = True
+
+            converted_list.append(str(value))
+
+        # Converts the int, int/str or str list.
+        # Checks which type to cut down on processing time.
+        if contains_int and not contains_str:
+            converted_list.sort(key=int)
+        elif contains_int and contains_str:
+            converted_list.sort(key=str_int_key)
+        else:
+            converted_list.sort()
+
+        # Re-converts the values back to the original type.
+        sorted_list: list[Any] = []
+        for value in converted_list:
+            # Checks if the value was a list to reconstruct the list.
+            if "<class 'list'>" in str(orig_type[value]):
+                # Uses eval to convert the str[list] back to the original list.
+                sorted_list.append(eval(value))
+            else:
+                # Looks up original type in the dictionary and adds the value
+                # with the original type to the sorted list.
+                sorted_list.append(orig_type[value](value))
+
+    return sorted_list
