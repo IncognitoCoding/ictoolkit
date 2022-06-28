@@ -23,7 +23,7 @@ __author__ = "IncognitoCoding"
 __copyright__ = "Copyright 2022, dict"
 __credits__ = ["IncognitoCoding"]
 __license__ = "MIT"
-__version__ = "0.5"
+__version__ = "0.6"
 __maintainer__ = "IncognitoCoding"
 __status__ = "Production"
 
@@ -123,7 +123,7 @@ def sort_dict(my_dict: dict[Any, Any], sort: Literal["key", "value"], sort_value
             "expected_result": """Literal["key", "value"]""",
             "returned_result": sort,
         }
-        raise DictStructureFailure(FCustomException(exc_args))
+        raise DictStructureFailure(FCustomException(message_args=exc_args, tb_remove_name="sort_dict"))
 
     return sorted_dict
 
@@ -283,7 +283,7 @@ def string_grouper(
                     "expected_result": """<class 'str'>""",
                     "returned_result": type(grouping_value),
                 }
-                raise FTypeError(exc_args)
+                raise FTypeError(message_args=exc_args, tb_remove_name="string_grouper")
         elif grouping_option == 2:
             # This section groups based on a character number. If the string is "Testing" and the number was 3, the grouping values would match on "Tes".
             # Checks that the grouping_value is a number.
@@ -327,7 +327,7 @@ def string_grouper(
                     "expected_result": """<class 'int'>""",
                     "returned_result": type(grouping_value),
                 }
-                raise FTypeError(exc_args)
+                raise FTypeError(message_args=exc_args, tb_remove_name="string_grouper")
         elif grouping_option == 3:
             # This comparison can have some complex checks because it has to check previous entries and make choices based on previous and current groupings.
             # The section of code is split into two different loops. The primary loop goes through each string. The sub-string loops and checks character by character

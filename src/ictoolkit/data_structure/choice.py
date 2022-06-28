@@ -17,7 +17,7 @@ __author__ = "IncognitoCoding"
 __copyright__ = "Copyright 2022, choice"
 __credits__ = ["IncognitoCoding"]
 __license__ = "MIT"
-__version__ = "0.7"
+__version__ = "0.8"
 __maintainer__ = "IncognitoCoding"
 __status__ = "Production"
 
@@ -207,7 +207,9 @@ def user_choice_character_grouping(list_of_strings: list) -> dict[str, list[str]
                                                 "expected_result": "<class 'str'>",
                                                 "returned_result": f"{type(key)}",
                                             }
-                                            raise FTypeError(exc_args)
+                                            raise FTypeError(
+                                                message_args=exc_args, tb_remove_name="user_choice_character_grouping"
+                                            )
                                 elif "*" not in dest_group_value_choice[-1:] and "*" in dest_group_value_choice[:1]:
                                     wildcard_value = [
                                         value
@@ -224,7 +226,9 @@ def user_choice_character_grouping(list_of_strings: list) -> dict[str, list[str]
                                                 "expected_result": "<class 'str'>",
                                                 "returned_result": f"{type(key)}",
                                             }
-                                            raise FTypeError(exc_args)
+                                            raise FTypeError(
+                                                message_args=exc_args, tb_remove_name="user_choice_character_grouping"
+                                            )
                                 elif "*" in dest_group_value_choice[-1:] and "*" in dest_group_value_choice[:1]:
                                     wildcard_value = [
                                         value for value in group if dest_group_value_choice.replace("*", "") in value
@@ -239,7 +243,9 @@ def user_choice_character_grouping(list_of_strings: list) -> dict[str, list[str]
                                                 "expected_result": "<class 'str'>",
                                                 "returned_result": f"{type(key)}",
                                             }
-                                            raise FTypeError(exc_args)
+                                            raise FTypeError(
+                                                message_args=exc_args, tb_remove_name="user_choice_character_grouping"
+                                            )
                                 else:
                                     single_match_value = any(dest_group_value_choice == value for value in group)
                                 if single_match_value:
@@ -252,7 +258,9 @@ def user_choice_character_grouping(list_of_strings: list) -> dict[str, list[str]
                                             "expected_result": "<class 'str'>",
                                             "returned_result": f"{type(key)}",
                                         }
-                                        raise FTypeError(exc_args)
+                                        raise FTypeError(
+                                            message_args=exc_args, tb_remove_name="user_choice_character_grouping"
+                                        )
                                     break
 
                             if single_match_value or len(wildcard_key_value) >= 1:

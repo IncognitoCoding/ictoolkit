@@ -16,7 +16,7 @@ __author__ = "IncognitoCoding"
 __copyright__ = "Copyright 2022, common"
 __credits__ = ["IncognitoCoding"]
 __license__ = "MIT"
-__version__ = "0.3"
+__version__ = "0.4"
 __maintainer__ = "IncognitoCoding"
 __status__ = "Production"
 
@@ -139,7 +139,7 @@ def common_case_isupper(list_of_strings: list[str]) -> bool:
             "main_message": "Unexpected upper_count vs lower_count match.",
             "returned_result": [f"upper_count = {upper_count}", f"lower_count = {lower_count}"],
         }
-        raise FValueError(exc_args)
+        raise FValueError(message_args=exc_args)
 
 
 def common_case_islower(list_of_strings: list[str]) -> bool:
@@ -200,7 +200,7 @@ def common_case_islower(list_of_strings: list[str]) -> bool:
             "main_message": "Unexpected upper_count vs lower_count match.",
             "returned_result": [f"upper_count = {upper_count}", f"lower_count = {lower_count}"],
         }
-        raise FValueError(exc_args)
+        raise FValueError(message_args=exc_args)
 
 
 def dict_keys_upper(my_dict: dict[str, Any]) -> dict[str, Any]:

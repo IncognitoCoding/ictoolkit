@@ -21,7 +21,7 @@ __author__ = "IncognitoCoding"
 __copyright__ = "Copyright 2022, thread_director"
 __credits__ = ["IncognitoCoding"]
 __license__ = "MIT"
-__version__ = "3.4"
+__version__ = "3.5"
 __maintainer__ = "IncognitoCoding"
 __status__ = "Production"
 
@@ -157,7 +157,7 @@ def start_function_thread(passing_program_function, program_function_name: str, 
                 "custom_type": ThreadStartFailure,
                 "original_exception": exc_obj,
             }
-            raise ThreadStartFailure(FCustomException(exc_args))
+            raise ThreadStartFailure(FCustomException(message_args=exc_args))
 
         # Loop breaks if the thread is alive or timeout reached.
         if thread_obj.is_alive() is True:
@@ -169,4 +169,4 @@ def start_function_thread(passing_program_function, program_function_name: str, 
                 "custom_type": ThreadStartFailure,
                 "suggested_resolution": "Manual intervention is required for this thread to start.",
             }
-            raise ThreadStartFailure(FCustomException(exc_args))
+            raise ThreadStartFailure(FCustomException(message_args=exc_args))

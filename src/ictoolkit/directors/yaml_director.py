@@ -21,7 +21,7 @@ __author__ = "IncognitoCoding"
 __copyright__ = "Copyright 2022, yaml_director"
 __credits__ = ["IncognitoCoding"]
 __license__ = "MIT"
-__version__ = "3.4"
+__version__ = "3.5"
 __maintainer__ = "IncognitoCoding"
 __status__ = "Production"
 
@@ -109,7 +109,7 @@ def read_yaml_config(yaml_file_path: str, loader: str) -> dict[Any, Any]:
                 "returned_result": loader,
                 "suggested_resolution": "Please verify you have set all required keys and try again.",
             }
-            raise YamlReadFailure(FCustomException(exc_args))
+            raise YamlReadFailure(FCustomException(message_args=exc_args, tb_remove_name="read_yaml_config"))
         elif "expected <block end>, but found '<scalar>'" in str(exc):
             exc_args = {
                 "main_message": "A failure occurred while reading the YAML file.",
@@ -122,7 +122,7 @@ def read_yaml_config(yaml_file_path: str, loader: str) -> dict[Any, Any]:
                     "you are using three single quotes, it will help if you use double quotes to begin and end with a single quote in the middle.",
                 ],
             }
-            raise YamlReadFailure(FCustomException(exc_args))
+            raise YamlReadFailure(FCustomException(message_args=exc_args, tb_remove_name="read_yaml_config"))
         else:  # pragma: no cover
             raise exc
     else:

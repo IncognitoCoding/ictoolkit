@@ -26,7 +26,7 @@ __author__ = "IncognitoCoding"
 __copyright__ = "Copyright 2022, log_director"
 __credits__ = ["IncognitoCoding"]
 __license__ = "MIT"
-__version__ = "3.4"
+__version__ = "3.5"
 __maintainer__ = "IncognitoCoding"
 __status__ = "Production"
 
@@ -164,7 +164,7 @@ def create_logger(logger_settings: dict) -> logging.Logger:
             "returned_result": logger_settings_keys,
             "suggested_resolution": "Please verify you have set all required keys and try again.",
         }
-        raise FKeyError(exc_args)
+        raise FKeyError(message_args=exc_args, tb_remove_name="create_logger")
 
     save_path = logger_settings.get("save_path")
     logger_name = logger_settings.get("logger_name")
@@ -231,7 +231,7 @@ def create_logger(logger_settings: dict) -> logging.Logger:
                 "custom_type": LoggerSetupFailure,
                 "suggested_resolution": "Please verify you entered a valid format option number or custom format string.",
             }
-            raise LoggerSetupFailure(FCustomException(exc_args))
+            raise LoggerSetupFailure(FCustomException(message_args=exc_args, tb_remove_name="create_logger"))
 
         # Sets handler option based on parameter.
         if handler_option == 1 or handler_option is None:
@@ -282,7 +282,7 @@ def create_logger(logger_settings: dict) -> logging.Logger:
                 "custom_type": LoggerSetupFailure,
                 "suggested_resolution": "Please verify you entered a valid handler option number.",
             }
-            raise LoggerSetupFailure(FCustomException(exc_args))
+            raise LoggerSetupFailure(FCustomException(message_args=exc_args, tb_remove_name="create_logger"))
     else:
         # Setting the existing logger.
         created_logger = logging.getLogger(logger_name)
@@ -436,6 +436,6 @@ def setup_logger_yaml(yaml_path: str, separate_default_logs: bool = False, allow
                     "custom_type": LoggerSetupFailure,
                     "suggested_resolution": "Please verify YAML file configuration.",
                 }
-                raise LoggerSetupFailure(FCustomException(exc_args))
+                raise LoggerSetupFailure(FCustomException(message_args=exc_args, tb_remove_name="setup_logger_yaml"))
             else:
                 raise exc

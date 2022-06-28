@@ -21,7 +21,7 @@ __author__ = "IncognitoCoding"
 __copyright__ = "Copyright 2022, str"
 __credits__ = ["IncognitoCoding"]
 __license__ = "MIT"
-__version__ = "0.3"
+__version__ = "0.4"
 __maintainer__ = "IncognitoCoding"
 __status__ = "Production"
 
@@ -121,7 +121,7 @@ def clean_non_word_characters(string: str) -> str:
             "expected_result": "The string should not have contained any hex characters.",
             "returned_result": encoded_string,
         }
-        raise FValueError(exc_args)
+        raise FValueError(message_args=exc_args, tb_remove_name="clean_non_word_characters")
     else:
         # Checks if the lengths are different from the parameter string and cleaned string to know if the string contained non-word values.
         if len(string) > len(cleaned_string):
@@ -373,4 +373,4 @@ def remove_section(orig_value: str, removal_values: Union[str, tuple[str, ...]],
             "expected_result": "A string value",
             "returned_result": None,
         }
-        raise RemoveSectionFailure(FCustomException(exc_args))
+        raise RemoveSectionFailure(FCustomException(message_args=exc_args, tb_remove_name="remove_section"))

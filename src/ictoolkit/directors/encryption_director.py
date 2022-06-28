@@ -34,7 +34,7 @@ __author__ = "IncognitoCoding"
 __copyright__ = "Copyright 2022, encryption_director"
 __credits__ = ["IncognitoCoding"]
 __license__ = "MIT"
-__version__ = "3.4"
+__version__ = "3.5"
 __maintainer__ = "IncognitoCoding"
 __status__ = "Production"
 
@@ -150,7 +150,7 @@ def encrypt_info(
             "expected_result": """<class 'bytes'>""",
             "returned_result": type(message_encryption_random_salt),
         }
-        raise EncryptionFailure(FCustomException(exc_args))
+        raise EncryptionFailure(FCustomException(message_args=exc_args, tb_remove_name="encrypt_info"))
     logger.debug("Returned from imported function (PBKDF2HMAC) to function (encrypt_info)")
     logger.debug(
         "Encoding the string using the pre-defined encryption password and the cryptographic key into the binary form"
@@ -228,105 +228,93 @@ def decrypt_info(
     )
 
     logger.debug(f"Starting to decrypt the info")
-    try:
-        # Converting the pre-defined encryption password to bytes.
-        password = message_encryption_password.encode()
 
-        logger.debug("Setting random salt string that is (16 bytes) used to help protect from dictionary attacks")
+    # Converting the pre-defined encryption password to bytes.
+    password = message_encryption_password.encode()
 
-        # Checks if incoming salt is in str format, so the salt can be re-encoded.
-        if isinstance(message_encryption_random_salt, str):
-            if message_encryption_random_salt[:2] == "b'":
-                # Strips the bytes section off the input.
-                # Removes first 2 characters.
-                unconverted_message_encryption_random_salt = message_encryption_random_salt[2:]
-                # Removes last character.
-                unconverted_message_encryption_random_salt = unconverted_message_encryption_random_salt[:-1]
-                # Re-encodes the info.
-                message_encryption_random_salt = (
-                    unconverted_message_encryption_random_salt.encode()
-                    .decode("unicode_escape")
-                    .encode("raw_unicode_escape")
-                )
+    logger.debug("Setting random salt string that is (16 bytes) used to help protect from dictionary attacks")
 
-        # Checks if incoming salt is in str format, so the salt can be re-encoded.
-        if isinstance(encrypted_info, str):
-            if encrypted_info[:2] == "b'":
-                # Strips the bytes section off the input.
-                # Removes first 2 characters.
-                unconverted_encrypted_info = encrypted_info[2:]
-                # Removes last character.
-                unconverted_encrypted_info = unconverted_encrypted_info[:-1]
-                # Re-encodes the info.
-                encrypted_info = (
-                    unconverted_encrypted_info.encode().decode("unicode_escape").encode("raw_unicode_escape")
-                )
-
-        if isinstance(message_encryption_random_salt, bytes):
-            # Calling function to derive a cryptographic key from a password
-            kdf = PBKDF2HMAC(
-                algorithm=hashes.SHA256(),  # An instance of HashAlgorithm
-                length=32,  # The desired length of the derived key in bytes. Maximum is (232 - 1)
-                salt=message_encryption_random_salt,  # Secure values [1] are 128-bits (16 bytes) or longer and randomly generated
-                iterations=100000,  # The number of iterations to perform of the hash function
-                backend=default_backend(),  # An optional instance of PBKDF2HMACBackend
+    # Checks if incoming salt is in str format, so the salt can be re-encoded.
+    if isinstance(message_encryption_random_salt, str):
+        if message_encryption_random_salt[:2] == "b'":
+            # Strips the bytes section off the input.
+            # Removes first 2 characters.
+            unconverted_message_encryption_random_salt = message_encryption_random_salt[2:]
+            # Removes last character.
+            unconverted_message_encryption_random_salt = unconverted_message_encryption_random_salt[:-1]
+            # Re-encodes the info.
+            message_encryption_random_salt = (
+                unconverted_message_encryption_random_salt.encode()
+                .decode("unicode_escape")
+                .encode("raw_unicode_escape")
             )
+
+    # Checks if incoming salt is in str format, so the salt can be re-encoded.
+    if isinstance(encrypted_info, str):
+        if encrypted_info[:2] == "b'":
+            # Strips the bytes section off the input.
+            # Removes first 2 characters.
+            unconverted_encrypted_info = encrypted_info[2:]
+            # Removes last character.
+            unconverted_encrypted_info = unconverted_encrypted_info[:-1]
+            # Re-encodes the info.
+            encrypted_info = unconverted_encrypted_info.encode().decode("unicode_escape").encode("raw_unicode_escape")
+
+    if isinstance(message_encryption_random_salt, bytes):
+        # Calling function to derive a cryptographic key from a password
+        kdf = PBKDF2HMAC(
+            algorithm=hashes.SHA256(),  # An instance of HashAlgorithm
+            length=32,  # The desired length of the derived key in bytes. Maximum is (232 - 1)
+            salt=message_encryption_random_salt,  # Secure values [1] are 128-bits (16 bytes) or longer and randomly generated
+            iterations=100000,  # The number of iterations to perform of the hash function
+            backend=default_backend(),  # An optional instance of PBKDF2HMACBackend
+        )
+    else:
+        exc_args = {
+            "main_message": "The message encryption random salt is not in type bytes.",
+            "custom_type": EncryptionFailure,
+            "expected_result": """<class 'bytes'>""",
+            "returned_result": type(message_encryption_random_salt),
+        }
+        raise EncryptionFailure(FCustomException(message_args=exc_args, tb_remove_name="decrypt_info"))
+
+    logger.debug("Returned from imported function (PBKDF2HMAC) to function (encrypt_info)")
+    logger.debug(
+        "Encoding the string using the pre-defined encryption password and the cryptographic key into the binary form"
+    )
+    # Encoding the string using the pre-defined encryption password and the cryptographic key into the binary form.
+    key = base64.urlsafe_b64encode(kdf.derive(password))
+
+    # Creating a symmetric authenticated cryptography (secret key)
+    f = Fernet(key)
+
+    try:
+        logger.debug("Decrypting the info using the secret key to create a Fernet token.")
+        if isinstance(encrypted_info, bytes):
+            # Decrypting the info using the secret key to create a Fernet token.
+            decrypted_info = f.decrypt(encrypted_info)
         else:
             exc_args = {
-                "main_message": "The message encryption random salt is not in type bytes.",
+                "main_message": "The encrypted message is not in type bytes.",
                 "custom_type": EncryptionFailure,
                 "expected_result": """<class 'bytes'>""",
-                "returned_result": type(message_encryption_random_salt),
+                "returned_result": type(encrypted_info),
             }
-            raise EncryptionFailure(FCustomException(exc_args))
+            raise EncryptionFailure(FCustomException(message_args=exc_args, tb_remove_name="decrypt_info"))
+        # Converts bytes to Unicode string.
+        decode_decrypted_info: str = decrypted_info.decode()
+        logger.debug(f"Returning the decrypted info. decrypted_info = {decode_decrypted_info}")
 
-        logger.debug("Returned from imported function (PBKDF2HMAC) to function (encrypt_info)")
-        logger.debug(
-            "Encoding the string using the pre-defined encryption password and the cryptographic key into the binary form"
-        )
-        # Encoding the string using the pre-defined encryption password and the cryptographic key into the binary form.
-        key = base64.urlsafe_b64encode(kdf.derive(password))
-
-        # Creating a symmetric authenticated cryptography (secret key)
-        f = Fernet(key)
-    except Exception as exc:
+    except InvalidToken as exc:  # pragma: no cover
         exc_args = {
-            "main_message": "A failure occurred while decrypting the message.",
+            "main_message": "An invalid Key failure occurred while decrypting the info.",
             "custom_type": DecryptionFailure,
             "original_exception": exc,
         }
-        raise DecryptionFailure(FCustomException(exc_args))
+        raise DecryptionFailure(FCustomException(message_args=exc_args, tb_remove_name="decrypt_info"))
     else:
-
-        try:
-            logger.debug("Decrypting the info using the secret key to create a Fernet token.")
-            if isinstance(encrypted_info, bytes):
-                # Decrypting the info using the secret key to create a Fernet token.
-                decrypted_info = f.decrypt(encrypted_info)
-            else:
-                exc_args = {
-                    "main_message": "The encrypted message is not in type bytes.",
-                    "custom_type": EncryptionFailure,
-                    "expected_result": """<class 'bytes'>""",
-                    "returned_result": type(encrypted_info),
-                }
-                raise EncryptionFailure(FCustomException(exc_args))
-            # Converts bytes to Unicode string.
-            decode_decrypted_info: str = decrypted_info.decode()
-            logger.debug(f"Returning the decrypted info. decrypted_info = {decode_decrypted_info}")
-
-        except InvalidToken as exc:  # pragma: no cover
-            exc_args = {
-                "main_message": "An invalid Key failure occurred while decrypting the info.",
-                "custom_type": DecryptionFailure,
-                "original_exception": exc,
-            }
-            raise DecryptionFailure(FCustomException(exc_args))
-        except Exception as exc:  # pragma: no cover
-            raise exc
-        else:
-            # Returning the decrypted info
-            return decode_decrypted_info
+        # Returning the decrypted info
+        return decode_decrypted_info
 
 
 def launch_decryptor_website(
@@ -459,4 +447,4 @@ def launch_decryptor_website(
             "custom_type": DecryptionSiteFailure,
             "original_exception": exc,
         }
-        raise DecryptionSiteFailure(FCustomException(exc_args))
+        raise DecryptionSiteFailure(FCustomException(message_args=exc_args))

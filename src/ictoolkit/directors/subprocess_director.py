@@ -20,7 +20,7 @@ __author__ = "IncognitoCoding"
 __copyright__ = "Copyright 2022, subprocess_director"
 __credits__ = ["IncognitoCoding"]
 __license__ = "MIT"
-__version__ = "3.4"
+__version__ = "3.5"
 __maintainer__ = "IncognitoCoding"
 __status__ = "Production"
 
@@ -118,6 +118,6 @@ def start_subprocess(program_arguments: Union[str, list]) -> AttributeDictionary
             "main_message": f"No output returned for subprocess ({program_arguments}).",
             "custom_type": SubprocessStartFailure,
         }
-        raise SubprocessStartFailure(FCustomException(exc_args))
+        raise SubprocessStartFailure(FCustomException(message_args=exc_args, tb_remove_name="start_subprocess"))
 
     return subprocess_output

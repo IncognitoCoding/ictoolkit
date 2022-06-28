@@ -26,7 +26,7 @@ __author__ = "IncognitoCoding"
 __copyright__ = "Copyright 2022, email_director"
 __credits__ = ["IncognitoCoding", "Monoloch"]
 __license__ = "MIT"
-__version__ = "3.4"
+__version__ = "3.5"
 __maintainer__ = "IncognitoCoding"
 __status__ = "Production"
 
@@ -108,7 +108,7 @@ def create_template_email(
             "returned_result": email_template_path,
             "suggested_resolution": "Please verify you have set the correct path and try again.",
         }
-        raise CreateTemplateFailure(FCustomException(exc_args))
+        raise CreateTemplateFailure(FCustomException(message_args=exc_args, tb_remove_name="create_template_email"))
 
     # Gets the main program module name.
     # Output Example: C:\Repositories\smtpredirect\smtpredirect\smtpredirect.py
@@ -325,7 +325,7 @@ def send_email(
             "returned_result": "No body or template was sent.",
             "suggested_resolution": "Ensure the body or template is being passed to the email_director module functions.",
         }
-        raise EmailSendFailure(FCustomException(exc_args))
+        raise EmailSendFailure(FCustomException(message_args=exc_args, tb_remove_name="send_email"))
     # Holds the updating email body lines.
     updating_body = []
     # Checks the email for any encryption identifiers.
@@ -348,7 +348,7 @@ def send_email(
                     "expected_result": "The unencrypted string between @START-ENCRYPT@ and @END-ENCRYPT@",
                     "returned_result": email_line,
                 }
-                raise EmailSendFailure(FCustomException(exc_args))
+                raise EmailSendFailure(FCustomException(message_args=exc_args, tb_remove_name="send_email"))
             logger.debug("Converting unencrypted message string into bytes")
             password = email_settings.get("message_encryption_password")
             salt = email_settings.get("message_encryption_random_salt")
@@ -400,7 +400,7 @@ def send_email(
                 "returned_result": attachment_path,
                 "suggested_resolution": "Please verify you have set the correct path and try again.",
             }
-            raise EmailSendFailure(FCustomException(exc_args))
+            raise EmailSendFailure(FCustomException(message_args=exc_args, tb_remove_name="send_email"))
         # Gets the mime type to determine the type of message being sent.
         mime_type, _ = mimetypes.guess_type(attachment_path)
         if mime_type:
@@ -440,7 +440,7 @@ def send_email(
                     "custom_type": EmailSendFailure,
                     "original_exception": exc,
                 }
-                raise EmailSendFailure(FCustomException(exc_args))
+                raise EmailSendFailure(FCustomException(message_args=exc_args, tb_remove_name="send_email"))
         else:
             logger.debug("Opening connection to SMTP server on port 25")
             smtp_Object = smtplib.SMTP(email_settings.get("smtp"), 25)
@@ -458,7 +458,7 @@ def send_email(
                 "suggested_resolution": "Ensure the server address and TLS options are set correctly.",
                 "original_exception": exc,
             }
-            raise EmailSendFailure(FCustomException(exc_args))
+            raise EmailSendFailure(FCustomException(message_args=exc_args, tb_remove_name="send_email"))
         elif "Connection unexpectedly closed" in str(exc):
             exc_args = {
                 "main_message": "Failed to reach the SMTP server.",
@@ -466,7 +466,7 @@ def send_email(
                 "suggested_resolution": "Ensure SMTP is reachable.",
                 "original_exception": exc,
             }
-            raise EmailSendFailure(FCustomException(exc_args))
+            raise EmailSendFailure(FCustomException(message_args=exc_args, tb_remove_name="send_email"))
         else:
             raise exc
 
@@ -521,7 +521,7 @@ def send_email(
         else:
             raise exc
 
-        raise EmailSendFailure(FCustomException(exc_args))
+        raise EmailSendFailure(FCustomException(message_args=exc_args, tb_remove_name="send_email"))
 
     finally:
 
@@ -536,6 +536,6 @@ def send_email(
                     "custom_type": EmailSendFailure,
                     "original_exception": exc,
                 }
-                raise EmailSendFailure(FCustomException(exc_args))
+                raise EmailSendFailure(FCustomException(message_args=exc_args, tb_remove_name="send_email"))
             else:
                 raise exc

@@ -19,7 +19,7 @@ __author__ = "IncognitoCoding"
 __copyright__ = "Copyright 2022, list"
 __credits__ = ["IncognitoCoding"]
 __license__ = "MIT"
-__version__ = "0.3"
+__version__ = "0.4"
 __maintainer__ = "IncognitoCoding"
 __status__ = "Production"
 
@@ -260,7 +260,7 @@ def get_list_of_dicts_duplicates(
             "returned_result": f"The searching key ({key}) does not existing in the dictionary ({list_dictionary})",
             "suggested_resolution": "Please verify you have set all required keys and try again.",
         }
-        raise FKeyError(exc_args)
+        raise FKeyError(message_args=exc_args, tb_remove_name="get_list_of_dicts_duplicates")
     else:
         # Checks that duplicates exist.
         if duplicate_list_dictionary:

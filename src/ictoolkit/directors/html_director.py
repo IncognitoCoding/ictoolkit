@@ -19,7 +19,7 @@ __author__ = "IncognitoCoding"
 __copyright__ = "Copyright 2022, html_director"
 __credits__ = ["IncognitoCoding"]
 __license__ = "MIT"
-__version__ = "3.3"
+__version__ = "3.4"
 __maintainer__ = "IncognitoCoding"
 __status__ = "Production"
 
@@ -86,7 +86,7 @@ class HTMLConverter(HTMLParser):
                 "returned_result": convert_option,
                 "suggested_resolution": "Please verify you have sent a valid conversion option.",
             }
-            raise FValueError(exc_args)
+            raise FValueError(message_args=exc_args, tb_remove_name="feed")
 
         self.output = ""
         super(HTMLConverter, self).feed(html_output)

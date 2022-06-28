@@ -23,7 +23,7 @@ __author__ = "IncognitoCoding"
 __copyright__ = "Copyright 2022, file_director"
 __credits__ = ["IncognitoCoding"]
 __license__ = "MIT"
-__version__ = "3.6"
+__version__ = "3.7"
 __maintainer__ = "IncognitoCoding"
 __status__ = "Production"
 
@@ -98,7 +98,7 @@ def write_file(file_path: str, write_value: str) -> None:
             "custom_type": FileWriteFailure,
             "original_exception": exc,
         }
-        raise FileWriteFailure(FCustomException(exc_args))
+        raise FileWriteFailure(FCustomException(message_args=exc_args, tb_remove_name="write_file"))
     else:
         try:
             return_search: Union[list[Any], None] = None
@@ -124,7 +124,7 @@ def write_file(file_path: str, write_value: str) -> None:
                     "custom_type": FileWriteFailure,
                     "returned_result": " No return search value were returned.",
                 }
-                raise FileWriteFailure(FCustomException(exc_args))
+                raise FileWriteFailure(FCustomException(message_args=exc_args, tb_remove_name="write_file"))
 
 
 def search_file(
@@ -219,7 +219,7 @@ def search_file(
                     "returned_result": file_path,
                     "suggested_resolution": "Please verify you have sent a full file path and not a directory.",
                 }
-                raise FileSearchFailure(FCustomException(exc_args))
+                raise FileSearchFailure(FCustomException(message_args=exc_args, tb_remove_name="search_file"))
 
             logger.debug(f'Reading in all lines from the file "{file_path}"')
             # Sets the basename for cleaner logging output.
@@ -500,7 +500,7 @@ def user_file_selection(prompt: str, criteria: str, root_dir: Optional[str] = No
             "expected_result": "A matching file.",
             "returned_result": 0,
         }
-        raise FFileNotFoundError(exc_args)
+        raise FFileNotFoundError(message_args=exc_args, tb_remove_name="user_file_selection")
 
     # Loop until valid input is provided by user
     while True:
