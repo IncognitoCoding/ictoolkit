@@ -26,7 +26,7 @@ __author__ = "IncognitoCoding"
 __copyright__ = "Copyright 2022, log_director"
 __credits__ = ["IncognitoCoding"]
 __license__ = "MIT"
-__version__ = "3.5"
+__version__ = "3.6"
 __maintainer__ = "IncognitoCoding"
 __status__ = "Production"
 
@@ -434,6 +434,7 @@ def setup_logger_yaml(yaml_path: str, separate_default_logs: bool = False, allow
                 exc_args = {
                     "main_message": "The logging hander failed to create.",
                     "custom_type": LoggerSetupFailure,
+                    "original_exception": exc,
                     "suggested_resolution": "Please verify YAML file configuration.",
                 }
                 raise LoggerSetupFailure(FCustomException(message_args=exc_args, tb_remove_name="setup_logger_yaml"))
