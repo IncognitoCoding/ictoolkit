@@ -156,7 +156,7 @@ def user_choice_character_grouping(list_of_strings: list) -> dict[str, list[str]
                     done_editing_choice: int = 0
                     # Loops until customer is done with changes.
                     while True:
-                        logger.debug("User choose to retry character group position")
+                        logger.debug("User chooses to retry character group position")
                         # Gets the string value to move.
                         while True:
                             while True:

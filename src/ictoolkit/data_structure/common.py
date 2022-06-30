@@ -16,7 +16,7 @@ __author__ = "IncognitoCoding"
 __copyright__ = "Copyright 2022, common"
 __credits__ = ["IncognitoCoding"]
 __license__ = "MIT"
-__version__ = "0.4"
+__version__ = "0.5"
 __maintainer__ = "IncognitoCoding"
 __status__ = "Production"
 
@@ -28,7 +28,7 @@ def str_to_list(value: Union[str, list], sep: str) -> list[Any]:
     allows the ability to convert single values or multiple values to a list.
 
     Ideal for converting database cells that were converted from\\
-    list to str for storage. Ex: .join('my_list_values')
+    list to str for storage. Ex: .join('my_list_values') or list_to_str(value=[1,2])
 
     Whitespace is stripped from the start or end.
 
@@ -75,6 +75,50 @@ def str_to_list(value: Union[str, list], sep: str) -> list[Any]:
             new_list = str(value.strip()).split(sep)
         else:
             new_list.append(value.strip())
+    else:
+        new_list = value
+
+    return new_list
+
+
+def list_to_str(value: Union[str, list], sep: str = " ") -> str:
+    """
+    Take any list and converts the list to a string.\\
+
+    Usage Notes:
+    \t\\- If str is sent the original str will forward.\\
+
+    Args:
+        value (Union[str, list]):
+        \t\\- The list getting converted.
+        \t\\- A str will forward through.
+        sep (str, optional):
+        \t\\- The delimiter that will separate each list entry.
+        \t\\- Blanks are supported.
+        \t\\- Defaults to a single blank space.
+
+    Raises:
+        FTypeError (fexception):
+        \t\\- The object value '{value}' is not an instance of the required class(es) or subclass(es).
+
+    Returns:
+        str:
+        \t\\- A converted list to a string or the original forwarded list.
+    """
+    logger = logging.getLogger(__name__)
+    logger.debug(f"=" * 20 + get_function_name() + "=" * 20)
+    # Custom flowchart tracking. This is ideal for large projects that move a lot.
+    # For any third-party modules, set the flow before making the function call.
+    logger_flowchart = logging.getLogger("flowchart")
+    logger_flowchart.debug(f"Flowchart --> Function: {get_function_name()}")
+
+    type_check(value=value, required_type=(str, list), tb_remove_name="list_to_str")
+
+    formatted_value = "  - value (list):" + str("\n        - " + "\n        - ".join(map(str, value)))
+    logger.debug("Passing parameters:\n" f"{formatted_value}\n")
+
+    if isinstance(value, list):
+        new_list = sep.join(map(str, value))
     else:
         new_list = value
 

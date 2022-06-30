@@ -5,6 +5,7 @@ import pytest
 from ictoolkit.data_structure.dict import move_dict_value
 from ictoolkit.data_structure.common import (
     str_to_list,
+    list_to_str,
     common_case_isupper,
     common_case_islower,
     dict_keys_upper,
@@ -16,7 +17,7 @@ __author__ = "IncognitoCoding"
 __copyright__ = "Copyright 2022, test_common"
 __credits__ = ["IncognitoCoding"]
 __license__ = "MIT"
-__version__ = "0.1"
+__version__ = "0.2"
 __maintainer__ = "IncognitoCoding"
 __status__ = "Production"
 
@@ -59,6 +60,38 @@ def test_1_4_str_to_list():
     """
     my_list = str_to_list(value=[], sep=", ")
     assert [] == my_list
+
+
+def test_1_list_to_str():
+    """
+    This function tests converting a list to str.
+    """
+    my_str = list_to_str(value="sample1")
+    assert "sample1" == my_str
+
+
+def test_1_1_list_to_str():
+    """
+    This function tests converting a list to str.
+    """
+    my_str = list_to_str(value=["sample1", "sample2"])
+    assert "sample1 sample2" == my_str
+
+
+def test_1_2_list_to_str():
+    """
+    This function tests converting a list to str.
+    """
+    my_str = list_to_str(value=["sample1", "sample2"], sep=", ")
+    assert "sample1, sample2" == my_str
+
+
+def test_1_3_list_to_str():
+    """
+    This function tests converting a list to str.
+    """
+    my_str = list_to_str(value=["sample1", 2], sep=", ")
+    assert "sample1, 2" == my_str
 
 
 def test_1_move_dict_value():
