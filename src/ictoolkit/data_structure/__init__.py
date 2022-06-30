@@ -1,6 +1,7 @@
 from ..data_structure.choice import user_choice_character_grouping
 from ..data_structure.common import (
     str_to_list,
+    list_to_str,
     common_case_isupper,
     common_case_islower,
     dict_keys_upper,
