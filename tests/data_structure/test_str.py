@@ -2,17 +2,19 @@
 import pytest
 
 # Local Functions
-from ictoolkit.data_structure.str import find_longest_common_substring, clean_non_word_characters, remove_section
-
-# Exceptions
-from fexception import FValueError
+from ictoolkit.data_structure.str import (
+    list_to_str,
+    find_longest_common_substring,
+    clean_non_word_characters,
+    remove_section,
+)
 
 
 __author__ = "IncognitoCoding"
 __copyright__ = "Copyright 2022, test_str"
 __credits__ = ["IncognitoCoding"]
 __license__ = "MIT"
-__version__ = "0.2"
+__version__ = "0.3"
 __maintainer__ = "IncognitoCoding"
 __status__ = "Production"
 
@@ -20,6 +22,38 @@ __status__ = "Production"
 # ############################################################
 # ######Section Test Part 1 (Successful Value Checking)#######
 # ############################################################
+
+
+def test_1_list_to_str():
+    """
+    This function tests converting a list to str.
+    """
+    my_str = list_to_str(value="sample1")
+    assert "sample1" == my_str
+
+
+def test_1_1_list_to_str():
+    """
+    This function tests converting a list to str.
+    """
+    my_str = list_to_str(value=["sample1", "sample2"])
+    assert "sample1 sample2" == my_str
+
+
+def test_1_2_list_to_str():
+    """
+    This function tests converting a list to str.
+    """
+    my_str = list_to_str(value=["sample1", "sample2"], sep=", ")
+    assert "sample1, sample2" == my_str
+
+
+def test_1_3_list_to_str():
+    """
+    This function tests converting a list to str.
+    """
+    my_str = list_to_str(value=["sample1", 2], sep=", ")
+    assert "sample1, 2" == my_str
 
 
 def test_1_find_longest_common_substring():

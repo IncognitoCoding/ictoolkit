@@ -7,7 +7,7 @@ from typing import Literal, Union, Any
 from fchecker.type import type_check
 
 # Local Functions
-from ..data_structure.common import common_case_isupper, common_case_islower, dict_keys_upper, dict_keys_lower
+from ..data_structure.common import common_case_isupper, common_case_islower
 from ..helpers.py_helper import get_function_name
 from ..helpers.sort_helper import str_int_key
 from ..data_structure.list import sort_list
@@ -23,9 +23,87 @@ __author__ = "IncognitoCoding"
 __copyright__ = "Copyright 2022, dict"
 __credits__ = ["IncognitoCoding"]
 __license__ = "MIT"
-__version__ = "0.6"
+__version__ = "0.7"
 __maintainer__ = "IncognitoCoding"
 __status__ = "Production"
+
+
+def dict_keys_upper(my_dict: dict[str, Any]) -> dict[str, Any]:
+    """
+    Converts all dictionary keys to upper case.
+
+    Args:
+        my_dict (dict[str, Any]):
+        \t\\- The dictionary needing the keys converted.
+
+    Raises:
+        FTypeError (fexception):
+        \t\\- The object value '{my_dict}' is not an instance of the required class(es) or subclass(es).
+
+    Returns:
+        dict[str, Any]:
+        \t\\- The original dictionary with upper case keys.
+    """
+    logger = logging.getLogger(__name__)
+    logger.debug(f"=" * 20 + get_function_name() + "=" * 20)
+    # Custom flowchart tracking. This is ideal for large projects that move a lot.
+    # For any third-party modules, set the flow before making the function call.
+    logger_flowchart = logging.getLogger("flowchart")
+    logger_flowchart.debug(f"Flowchart --> Function: {get_function_name()}")
+
+    type_check(value=my_dict, required_type=dict, tb_remove_name="dict_keys_upper")
+
+    formatted_my_dict = "  - my_dict (dict):\n        - " + "\n        - ".join(
+        ": ".join((key, str(val))) for (key, val) in my_dict.items()
+    )
+    logger.debug("Passing parameters:\n" f"{formatted_my_dict}\n")
+
+    res = dict()
+    for key in my_dict.keys():
+        if isinstance(my_dict[key], dict):
+            res[key.upper()] = dict_keys_upper(my_dict[key])
+        else:
+            res[key.upper()] = my_dict[key]
+    return res
+
+
+def dict_keys_lower(my_dict: dict[str, Any]) -> dict[str, Any]:
+    """
+    Converts all dictionary keys to lower case.
+
+    Args:
+        my_dict (dict[str, Any]):
+        \t\\- The dictionary needing the keys converted.
+
+    Raises:
+        FTypeError (fexception):
+        \t\\- The object value '{my_dict}' is not an instance of the required class(es) or subclass(es).
+
+    Returns:
+        dict[str, Any]:
+        \t\\- The original dictionary with lower case keys.
+    """
+    logger = logging.getLogger(__name__)
+    logger.debug(f"=" * 20 + get_function_name() + "=" * 20)
+    # Custom flowchart tracking. This is ideal for large projects that move a lot.
+    # For any third-party modules, set the flow before making the function call.
+    logger_flowchart = logging.getLogger("flowchart")
+    logger_flowchart.debug(f"Flowchart --> Function: {get_function_name()}")
+
+    type_check(value=my_dict, required_type=dict, tb_remove_name="dict_keys_lower")
+
+    formatted_my_dict = "  - my_dict (dict):\n        - " + "\n        - ".join(
+        ": ".join((key, str(val))) for (key, val) in my_dict.items()
+    )
+    logger.debug("Passing parameters:\n" f"{formatted_my_dict}\n")
+
+    res = dict()
+    for key in my_dict.keys():
+        if isinstance(my_dict[key], dict):
+            res[key.lower()] = dict_keys_lower(my_dict[key])
+        else:
+            res[key.lower()] = my_dict[key]
+    return res
 
 
 def sort_dict(my_dict: dict[Any, Any], sort: Literal["key", "value"], sort_values: bool = False) -> dict[Any, Any]:

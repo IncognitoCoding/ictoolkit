@@ -21,9 +21,56 @@ __author__ = "IncognitoCoding"
 __copyright__ = "Copyright 2022, str"
 __credits__ = ["IncognitoCoding"]
 __license__ = "MIT"
-__version__ = "0.4"
+__version__ = "0.5"
 __maintainer__ = "IncognitoCoding"
 __status__ = "Production"
+
+
+def list_to_str(value: Union[str, list], sep: str = " ") -> str:
+    """
+    Take any list and converts the list to a string.\\
+
+    Usage Notes:
+    \t\\- If str is sent the original str will forward.\\
+
+    Args:
+        value (Union[str, list]):
+        \t\\- The list getting converted.
+        \t\\- A str will forward through.
+        sep (str, optional):
+        \t\\- The delimiter that will separate each list entry.
+        \t\\- Blanks are supported.
+        \t\\- Defaults to a single blank space.
+
+    Raises:
+        FTypeError (fexception):
+        \t\\- The object value '{value}' is not an instance of the required class(es) or subclass(es).
+
+    Returns:
+        str:
+        \t\\- A converted list to a string or the original forwarded list.
+    """
+    logger = logging.getLogger(__name__)
+    logger.debug(f"=" * 20 + get_function_name() + "=" * 20)
+    # Custom flowchart tracking. This is ideal for large projects that move a lot.
+    # For any third-party modules, set the flow before making the function call.
+    logger_flowchart = logging.getLogger("flowchart")
+    logger_flowchart.debug(f"Flowchart --> Function: {get_function_name()}")
+
+    type_check(value=value, required_type=(str, list), tb_remove_name="list_to_str")
+
+    if isinstance(value, str):
+        formatted_value = f"  - string (str):\n        - {value}\n"
+    else:
+        formatted_value = "  - value (list):" + str("\n        - " + "\n        - ".join(map(str, value)))
+    logger.debug("Passing parameters:\n" f"{formatted_value}\n")
+
+    if isinstance(value, list):
+        new_list = sep.join(map(str, value))
+    else:
+        new_list = value
+
+    return new_list
 
 
 def find_longest_common_substring(string1: str, string2: str) -> Union[str, None]:

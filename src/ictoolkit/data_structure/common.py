@@ -1,8 +1,6 @@
 # Built-in/Generic Imports
 import logging
 
-from typing import Union, Any
-
 # Libraries
 from fchecker.type import type_check
 
@@ -16,113 +14,9 @@ __author__ = "IncognitoCoding"
 __copyright__ = "Copyright 2022, common"
 __credits__ = ["IncognitoCoding"]
 __license__ = "MIT"
-__version__ = "0.5"
+__version__ = "0.6"
 __maintainer__ = "IncognitoCoding"
 __status__ = "Production"
-
-
-def str_to_list(value: Union[str, list], sep: str) -> list[Any]:
-    """
-    Take any string and converts it based on the separator.\\
-    The difference between this function and .split() is this function\\
-    allows the ability to convert single values or multiple values to a list.
-
-    Ideal for converting database cells that were converted from\\
-    list to str for storage. Ex: .join('my_list_values') or list_to_str(value=[1,2])
-
-    Whitespace is stripped from the start or end.
-
-    Usage Notes:
-    \t\\- If a list is sent the original list will forward.\\
-    \t\\- If the separator never matches the entry will be considered\\
-    \t   a single entry and add to the list.
-
-    Args:
-        value (Union[str, list]):
-        \t\\- The string getting split.
-        \t\\- A list will forward through.
-        sep (str):
-        \t\\- The delimiter that will split the string.
-
-    Raises:
-        FTypeError (fexception):
-        \t\\- The object value '{value}' is not an instance of the required class(es) or subclass(es).
-
-    Returns:
-        list[Any]:
-        \t\\- A converted string to a list or the original forwarded list.
-        \t\\- Empty lists can pass through.
-    """
-    logger = logging.getLogger(__name__)
-    logger.debug(f"=" * 20 + get_function_name() + "=" * 20)
-    # Custom flowchart tracking. This is ideal for large projects that move a lot.
-    # For any third-party modules, set the flow before making the function call.
-    logger_flowchart = logging.getLogger("flowchart")
-    logger_flowchart.debug(f"Flowchart --> Function: {get_function_name()}")
-
-    type_check(value=value, required_type=(str, list), tb_remove_name="str_to_list")
-
-    if isinstance(value, str):
-        formatted_value = f"  - string (str):\n        - {value}\n"
-    else:
-        formatted_value = "  - value (list):" + str("\n        - " + "\n        - ".join(map(str, value)))
-    logger.debug("Passing parameters:\n" f"{formatted_value}\n")
-
-    new_list: list = []
-    if isinstance(value, str):
-        # Converts if the delimiter is in the value.
-        if sep in str(value):
-            new_list = str(value.strip()).split(sep)
-        else:
-            new_list.append(value.strip())
-    else:
-        new_list = value
-
-    return new_list
-
-
-def list_to_str(value: Union[str, list], sep: str = " ") -> str:
-    """
-    Take any list and converts the list to a string.\\
-
-    Usage Notes:
-    \t\\- If str is sent the original str will forward.\\
-
-    Args:
-        value (Union[str, list]):
-        \t\\- The list getting converted.
-        \t\\- A str will forward through.
-        sep (str, optional):
-        \t\\- The delimiter that will separate each list entry.
-        \t\\- Blanks are supported.
-        \t\\- Defaults to a single blank space.
-
-    Raises:
-        FTypeError (fexception):
-        \t\\- The object value '{value}' is not an instance of the required class(es) or subclass(es).
-
-    Returns:
-        str:
-        \t\\- A converted list to a string or the original forwarded list.
-    """
-    logger = logging.getLogger(__name__)
-    logger.debug(f"=" * 20 + get_function_name() + "=" * 20)
-    # Custom flowchart tracking. This is ideal for large projects that move a lot.
-    # For any third-party modules, set the flow before making the function call.
-    logger_flowchart = logging.getLogger("flowchart")
-    logger_flowchart.debug(f"Flowchart --> Function: {get_function_name()}")
-
-    type_check(value=value, required_type=(str, list), tb_remove_name="list_to_str")
-
-    formatted_value = "  - value (list):" + str("\n        - " + "\n        - ".join(map(str, value)))
-    logger.debug("Passing parameters:\n" f"{formatted_value}\n")
-
-    if isinstance(value, list):
-        new_list = sep.join(map(str, value))
-    else:
-        new_list = value
-
-    return new_list
 
 
 def common_case_isupper(list_of_strings: list[str]) -> bool:
@@ -245,81 +139,3 @@ def common_case_islower(list_of_strings: list[str]) -> bool:
             "returned_result": [f"upper_count = {upper_count}", f"lower_count = {lower_count}"],
         }
         raise FValueError(message_args=exc_args)
-
-
-def dict_keys_upper(my_dict: dict[str, Any]) -> dict[str, Any]:
-    """
-    Converts all dictionary keys to upper case.
-
-    Args:
-        my_dict (dict[str, Any]):
-        \t\\- The dictionary needing the keys converted.
-
-    Raises:
-        FTypeError (fexception):
-        \t\\- The object value '{my_dict}' is not an instance of the required class(es) or subclass(es).
-
-    Returns:
-        dict[str, Any]:
-        \t\\- The original dictionary with upper case keys.
-    """
-    logger = logging.getLogger(__name__)
-    logger.debug(f"=" * 20 + get_function_name() + "=" * 20)
-    # Custom flowchart tracking. This is ideal for large projects that move a lot.
-    # For any third-party modules, set the flow before making the function call.
-    logger_flowchart = logging.getLogger("flowchart")
-    logger_flowchart.debug(f"Flowchart --> Function: {get_function_name()}")
-
-    type_check(value=my_dict, required_type=dict, tb_remove_name="dict_keys_upper")
-
-    formatted_my_dict = "  - my_dict (dict):\n        - " + "\n        - ".join(
-        ": ".join((key, str(val))) for (key, val) in my_dict.items()
-    )
-    logger.debug("Passing parameters:\n" f"{formatted_my_dict}\n")
-
-    res = dict()
-    for key in my_dict.keys():
-        if isinstance(my_dict[key], dict):
-            res[key.upper()] = dict_keys_upper(my_dict[key])
-        else:
-            res[key.upper()] = my_dict[key]
-    return res
-
-
-def dict_keys_lower(my_dict: dict[str, Any]) -> dict[str, Any]:
-    """
-    Converts all dictionary keys to lower case.
-
-    Args:
-        my_dict (dict[str, Any]):
-        \t\\- The dictionary needing the keys converted.
-
-    Raises:
-        FTypeError (fexception):
-        \t\\- The object value '{my_dict}' is not an instance of the required class(es) or subclass(es).
-
-    Returns:
-        dict[str, Any]:
-        \t\\- The original dictionary with lower case keys.
-    """
-    logger = logging.getLogger(__name__)
-    logger.debug(f"=" * 20 + get_function_name() + "=" * 20)
-    # Custom flowchart tracking. This is ideal for large projects that move a lot.
-    # For any third-party modules, set the flow before making the function call.
-    logger_flowchart = logging.getLogger("flowchart")
-    logger_flowchart.debug(f"Flowchart --> Function: {get_function_name()}")
-
-    type_check(value=my_dict, required_type=dict, tb_remove_name="dict_keys_lower")
-
-    formatted_my_dict = "  - my_dict (dict):\n        - " + "\n        - ".join(
-        ": ".join((key, str(val))) for (key, val) in my_dict.items()
-    )
-    logger.debug("Passing parameters:\n" f"{formatted_my_dict}\n")
-
-    res = dict()
-    for key in my_dict.keys():
-        if isinstance(my_dict[key], dict):
-            res[key.lower()] = dict_keys_lower(my_dict[key])
-        else:
-            res[key.lower()] = my_dict[key]
-    return res

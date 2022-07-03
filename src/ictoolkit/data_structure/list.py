@@ -5,23 +5,247 @@ from typing import Union, List, Any, Optional
 # Libraries
 from fchecker.type import type_check
 
-from ictoolkit.data_structure.common import str_to_list
-
 # Local Functions
 from ..helpers.py_helper import get_function_name
 from ..helpers.sort_helper import str_int_key
 
 # Exceptions
-from fexception import FKeyError
+from fexception import FKeyError, FValueError
 
 
 __author__ = "IncognitoCoding"
 __copyright__ = "Copyright 2022, list"
 __credits__ = ["IncognitoCoding"]
 __license__ = "MIT"
-__version__ = "0.4"
+__version__ = "0.5"
 __maintainer__ = "IncognitoCoding"
 __status__ = "Production"
+
+
+def find_substring(value: str, start_match: str, end_match: str) -> Union[list, None]:
+    """
+    Finds a substring based on the start and end match values.
+
+    Multiple substring detection is supported.
+
+    Args:
+        value (str):
+        \t\\- The value containing substrings.
+        start_match (str):
+        \t\\- The start matching substring.
+        end_match (str):
+        \t\\- The end matching substring.
+
+    Raises:
+        FTypeError (fexception):
+        \t\\- The object value '{value}' is not an instance of the required class(es) or subclass(es).
+        FTypeError (fexception):
+        \t\\- The object value '{start_match}' is not an instance of the required class(es) or subclass(es).
+        FTypeError (fexception):
+        \t\\- The object value '{end_match}' is not an instance of the required class(es) or subclass(es).
+
+    Returns:
+        Union[list, None]:
+        \t\\- list:\\
+        \t\t\\- A list of matching substrings.\\
+        \t\\- None:\\
+        \t\t\\- No matching substrings.
+    """
+    logger = logging.getLogger(__name__)
+    logger.debug(f"=" * 20 + get_function_name() + "=" * 20)
+    # Custom flowchart tracking. This is ideal for large projects that move a lot.
+    # For any third-party modules, set the flow before making the function call.
+    logger_flowchart = logging.getLogger("flowchart")
+    logger_flowchart.debug(f"Flowchart --> Function: {get_function_name()}")
+
+    type_check(value=value, required_type=str, tb_remove_name="find_section")
+    type_check(value=start_match, required_type=str, tb_remove_name="find_section")
+    type_check(value=end_match, required_type=str, tb_remove_name="find_section")
+
+    logger.debug(
+        "Passing parameters:\n"
+        f"  - value (str):\n        - {value}\n"
+        f"  - start_match (str):\n        - {start_match}\n"
+        f"  - end_match (str):\n        - {end_match}\n"
+    )
+
+    try:
+        logger.debug(f"Checking if a section is between the start ({start_match}) and end ({end_match}) characters")
+
+        matched_substrings: list[str] = []
+
+        # Gets the initial value section.
+        start: int = value.index(start_match) + len(start_match)
+        end: int = value.index(end_match, start)
+
+        matched_substrings.append(value[start:end])
+
+        logger.debug(f"A section was found and added to the list\n  - {value[start:end]}")
+        logger.debug(f"Starting a loop to see if any other sections exist")
+
+        # Stores the stripped value.
+        stripped_value: str = value
+        # Loops through until all sections are found.
+        while True:
+            # Stripps the ending plus 1 to remove the separator.
+            stripped_value = stripped_value[end + 1 :]
+            # Checks if any other groupings exist.
+            if start_match in stripped_value and end_match in stripped_value:
+                logger.debug("Another section was detected")
+                start: int = stripped_value.index(start_match) + len(start_match)
+                end: int = stripped_value.index(end_match, start)
+                matched_substrings.append(stripped_value[start:end])
+                logger.debug(f"An additional section was found and added to the list\n  - {stripped_value[start:end]}")
+            else:
+                break
+
+        logger.debug(f"Returning {len(matched_substrings)} sections\n  - {matched_substrings}")
+        return matched_substrings
+    except ValueError:
+        logger.debug(f"No sections exist in the value")
+        # Returns none if no substring if found.
+        return None
+
+
+def str_to_list(
+    value: Union[str, list], sep: str, remove_whitespace: bool = True, exclude: Optional[str] = None
+) -> list[Any]:
+    """
+    Take any string and converts it based on the separator.\\
+    The difference between this function and .split() is that\\
+    this function allows lists to pass through and sections of\\
+    the value to be excluded.
+
+    Ideal for converting database cells that were converted from\\
+    list to str for storage. Ex: .join('my_list_values') or list_to_str(value=[1,2])
+
+    The exclude can be beneficial when part of a string needs to be converted,\\
+    but another section with a matching separator must remain intact.
+
+    Whitespace is stripped from the start or end.
+
+    Usage Notes:
+    \t\\- If a list is sent the original list will forward.\\
+    \t\\- If the separator never matches the entry will be considered\\
+    \t   a single entry and add to the list.
+
+    Args:
+        value (Union[str, list]):
+        \t\\- The string getting split.
+        \t\\- A list will forward through.
+        sep (str):
+        \t\\- The delimiter that will split the string.
+        remove_whitespace (bool, optional):
+        \t\\- Removes whitespace.
+        \t\\- Defaults to True.
+        exclude (str, optional):
+        \t\\- A character to use for excluding the string section from splitting.\\
+        \t\\- Use a unique character that will never match a common string (ex: ~, [, ^, •).\\
+        \t\\- NOTE:
+        \t\t\\- A single exclude will exclude values after.\\
+        \t\t\\- Start and end exclude will exclude a section.\\
+        \t\t\\- Multiple start/end excludes are supported.
+
+    Raises:
+        FTypeError (fexception):
+        \t\\- The object value '{value}' is not an instance of the required class(es) or subclass(es).
+        FTypeError (fexception):
+        \t\\- The object value '{sep}' is not an instance of the required class(es) or subclass(es).
+        FTypeError (fexception):
+        \t\\- The object value '{remove_whitespace}' is not an instance of the required class(es) or subclass(es).
+        FTypeError (fexception):
+        \t\\- The object value '{exclude}' is not an instance of the required class(es) or subclass(es).
+        FValueError (fexception):
+        \t\\- The 'exclude' value must contain only one character.
+
+    Returns:
+        list[Any]:
+        \t\\- A converted string to a list or the original forwarded list.\\
+        \t\\- Empty lists can pass through.
+    """
+    logger = logging.getLogger(__name__)
+    logger.debug(f"=" * 20 + get_function_name() + "=" * 20)
+    # Custom flowchart tracking. This is ideal for large projects that move a lot.
+    # For any third-party modules, set the flow before making the function call.
+    logger_flowchart = logging.getLogger("flowchart")
+    logger_flowchart.debug(f"Flowchart --> Function: {get_function_name()}")
+
+    type_check(value=value, required_type=(str, list), tb_remove_name="str_to_list")
+    type_check(value=sep, required_type=str, tb_remove_name="str_to_list")
+    type_check(value=remove_whitespace, required_type=bool, tb_remove_name="str_to_list")
+    if exclude:
+        type_check(value=exclude, required_type=str, tb_remove_name="str_to_list")
+
+    if isinstance(value, str):
+        formatted_value = f"  - string (str):\n        - {value}\n"
+    else:
+        formatted_value = "  - value (list):" + str("\n        - " + "\n        - ".join(map(str, value)))
+
+    logger.debug(
+        "Passing parameters:\n"
+        f"{formatted_value}\n"
+        f"  - sep (str):\n        - {sep}\n"
+        f"  - remove_whitespace (bool):\n        - {remove_whitespace}\n"
+        f"  - exclude (str):\n        - {exclude}\n"
+    )
+
+    if exclude:
+        # Checks that only one exclude character was sent.
+        if len(exclude) >= 2:
+            exc_args = {
+                "main_message": "The 'exclude' value must contain only one character.",
+                "expected_result": "1",
+                "returned_result": len(exclude),
+            }
+            raise FValueError(message_args=exc_args, tb_remove_name="str_to_list")
+
+    new_list: list[str] = []
+    constructed_string: str = ""
+    ignore: bool = False
+
+    if isinstance(value, str):
+        logger.debug(f"Splitting all string characters\n  - Total Characters = {len(value)}")
+        # Checks if an exclude is included to use a more in-depth split process.
+        if exclude:
+            for index, character in enumerate(value):
+                # Checks if the character is excluded.
+                # This will enable or disable the grouping.
+                if character == exclude:
+                    ignore = True if ignore == False else False
+                    logger.debug(
+                        f"Ignore Character: {character} at position {index}.... Previous Character is {value[index - 1]}"
+                    )
+                    logger.debug(f"Setting ignore to {ignore}")
+                else:
+                    # Adds each character to the string.
+                    constructed_string += character
+
+                if (
+                    (character == sep and not ignore)
+                    or (len(value) == index + 1)
+                    or (not ignore and value[index + 1] == exclude)
+                ):
+                    # Removes whitespace.
+                    if remove_whitespace:
+                        logger.debug("Removing whitepsace from the constructed string")
+                        constructed_string = constructed_string.strip()
+
+                    logger.debug(f"Adding the constructed string to the list\n  - {constructed_string}")
+                    # Adds the populated string to the results list.
+                    new_list.append(constructed_string)
+                    # Clears the values.
+                    constructed_string = ""
+        else:
+            # Converts if the delimiter is in the value.
+            if sep in str(value):
+                new_list = str(value.strip()).split(sep)
+            else:
+                new_list.append(value.strip())
+    else:
+        new_list = value
+
+    logger.debug(f"Returning the list\n  - {new_list}")
+    return new_list
 
 
 def remove_duplicate_dict_values_in_list(list_dictionary: List[dict], element_number: Optional[int] = None) -> list:

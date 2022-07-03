@@ -3,6 +3,8 @@ import pytest
 
 # Local Functions
 from ictoolkit.data_structure.list import (
+    find_substring,
+    str_to_list,
     remove_duplicate_dict_values_in_list,
     get_list_of_dicts_duplicates,
     get_list_duplicates,
@@ -16,9 +18,201 @@ __author__ = "IncognitoCoding"
 __copyright__ = "Copyright 2022, test_list"
 __credits__ = ["IncognitoCoding"]
 __license__ = "MIT"
-__version__ = "0.1"
+__version__ = "0.2"
 __maintainer__ = "IncognitoCoding"
 __status__ = "Production"
+
+
+def test_1_find_substring():
+    """This function tests getting a single substring"""
+    my_substrings = find_substring(value="sample1", start_match="m", end_match="e")
+    assert ["pl"] == my_substrings
+
+
+def test_1_1_find_substring():
+    """This function tests getting a single substring"""
+    my_substrings = find_substring(
+        value="This is my sample. %Excluding this section%. %Excluding this section too%",
+        start_match="%",
+        end_match="%",
+    )
+    assert ["Excluding this section", "Excluding this section too"] == my_substrings
+
+
+def test_1_2_find_substring():
+    """This function tests getting a single substring"""
+    my_substrings = find_substring(
+        value="This is my sample. %Excluding this section%. %Excluding this section too%",
+        start_match="%",
+        end_match="#",
+    )
+    assert None is my_substrings
+
+
+def test_1_str_to_list():
+    """
+    This function tests converting a single string to a list.
+    """
+    my_list = str_to_list(value="sample1", sep=", ")
+    assert ["sample1"] == my_list
+
+
+def test_1_1_str_to_list():
+    """
+    This function tests converting a single string to a list.
+    """
+    my_list = str_to_list(value="10.10.200.11", sep=", ")
+    assert ["10.10.200.11"] == my_list
+
+
+def test_1_2_str_to_list():
+    """
+    This function tests converting a string to a list.
+    """
+    my_list = str_to_list(value="sample1, sample2, sample3", sep=", ")
+    assert ["sample1", "sample2", "sample3"] == my_list
+
+
+def test_1_3_str_to_list():
+    """
+    This function tests passing an existing list through.
+    """
+    my_list = str_to_list(value=["sample1", "sample2", "sample3"], sep=", ")
+    assert ["sample1", "sample2", "sample3"] == my_list
+
+
+def test_1_4_str_to_list():
+    """
+    This function tests passing an existing list through.
+    """
+    my_list = str_to_list(value=[], sep=", ")
+    assert [] == my_list
+
+
+def test_1_5_str_to_list():
+    """
+    This function tests converting a string to a list using an exclude character.
+    """
+    my_list = str_to_list(
+        value="This is •my• sample •excluding everything after. 13• Also, this is my section that will split. 16•This section will not.•",
+        sep=" ",
+        exclude="•",
+    )
+    assert [
+        "This",
+        "is",
+        "my",
+        "sample",
+        "excluding everything after. 13",
+        "Also,",
+        "this",
+        "is",
+        "my",
+        "section",
+        "that",
+        "will",
+        "split.",
+        "16",
+        "This section will not.",
+    ] == my_list
+
+
+def test_1_6_str_to_list():
+    """
+    This function tests converting a string to a list using an exclude character.
+    """
+    my_list = str_to_list(
+        value="This is •my sample• excluding everything after. 13 Also, this is my section that will split. This section will not.",
+        sep=" ",
+        exclude="•",
+    )
+    assert [
+        "This",
+        "is",
+        "my sample",
+        "excluding",
+        "everything",
+        "after.",
+        "13",
+        "Also,",
+        "this",
+        "is",
+        "my",
+        "section",
+        "that",
+        "will",
+        "split.",
+        "This",
+        "section",
+        "will",
+        "not.",
+    ] == my_list
+
+
+def test_1_7_str_to_list():
+    """
+    This function tests converting a string to a list using an exclude character.
+    """
+    my_list = str_to_list(
+        # value="This is %my% sample %excluding everything after. 13% Also, this is my section that will split. 16%This section will not.%",
+        # value="This is %my sample% excluding everything after. 13 Also, this is my section that will split. This section will not.",
+        value="This is •my sample excluding everything after. 13 Also, this is my section that will split. This section will not.",
+        sep=" ",
+        exclude="•",
+    )
+    assert [
+        "This",
+        "is",
+        "my sample excluding everything after. 13 Also, this is my section that will split. This section will not.",
+    ] == my_list
+
+
+def test_1_8_str_to_list():
+    """
+    This function tests converting a string to a list using an exclude character.
+    """
+    my_list = str_to_list(
+        # value="This is %my% sample %excluding everything after. 13% Also, this is my section that will split. 16%This section will not.%",
+        # value="This is %my sample% excluding everything after. 13 Also, this is my section that will split. This section will not.",
+        value="This is my sample excluding everything after. 13 Also, this is my section that will split. This section will not.",
+        sep=" ",
+        exclude="•",
+    )
+    assert [
+        "This",
+        "is",
+        "my",
+        "sample",
+        "excluding",
+        "everything",
+        "after.",
+        "13",
+        "Also,",
+        "this",
+        "is",
+        "my",
+        "section",
+        "that",
+        "will",
+        "split.",
+        "This",
+        "section",
+        "will",
+        "not.",
+    ] == my_list
+
+
+def test_1_9_str_to_list():
+    """
+    This function tests passing a list through.
+    """
+    my_list = str_to_list(
+        # value="This is %my% sample %excluding everything after. 13% Also, this is my section that will split. 16%This section will not.%",
+        # value="This is %my sample% excluding everything after. 13 Also, this is my section that will split. This section will not.",
+        value=["sample1"],
+        sep=" ",
+    )
+    assert ["sample1"] == my_list
 
 
 def test_remove_duplicate_dict_values_in_list():
