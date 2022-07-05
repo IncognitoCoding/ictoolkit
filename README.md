@@ -118,7 +118,7 @@ Functions and classes under the "directors" directory will be moved to a differe
       - This function creates a logger based on specific parameters.
       - Supports setting a default logger path, so no full path is required.
         - All default logs will be at the root of the main program in a folder called logs.
-        - Multiple logger paths are supported.
+        - Multiple default logger paths are supported.
     - Function: setup_logger_yaml
       - This function sets up a logger for the program using a YAML file.
   - Module: subprocess_director.py
