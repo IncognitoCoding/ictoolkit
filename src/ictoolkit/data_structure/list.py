@@ -122,7 +122,7 @@ def str_to_list(
     The exclude can be beneficial when part of a string needs to be converted,\\
     but another section with a matching separator must remain intact.
 
-    Whitespace is stripped from the start or end.
+    Whitespace is stripped automatically.
 
     Usage Notes:
     \t\\- If a list is sent the original list will forward.\\
