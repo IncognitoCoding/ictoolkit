@@ -169,7 +169,7 @@ def create_dataclass(
                     )
 
                 exc_args = {
-                    "main_message": f"{dataclass_name} got an unexpected keyword argument {diff_names}",
+                    "main_message": f"{dataclass_name} got an unexpected keyword argument.",
                     "custom_type": RequirementFailure,
                     "expected_result": str(sorted(required_field_names)).replace("[", "").replace("]", ""),
                     "returned_result": str(sorted(current_field_names)).replace("[", "").replace("]", ""),
