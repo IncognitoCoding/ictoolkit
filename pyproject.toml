@@ -7,7 +7,7 @@ name = "ictoolkit"
 version = "3.50"
 description = "ictoolkit is designed to be the swiss army knife of programming methods."
 authors = [
-    { name = "IncognitoCoding" }  # Replace with actual email
+    { name = "IncognitoCoding" }
 ]
 license = { file = "LICENSE" }
 readme = "README.md"
