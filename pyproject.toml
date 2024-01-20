@@ -4,12 +4,12 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "ictoolkit"
-version = "3.49"
+version = "3.50"
 description = "ictoolkit is designed to be the swiss army knife of programming methods."
 authors = [
     { name = "IncognitoCoding" }  # Replace with actual email
 ]
-license = "MIT"
+license = { file = "LICENSE" }
 readme = "README.md"
 requires-python = ">=3.9"
 keywords = ["swiss army knife", "programming tools"]
