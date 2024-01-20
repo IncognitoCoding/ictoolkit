@@ -4,30 +4,35 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "ictoolkit"
-version = "3.48"
+version = "3.49"
 description = "ictoolkit is designed to be the swiss army knife of programming methods."
 authors = [
-    { name = "IncognitoCoding"}
+    { name = "IncognitoCoding" }  # Replace with actual email
 ]
-license = { file = "LICENSE" }  # Assuming MIT license is in a separate file
+license = "MIT"
 readme = "README.md"
 requires-python = ">=3.9"
-keywords = ["swiss army knife", "programming tools"]  # Add relevant keywords
+keywords = ["swiss army knife", "programming tools"]
 classifiers = [
     "Development Status :: 5 - Production/Stable",
     "License :: OSI Approved :: MIT License",
-    "Operating System :: OS Independent",  # More inclusive than listing specific platforms
+    "Operating System :: OS Independent",
     "Programming Language :: Python :: 3",
 ]
 dependencies = [
-    "fchecker==0.15.5",
-    "fexception==0.3.17",
-    "Jinja2==3.1.2",
-    "cryptography==41.0.5",
-    "Flask==3.0.0",
-    "waitress==2.1.2",
-    "PyYAML==6.0.1",
+    "fchecker~=0.15.5",
+    "fexception~=0.3.17",
+    "Jinja2~=3.1.2",
+    "cryptography~=41.0.5",
+    "Flask~=3.0.0",
+    "waitress~=2.1.2",
+    "PyYAML~=6.0.1",
 ]
 
 [project.urls]
 Home = "https://github.com/IncognitoCoding/fchecker"
+
+[tool.pytest.ini_options]
+addopts = "--cov --cov-report term-missing -s --verbose"
+norecursedirs = ["dist", "build"]
+testpaths = ["tests"]
